@@ -1,0 +1,204 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect, createContext } from 'react';
+
+// Pages
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import Dashboard from './pages/Dashboard';
+import Leads from './pages/Leads';
+import Deals from './pages/Deals';
+import Contacts from './pages/Contacts';
+import Accounts from './pages/Accounts';
+import Activities from './pages/Activities';
+import Pipelines from './pages/Pipelines';
+import Calendar from './pages/Calendar';
+import Notes from './pages/Notes';
+import Tags from './pages/Tags';
+import Reports from './pages/Reports';
+import Products from './pages/Products';
+import Quotes from './pages/Quotes';
+import Branches from './pages/Branches';
+import Campaigns from './pages/Campaigns';
+import Audiences from './pages/Audiences';
+import EmailTemplates from './pages/EmailTemplates';
+import Integrations from './pages/Integrations';
+import Inbox from './pages/Inbox';
+import Workflows from './pages/Workflows';
+import CustomFields from './pages/CustomFields';
+import Documents from './pages/Documents';
+import AuditLogs from './pages/AuditLogs';
+
+// Super Admin Pages
+import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
+import SuperAdminLayout from './pages/SuperAdmin/SuperAdminLayout';
+import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
+import SuperAdminTenants from './pages/SuperAdmin/SuperAdminTenants';
+
+// Components
+import Layout from './components/Layout';
+
+// Auth Context
+export const AuthContext = createContext(null);
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [tenant, setTenant] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      const token = localStorage.getItem('crm_token');
+      if (token) {
+        // Token exists, verify with server
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+        const res = await fetch(`${API_URL}/auth/session`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          credentials: 'include'
+        });
+        const data = await res.json();
+        
+        if (data.success && data.data) {
+          setUser(data.data);
+          setTenant(data.data.tenant);
+          localStorage.setItem('crm_user', JSON.stringify(data.data));
+          if (data.data.tenant) {
+            localStorage.setItem('crm_tenant', JSON.stringify(data.data.tenant));
+          }
+        } else {
+          // Token invalid, clear it
+          localStorage.removeItem('crm_token');
+          localStorage.removeItem('crm_user');
+          localStorage.removeItem('crm_tenant');
+        }
+      }
+    } catch (error) {
+      console.error('Session check failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (username, password) => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      // Handle both old format (data.data) and new format (data.token + data.user)
+      const token = data.token || data.data?.token;
+      const userData = data.user || data.data;
+      
+      if (token && userData) {
+        localStorage.setItem('crm_token', token);
+        localStorage.setItem('crm_user', JSON.stringify(userData));
+        
+        if (userData.tenant) {
+          localStorage.setItem('crm_tenant', JSON.stringify(userData.tenant));
+          setTenant(userData.tenant);
+        }
+        
+        setUser(userData);
+        return { success: true };
+      }
+    }
+    return { success: false, message: data.message };
+  };
+
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem('crm_token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include'
+      });
+    } catch (e) {
+      // Ignore errors
+    }
+    localStorage.removeItem('crm_token');
+    localStorage.removeItem('crm_user');
+    localStorage.removeItem('crm_tenant');
+    setUser(null);
+    setTenant(null);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc' }}>
+        <div className="spinner" style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTop: '4px solid #244066', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, tenant, login, logout, checkSession, setUser, setTenant }}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
+        <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} />
+        
+        {/* Protected routes - Core CRM */}
+        <Route path="/dashboard" element={user ? <Layout><Dashboard /></Layout> : <Navigate to="/login" />} />
+        <Route path="/leads" element={user ? <Layout><Leads /></Layout> : <Navigate to="/login" />} />
+        <Route path="/deals" element={user ? <Layout><Deals /></Layout> : <Navigate to="/login" />} />
+        <Route path="/contacts" element={user ? <Layout><Contacts /></Layout> : <Navigate to="/login" />} />
+        <Route path="/accounts" element={user ? <Layout><Accounts /></Layout> : <Navigate to="/login" />} />
+        <Route path="/activities" element={user ? <Layout><Activities /></Layout> : <Navigate to="/login" />} />
+        <Route path="/pipelines" element={user ? <Layout><Pipelines /></Layout> : <Navigate to="/login" />} />
+        <Route path="/calendar" element={user ? <Layout><Calendar /></Layout> : <Navigate to="/login" />} />
+        
+        {/* Protected routes - Notes & Tags */}
+        <Route path="/notes" element={user ? <Layout><Notes /></Layout> : <Navigate to="/login" />} />
+        <Route path="/tags" element={user ? <Layout><Tags /></Layout> : <Navigate to="/login" />} />
+        
+        {/* Protected routes - Products & Quotes */}
+        <Route path="/products" element={user ? <Layout><Products /></Layout> : <Navigate to="/login" />} />
+        <Route path="/quotes" element={user ? <Layout><Quotes /></Layout> : <Navigate to="/login" />} />
+        
+        {/* Protected routes - Marketing & Communication */}
+        <Route path="/campaigns" element={user ? <Layout><Campaigns /></Layout> : <Navigate to="/login" />} />
+        <Route path="/audiences" element={user ? <Layout><Audiences /></Layout> : <Navigate to="/login" />} />
+        <Route path="/email-templates" element={user ? <Layout><EmailTemplates /></Layout> : <Navigate to="/login" />} />
+        <Route path="/integrations" element={user ? <Layout><Integrations /></Layout> : <Navigate to="/login" />} />
+        <Route path="/inbox" element={user ? <Layout><Inbox /></Layout> : <Navigate to="/login" />} />
+        
+        {/* Protected routes - Documents & Reports */}
+        <Route path="/documents" element={user ? <Layout><Documents /></Layout> : <Navigate to="/login" />} />
+        <Route path="/reports" element={user ? <Layout><Reports /></Layout> : <Navigate to="/login" />} />
+        
+        {/* Protected routes - Settings & Admin */}
+        <Route path="/branches" element={user ? <Layout><Branches /></Layout> : <Navigate to="/login" />} />
+        <Route path="/workflows" element={user ? <Layout><Workflows /></Layout> : <Navigate to="/login" />} />
+        <Route path="/custom-fields" element={user ? <Layout><CustomFields /></Layout> : <Navigate to="/login" />} />
+        <Route path="/audit-logs" element={user ? <Layout><AuditLogs /></Layout> : <Navigate to="/login" />} />
+        
+        {/* Super Admin Routes */}
+        <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+        <Route path="/super-admin" element={<SuperAdminLayout />}>
+          <Route index element={<Navigate to="/super-admin/dashboard" />} />
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="tenants" element={<SuperAdminTenants />} />
+          <Route path="tenants/:id" element={<SuperAdminTenants />} />
+        </Route>
+        
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </AuthContext.Provider>
+  );
+}
+
+export default App;
