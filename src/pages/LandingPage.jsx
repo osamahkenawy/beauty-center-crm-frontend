@@ -81,7 +81,6 @@ export default function LandingPage() {
         <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
           <a onClick={() => scrollToSection('home')}>Home</a>
           <a onClick={() => scrollToSection('features')}>Features</a>
-          <a onClick={() => scrollToSection('plans')}>Plans</a>
           <a onClick={() => scrollToSection('faq')}>FAQ</a>
           <a onClick={() => scrollToSection('contact')}>Contact</a>
           <Link to="/login">Login</Link>
@@ -103,7 +102,6 @@ export default function LandingPage() {
               <ul>
                 <li><a onClick={() => scrollToSection('home')} className="active">Home</a></li>
                 <li><a onClick={() => scrollToSection('features')}>Features</a></li>
-                <li><a onClick={() => scrollToSection('plans')}>Plans</a></li>
                 <li><a onClick={() => scrollToSection('faq')}>FAQ</a></li>
                 <li><a onClick={() => scrollToSection('contact')}>Contact</a></li>
               </ul>
@@ -290,88 +288,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="plans" className="pricing-section">
-        <div className="container">
-          <div className="section-header">
-            <h2>Simple Pricing</h2>
-            <p className="section-subtitle">Start free. Scale as you grow. No surprises.</p>
-            <div className="styled-divider"></div>
-          </div>
-
-          <div className="pricing-grid">
-            {/* Starter Plan */}
-            <div className="pricing-card">
-              <div className="pricing-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                  <path d="M2 17l10 5 10-5"/>
-                  <path d="M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              <h3>Starter</h3>
-              <p className="price">AED 99</p>
-              <p className="price-period">per user /mo</p>
-              <Link to="/register" className="btn-primary">Start Free Trial</Link>
-              <p className="price-note">14 days free trial</p>
-              <ul className="pricing-features">
-                <li>Up to 5 users</li>
-                <li>5,000 contacts</li>
-                <li>1 sales pipeline</li>
-                <li>Basic reporting</li>
-                <li>Email support</li>
-              </ul>
-            </div>
-
-            {/* Professional Plan */}
-            <div className="pricing-card featured">
-              <div className="pricing-badge">Most Popular</div>
-              <div className="pricing-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-              </div>
-              <h3>Professional</h3>
-              <p className="price">AED 249</p>
-              <p className="price-period">per user /mo</p>
-              <Link to="/register" className="btn-white">Start Free Trial</Link>
-              <p className="price-note">14 days free trial</p>
-              <ul className="pricing-features">
-                <li>Up to 25 users</li>
-                <li>50,000 contacts</li>
-                <li>Unlimited pipelines</li>
-                <li>Advanced analytics</li>
-                <li>Workflow automation</li>
-                <li>Priority support</li>
-              </ul>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className="pricing-card">
-              <div className="pricing-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="3" y1="9" x2="21" y2="9"/>
-                  <line x1="9" y1="21" x2="9" y2="9"/>
-                </svg>
-              </div>
-              <h3>Enterprise</h3>
-              <p className="price">AED 599</p>
-              <p className="price-period">per user /mo</p>
-              <Link to="/register" className="btn-primary">Contact Sales</Link>
-              <p className="price-note">Custom implementation</p>
-              <ul className="pricing-features">
-                <li>Unlimited users</li>
-                <li>Unlimited contacts</li>
-                <li>White-label option</li>
-                <li>API access</li>
-                <li>Dedicated support</li>
-                <li>Custom integrations</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* FAQ Section */}
       <section id="faq" className="faq-section">
@@ -572,7 +488,6 @@ export default function LandingPage() {
               <h4>Company</h4>
               <ul>
                 <li><button onClick={() => scrollToSection('features')}>Features</button></li>
-                <li><button onClick={() => scrollToSection('plans')}>Plans</button></li>
                 <li><button onClick={() => scrollToSection('contact')}>Contact</button></li>
               </ul>
             </div>
