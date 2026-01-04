@@ -43,7 +43,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { user } = useContext(AuthContext);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     fetchStats();
@@ -68,14 +68,15 @@ export default function Dashboard() {
   // Smart greeting based on time of day
   const getGreeting = () => {
     const hour = currentTime.getHours();
-    if (hour >= 5 && hour < 12) return 'Good morning';
-    if (hour >= 12 && hour < 17) return 'Good afternoon';
-    if (hour >= 17 && hour < 21) return 'Good evening';
-    return 'Good night';
+    if (hour >= 5 && hour < 12) return t('dashboard.goodMorning');
+    if (hour >= 12 && hour < 17) return t('dashboard.goodAfternoon');
+    if (hour >= 17 && hour < 21) return t('dashboard.goodEvening');
+    return t('dashboard.goodNight');
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-US', {
+    const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-US';
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: 'AED',
       minimumFractionDigits: 0,
@@ -83,7 +84,8 @@ export default function Dashboard() {
   };
 
   const formatTime = () => {
-    return currentTime.toLocaleTimeString('en-US', { 
+    const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-US';
+    return currentTime.toLocaleTimeString(locale, { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: true 
@@ -91,7 +93,8 @@ export default function Dashboard() {
   };
 
   const formatDate = () => {
-    return currentTime.toLocaleDateString('en-US', { 
+    const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-US';
+    return currentTime.toLocaleDateString(locale, { 
       weekday: 'long', 
       month: 'long', 
       day: 'numeric' 
@@ -119,12 +122,26 @@ export default function Dashboard() {
     return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   };
 
+  // Translate pipeline stage names
+  const translateStageName = (stageName) => {
+    const stageKey = stageName.toLowerCase().replace(/\s+/g, '');
+    const translationKey = `pipelineStages.${stageKey}`;
+    const translated = t(translationKey);
+    // If translation exists and is different from key, return it; otherwise return original
+    return translated !== translationKey ? translated : stageName;
+  };
+
   // Chart configurations
+  const monthLabels = i18n.language === 'ar' 
+    ? [t('months.jan'), t('months.feb'), t('months.mar'), t('months.apr'), t('months.may'), t('months.jun'),
+       t('months.jul'), t('months.aug'), t('months.sep'), t('months.oct'), t('months.nov'), t('months.dec')]
+    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
   const salesChartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    labels: monthLabels,
     datasets: [
       {
-        label: 'Revenue',
+        label: t('dashboard.revenue'),
         data: getMonthlyRevenue(),
         borderColor: '#244066',
         backgroundColor: 'rgba(36, 64, 102, 0.1)',
@@ -136,6 +153,10 @@ export default function Dashboard() {
     ]
   };
 
+  const chartFontFamily = i18n.language === 'ar' 
+    ? "'Cairo', 'Tajawal', 'Noto Sans Arabic', sans-serif"
+    : "'Inter', sans-serif";
+
   const salesChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -146,13 +167,13 @@ export default function Dashboard() {
         labels: {
           usePointStyle: true,
           padding: 20,
-          font: { size: 12, family: "'Inter', sans-serif" }
+          font: { size: 12, family: chartFontFamily }
         }
       },
       tooltip: {
         backgroundColor: '#244066',
-        titleFont: { size: 13 },
-        bodyFont: { size: 12 },
+        titleFont: { size: 13, family: chartFontFamily },
+        bodyFont: { size: 12, family: chartFontFamily },
         padding: 12,
         cornerRadius: 8,
         callbacks: {
@@ -166,12 +187,12 @@ export default function Dashboard() {
         grid: { color: 'rgba(0,0,0,0.05)' },
         ticks: {
           callback: (value) => formatCurrency(value),
-          font: { size: 11 }
+          font: { size: 11, family: chartFontFamily }
         }
       },
       x: {
         grid: { display: false },
-        ticks: { font: { size: 11 } }
+        ticks: { font: { size: 11, family: chartFontFamily } }
       }
     }
   };
@@ -182,7 +203,7 @@ export default function Dashboard() {
       const activeStages = stats.pipelineStages.filter(s => s.deal_count > 0);
       if (activeStages.length > 0) {
         return {
-          labels: activeStages.map(s => s.name),
+          labels: activeStages.map(s => translateStageName(s.name)),
           data: activeStages.map(s => s.deal_count || 0),
           colors: activeStages.map(s => s.color || '#6b7280')
         };
@@ -208,11 +229,11 @@ export default function Dashboard() {
     cutout: '70%',
     plugins: {
       legend: {
-        position: 'right',
+        position: i18n.language === 'ar' ? 'left' : 'right',
         labels: {
           usePointStyle: true,
           padding: 12,
-          font: { size: 11, family: "'Inter', sans-serif" }
+          font: { size: 11, family: chartFontFamily }
         }
       }
     }
@@ -223,7 +244,13 @@ export default function Dashboard() {
     if (stats?.leadSources && Object.keys(stats.leadSources).length > 0) {
       const sources = stats.leadSources;
       return {
-        labels: Object.keys(sources).map(s => s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')),
+        labels: Object.keys(sources).map(s => {
+          // Try to translate common source names
+          const sourceKey = s.toLowerCase().replace(/\s+/g, '');
+          const translationKey = `leadSources.${sourceKey}`;
+          const translated = t(translationKey);
+          return translated !== translationKey ? translated : (s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' '));
+        }),
         data: Object.values(sources)
       };
     }
@@ -233,9 +260,9 @@ export default function Dashboard() {
   const leadSourceInfo = getLeadSourceData();
 
   const leadSourceData = {
-    labels: leadSourceInfo.labels.length > 0 ? leadSourceInfo.labels : ['No Data'],
+    labels: leadSourceInfo.labels.length > 0 ? leadSourceInfo.labels : [t('common.noData')],
     datasets: [{
-      label: 'Leads',
+      label: t('leads.title'),
       data: leadSourceInfo.data.length > 0 ? leadSourceInfo.data : [0],
       backgroundColor: [
         'rgba(36, 64, 102, 0.9)',
@@ -261,11 +288,11 @@ export default function Dashboard() {
       x: {
         beginAtZero: true,
         grid: { color: 'rgba(0,0,0,0.05)' },
-        ticks: { font: { size: 11 } }
+        ticks: { font: { size: 11, family: chartFontFamily } }
       },
       y: {
         grid: { display: false },
-        ticks: { font: { size: 11 } }
+        ticks: { font: { size: 11, family: chartFontFamily } }
       }
     }
   };
@@ -294,7 +321,7 @@ export default function Dashboard() {
             <span>{formatDate()}</span>
           </div>
           <h1>{getGreeting()}, {user?.full_name || user?.username}</h1>
-          <p className="welcome-subtitle">Here's your sales performance overview</p>
+          <p className="welcome-subtitle">{t('dashboard.salesPerformanceOverview')}</p>
         </div>
         <div className="header-actions">
           <Link to="/leads" className="btn-primary">
@@ -316,7 +343,7 @@ export default function Dashboard() {
           </div>
           <div className="metric-trend positive">
             <StatUp width={14} height={14} />
-            <span>+{stats?.leads?.new ?? 0} this week</span>
+            <span>{t('dashboard.thisWeek', { count: stats?.leads?.new ?? 0 })}</span>
           </div>
         </div>
 
@@ -339,7 +366,7 @@ export default function Dashboard() {
           </div>
           <div className="metric-content">
             <span className="metric-value">{conversionRate}%</span>
-            <span className="metric-label">Conversion Rate</span>
+            <span className="metric-label">{t('dashboard.conversionRate')}</span>
           </div>
           <div className="metric-progress">
             <div className="progress-bar" style={{ width: `${conversionRate}%` }}></div>
@@ -356,7 +383,7 @@ export default function Dashboard() {
           </div>
           <div className="metric-badge">
             <Check width={14} height={14} />
-            <span>{stats?.deals?.won ?? 0} closed</span>
+            <span>{stats?.deals?.won ?? 0} {t('dashboard.closed')}</span>
           </div>
         </div>
       </div>
@@ -366,32 +393,32 @@ export default function Dashboard() {
         <div className="quick-stat">
           <Building width={18} height={18} />
           <span className="stat-number">{stats?.accounts?.total ?? 0}</span>
-          <span className="stat-label">Accounts</span>
+          <span className="stat-label">{t('dashboard.accounts')}</span>
         </div>
         <div className="quick-stat">
           <User width={18} height={18} />
           <span className="stat-number">{stats?.contacts?.total ?? 0}</span>
-          <span className="stat-label">Contacts</span>
+          <span className="stat-label">{t('dashboard.contacts')}</span>
         </div>
         <div className="quick-stat warning">
           <WarningTriangle width={18} height={18} />
           <span className="stat-number">{stats?.activities?.overdue ?? 0}</span>
-          <span className="stat-label">Overdue</span>
+          <span className="stat-label">{t('dashboard.overdue')}</span>
         </div>
         <div className="quick-stat info">
           <Calendar width={18} height={18} />
           <span className="stat-number">{stats?.activities?.today ?? 0}</span>
-          <span className="stat-label">Due Today</span>
+          <span className="stat-label">{t('dashboard.dueToday')}</span>
         </div>
         <div className="quick-stat">
           <Activity width={18} height={18} />
           <span className="stat-number">{stats?.activities?.upcoming ?? 0}</span>
-          <span className="stat-label">Upcoming</span>
+          <span className="stat-label">{t('dashboard.upcoming')}</span>
         </div>
         <div className="quick-stat success">
           <Trophy width={18} height={18} />
           <span className="stat-number">{winRate}%</span>
-          <span className="stat-label">Win Rate</span>
+          <span className="stat-label">{t('dashboard.winRate')}</span>
         </div>
       </div>
 
@@ -401,12 +428,12 @@ export default function Dashboard() {
           <div className="chart-header">
             <div>
               <h3>{t('dashboard.salesOverview')}</h3>
-              <p>Monthly revenue performance</p>
+              <p>{t('dashboard.monthlyRevenuePerformance')}</p>
             </div>
             <select className="chart-filter">
               <option value="year">{t('dashboard.thisYear')}</option>
-              <option value="6months">Last 6 Months</option>
-              <option value="quarter">This Quarter</option>
+              <option value="6months">{t('dashboard.lastSixMonths')}</option>
+              <option value="quarter">{t('dashboard.thisQuarter')}</option>
             </select>
           </div>
           <div className="chart-body">
@@ -418,7 +445,7 @@ export default function Dashboard() {
           <div className="chart-header">
             <div>
               <h3>{t('deals.pipeline')}</h3>
-              <p>{stats?.pipeline?.name || 'Deal distribution'}</p>
+              <p>{stats?.pipeline?.name || t('dashboard.dealDistribution')}</p>
             </div>
           </div>
           <div className="chart-body">
@@ -427,13 +454,13 @@ export default function Dashboard() {
             ) : (
               <div className="empty-chart">
                 <Wallet width={48} height={48} />
-                <p>No deals in pipeline yet</p>
-                <Link to="/deals" className="btn-secondary-sm">Create Deal</Link>
+                <p>{t('dashboard.noDealsInPipeline')}</p>
+                <Link to="/deals" className="btn-secondary-sm">{t('dashboard.createDeal')}</Link>
               </div>
             )}
           </div>
           <div className="pipeline-total">
-            <span className="total-label">Total Deals</span>
+            <span className="total-label">{t('dashboard.totalDeals')}</span>
             <span className="total-value">{stats?.deals?.total ?? 0}</span>
           </div>
         </div>
@@ -444,8 +471,8 @@ export default function Dashboard() {
         <div className="chart-card lead-sources">
           <div className="chart-header">
             <div>
-              <h3>Lead Sources</h3>
-              <p>Where your leads come from</p>
+              <h3>{t('dashboard.leadSources')}</h3>
+              <p>{t('dashboard.leadSourcesDescription')}</p>
             </div>
           </div>
           <div className="chart-body">
@@ -454,8 +481,8 @@ export default function Dashboard() {
             ) : (
               <div className="empty-chart">
                 <Flash width={48} height={48} />
-                <p>No leads yet</p>
-                <Link to="/leads" className="btn-secondary-sm">Create Lead</Link>
+                <p>{t('dashboard.noLeadsYet')}</p>
+                <Link to="/leads" className="btn-secondary-sm">{t('dashboard.createLead')}</Link>
               </div>
             )}
           </div>
@@ -505,7 +532,7 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="quick-actions-section">
-        <h3>Quick Actions</h3>
+        <h3>{t('dashboard.quickActions')}</h3>
         <div className="quick-actions-grid">
           <Link to="/leads" className="quick-action-card">
             <div className="quick-action-icon"><Flash width={24} height={24} /></div>
@@ -525,11 +552,11 @@ export default function Dashboard() {
           </Link>
           <Link to="/campaigns" className="quick-action-card">
             <div className="quick-action-icon"><Megaphone width={24} height={24} /></div>
-            <span>Campaign</span>
+            <span>{t('dashboard.campaign')}</span>
           </Link>
           <Link to="/inbox" className="quick-action-card">
             <div className="quick-action-icon"><Phone width={24} height={24} /></div>
-            <span>Inbox</span>
+            <span>{t('dashboard.inbox')}</span>
           </Link>
         </div>
       </div>
@@ -553,7 +580,7 @@ export default function Dashboard() {
                     </div>
                     <div className="recent-info">
                       <strong>{lead.first_name} {lead.last_name}</strong>
-                      <span>{lead.company || 'No company'}</span>
+                      <span>{lead.company || t('dashboard.noCompany')}</span>
                     </div>
                     <span className={`status-badge ${lead.status}`}>{lead.status}</span>
                   </div>
@@ -562,7 +589,7 @@ export default function Dashboard() {
             ) : (
               <div className="empty-state-mini">
                 <Flash width={32} height={32} />
-                <p>No leads yet</p>
+                <p>{t('dashboard.noLeadsYet')}</p>
               </div>
             )}
           </div>
@@ -596,7 +623,7 @@ export default function Dashboard() {
             ) : (
               <div className="empty-state-mini">
                 <Wallet width={32} height={32} />
-                <p>No deals yet</p>
+                <p>{t('dashboard.noDealsYet')}</p>
               </div>
             )}
           </div>
