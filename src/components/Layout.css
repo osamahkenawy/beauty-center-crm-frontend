@@ -126,7 +126,7 @@ html, body {
   left: var(--sidebar-width);
   height: var(--topbar-height);
   background: #fff;
-  z-index: 1040;
+  z-index: 1060;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -276,7 +276,7 @@ html, body {
   min-width: 250px;
   display: none;
   overflow: hidden;
-  z-index: 1060;
+  z-index: 1100;
 }
 
 .user-dropdown.show {
@@ -504,7 +504,7 @@ html, body {
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);
   min-width: 150px;
-  z-index: 1060;
+  z-index: 1100;
   overflow: hidden;
   animation: dropIn 0.2s ease;
 }

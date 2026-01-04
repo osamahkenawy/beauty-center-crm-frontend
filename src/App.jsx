@@ -155,9 +155,19 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc' }}>
-        <div className="spinner" style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTop: '4px solid #244066', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc', gap: '20px' }}>
+        <div className="loader-dots">
+          <div className="dot" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#244066', animation: 'pulse 1.4s ease-in-out infinite' }}></div>
+          <div className="dot" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#244066', animation: 'pulse 1.4s ease-in-out infinite 0.2s' }}></div>
+          <div className="dot" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#244066', animation: 'pulse 1.4s ease-in-out infinite 0.4s' }}></div>
+        </div>
+        <style>{`
+          .loader-dots { display: flex; gap: 8px; }
+          @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }

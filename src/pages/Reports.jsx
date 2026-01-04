@@ -40,7 +40,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('30');
   const [reportType, setReportType] = useState('all');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const fetchReports = useCallback(async () => {
     try {
@@ -59,7 +59,8 @@ export default function Reports() {
   }, [fetchReports]);
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-AE', { 
+    const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-AE';
+    return new Intl.NumberFormat(locale, { 
       style: 'currency', 
       currency: 'AED', 
       minimumFractionDigits: 0 
@@ -68,10 +69,15 @@ export default function Reports() {
 
   // Chart Data
   const revenueChartData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    labels: [
+      t('reports.week1', { defaultValue: 'Week 1' }),
+      t('reports.week2', { defaultValue: 'Week 2' }),
+      t('reports.week3', { defaultValue: 'Week 3' }),
+      t('reports.week4', { defaultValue: 'Week 4' })
+    ],
     datasets: [
       {
-        label: 'Revenue',
+        label: t('reports.revenue'),
         data: [
           reportData?.overview?.deals?.wonValue * 0.2 || 5000,
           reportData?.overview?.deals?.wonValue * 0.35 || 8000,
@@ -84,7 +90,7 @@ export default function Reports() {
         tension: 0.4,
       },
       {
-        label: 'Pipeline',
+        label: t('reports.pipeline'),
         data: [
           reportData?.overview?.deals?.pipelineValue * 0.3 || 10000,
           reportData?.overview?.deals?.pipelineValue * 0.25 || 8000,
@@ -99,8 +105,14 @@ export default function Reports() {
     ]
   };
 
+  const translateStageName = (stageName) => {
+    if (!stageName) return '';
+    const stageKey = `pipelineStages.${stageName.toLowerCase().replace(/\s+/g, '')}`;
+    return t(stageKey, { defaultValue: stageName });
+  };
+
   const pipelineChartData = {
-    labels: reportData?.sales?.byStage?.map(s => s.name) || ['Stage 1', 'Stage 2', 'Stage 3'],
+    labels: reportData?.sales?.byStage?.map(s => translateStageName(s.name)) || [t('pipelineStages.stage1', { defaultValue: 'Stage 1' }), t('pipelineStages.stage2', { defaultValue: 'Stage 2' }), t('pipelineStages.stage3', { defaultValue: 'Stage 3' })],
     datasets: [{
       data: reportData?.sales?.byStage?.map(s => s.count) || [5, 8, 3],
       backgroundColor: reportData?.sales?.byStage?.map(s => s.color) || ['#3b82f6', '#8b5cf6', '#f59e0b'],
@@ -109,9 +121,12 @@ export default function Reports() {
   };
 
   const leadSourceChartData = {
-    labels: reportData?.leads?.bySource?.map(s => s.source || 'Unknown') || ['Website', 'Referral', 'Other'],
+    labels: reportData?.leads?.bySource?.map(s => {
+      const sourceKey = `leadSources.${(s.source || 'Unknown').toLowerCase().replace(/\s+/g, '')}`;
+      return t(sourceKey, { defaultValue: s.source || 'Unknown' });
+    }) || [t('leadSources.website', { defaultValue: 'Website' }), t('leadSources.referral', { defaultValue: 'Referral' }), t('leadSources.other', { defaultValue: 'Other' })],
     datasets: [{
-      label: 'Leads',
+      label: t('dashboard.totalLeads'),
       data: reportData?.leads?.bySource?.map(s => s.count) || [10, 8, 5],
       backgroundColor: [
         'rgba(36, 64, 102, 0.9)',
@@ -126,7 +141,7 @@ export default function Reports() {
   };
 
   const conversionChartData = {
-    labels: ['Converted', 'Not Converted'],
+    labels: [t('reports.converted'), t('reports.notConverted')],
     datasets: [{
       data: [
         reportData?.overview?.leads?.converted || 5,
@@ -147,17 +162,38 @@ export default function Reports() {
         labels: {
           usePointStyle: true,
           padding: 20,
-          font: { size: 12 }
+          font: { 
+            size: 12,
+            family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+          }
+        }
+      },
+      tooltip: {
+        titleFont: {
+          family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+        },
+        bodyFont: {
+          family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
         }
       }
     },
     scales: {
       y: {
         beginAtZero: true,
-        grid: { color: 'rgba(0,0,0,0.05)' }
+        grid: { color: 'rgba(0,0,0,0.05)' },
+        ticks: {
+          font: {
+            family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+          }
+        }
       },
       x: {
-        grid: { display: false }
+        grid: { display: false },
+        ticks: {
+          font: {
+            family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+          }
+        }
       }
     }
   };
@@ -172,7 +208,18 @@ export default function Reports() {
         labels: {
           usePointStyle: true,
           padding: 15,
-          font: { size: 11 }
+          font: { 
+            size: 11,
+            family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+          }
+        }
+      },
+      tooltip: {
+        titleFont: {
+          family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+        },
+        bodyFont: {
+          family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
         }
       }
     }
@@ -183,11 +230,34 @@ export default function Reports() {
     maintainAspectRatio: false,
     indexAxis: 'y',
     plugins: {
-      legend: { display: false }
+      legend: { display: false },
+      tooltip: {
+        titleFont: {
+          family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+        },
+        bodyFont: {
+          family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+        }
+      }
     },
     scales: {
-      x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-      y: { grid: { display: false } }
+      x: { 
+        beginAtZero: true, 
+        grid: { color: 'rgba(0,0,0,0.05)' },
+        ticks: {
+          font: {
+            family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+          }
+        }
+      },
+      y: { 
+        grid: { display: false },
+        ticks: {
+          font: {
+            family: i18n.language === 'ar' ? 'Cairo, Arial, sans-serif' : 'Inter, system-ui, sans-serif'
+          }
+        }
+      }
     }
   };
 
@@ -202,25 +272,25 @@ export default function Reports() {
       <div className="reports-header">
         <div className="header-title">
           <h1><StatsUpSquare width={28} height={28} /> {t('common.reports')}</h1>
-          <p>Analytics and insights for your business</p>
+          <p>{t('reports.subtitle')}</p>
         </div>
         <div className="header-actions">
           <div className="filter-group">
             <Filter width={18} height={18} />
             <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-              <option value="7">Last 7 days</option>
-              <option value="30">Last 30 days</option>
-              <option value="90">Last 90 days</option>
-              <option value="365">Last year</option>
+              <option value="7">{t('reports.last7Days')}</option>
+              <option value="30">{t('reports.last30Days')}</option>
+              <option value="90">{t('reports.last90Days')}</option>
+              <option value="365">{t('reports.lastYear')}</option>
             </select>
           </div>
           <button className="btn-secondary" onClick={fetchReports}>
             <RefreshDouble width={18} height={18} />
-            Refresh
+            {t('reports.refresh')}
           </button>
           <button className="btn-primary">
             <Download width={18} height={18} />
-            Export
+            {t('reports.export')}
           </button>
         </div>
       </div>
@@ -228,7 +298,11 @@ export default function Reports() {
       {loading ? (
         <div className="loading-container">
           <div className="loading-spinner">
-            <div className="spinner-ring"></div>
+            <div className="loader-dots">
+              <div className="dot"></div>
+              <div className="dot"></div>
+              <div className="dot"></div>
+            </div>
           </div>
         </div>
       ) : (
@@ -241,10 +315,10 @@ export default function Reports() {
               </div>
               <div className="kpi-content">
                 <h3>{reportData?.overview?.leads?.total || 0}</h3>
-                <p>Total Leads</p>
+                <p>{t('reports.totalLeads')}</p>
                 <span className="kpi-detail">
                   <GraphUp width={14} height={14} />
-                  {reportData?.overview?.leads?.new || 0} new in period
+                  {reportData?.overview?.leads?.new || 0} {t('reports.newInPeriod')}
                 </span>
               </div>
             </div>
@@ -255,9 +329,9 @@ export default function Reports() {
               </div>
               <div className="kpi-content">
                 <h3>{conversionRate}%</h3>
-                <p>Conversion Rate</p>
+                <p>{t('reports.conversionRate')}</p>
                 <span className="kpi-detail">
-                  {reportData?.overview?.leads?.converted || 0} leads converted
+                  {reportData?.overview?.leads?.converted || 0} {t('reports.leadsConverted')}
                 </span>
               </div>
             </div>
@@ -268,9 +342,9 @@ export default function Reports() {
               </div>
               <div className="kpi-content">
                 <h3>{formatCurrency(reportData?.overview?.deals?.pipelineValue)}</h3>
-                <p>Pipeline Value</p>
+                <p>{t('reports.pipelineValue')}</p>
                 <span className="kpi-detail">
-                  {reportData?.overview?.deals?.total || 0} active deals
+                  {reportData?.overview?.deals?.total || 0} {t('reports.activeDeals')}
                 </span>
               </div>
             </div>
@@ -281,10 +355,10 @@ export default function Reports() {
               </div>
               <div className="kpi-content">
                 <h3>{formatCurrency(reportData?.overview?.deals?.wonValue)}</h3>
-                <p>Revenue Won</p>
+                <p>{t('reports.revenueWon')}</p>
                 <span className="kpi-detail">
                   <GraphUp width={14} height={14} />
-                  {reportData?.overview?.deals?.won || 0} deals closed
+                  {reportData?.overview?.deals?.won || 0} {t('reports.dealsClosed')}
                 </span>
               </div>
             </div>
@@ -295,8 +369,8 @@ export default function Reports() {
             <div className="chart-card large">
               <div className="chart-header">
                 <div>
-                  <h3>Revenue Trend</h3>
-                  <p>Weekly revenue and pipeline performance</p>
+                  <h3>{t('reports.revenueTrend')}</h3>
+                  <p>{t('reports.weeklyRevenuePerformance')}</p>
                 </div>
               </div>
               <div className="chart-body">
@@ -307,8 +381,8 @@ export default function Reports() {
             <div className="chart-card">
               <div className="chart-header">
                 <div>
-                  <h3>Pipeline Distribution</h3>
-                  <p>Deals by stage</p>
+                  <h3>{t('reports.pipelineDistribution')}</h3>
+                  <p>{t('reports.dealsByStage')}</p>
                 </div>
               </div>
               <div className="chart-body">
@@ -322,8 +396,8 @@ export default function Reports() {
             <div className="chart-card">
               <div className="chart-header">
                 <div>
-                  <h3>Lead Sources</h3>
-                  <p>Where your leads come from</p>
+                  <h3>{t('reports.leadSources')}</h3>
+                  <p>{t('reports.whereLeadsComeFrom')}</p>
                 </div>
               </div>
               <div className="chart-body">
@@ -334,8 +408,8 @@ export default function Reports() {
             <div className="chart-card">
               <div className="chart-header">
                 <div>
-                  <h3>Lead Conversion</h3>
-                  <p>Overall conversion rate</p>
+                  <h3>{t('reports.leadConversion')}</h3>
+                  <p>{t('reports.overallConversionRate')}</p>
                 </div>
               </div>
               <div className="chart-body conversion-chart">
@@ -345,7 +419,7 @@ export default function Reports() {
                 }} />
                 <div className="conversion-center">
                   <span className="conversion-rate">{conversionRate}%</span>
-                  <span className="conversion-label">Converted</span>
+                  <span className="conversion-label">{t('reports.converted')}</span>
                 </div>
               </div>
             </div>
@@ -354,7 +428,7 @@ export default function Reports() {
           {/* Top Performers */}
           {reportData?.performance?.topPerformers && (
             <div className="performers-section">
-              <h3><User width={20} height={20} /> Top Performers</h3>
+              <h3><User width={20} height={20} /> {t('reports.topPerformers')}</h3>
               <div className="performers-grid">
                 {reportData.performance.topPerformers.filter(p => p.deals_won > 0).slice(0, 5).map((performer, idx) => (
                   <div key={idx} className="performer-card">
@@ -364,7 +438,7 @@ export default function Reports() {
                     </div>
                     <div className="performer-info">
                       <strong>{performer.full_name}</strong>
-                      <span>{performer.deals_won} deals won</span>
+                      <span>{performer.deals_won} {t('reports.dealsWon')}</span>
                     </div>
                     <div className="performer-revenue">
                       {formatCurrency(performer.revenue)}
@@ -374,7 +448,7 @@ export default function Reports() {
                 {reportData.performance.topPerformers.filter(p => p.deals_won > 0).length === 0 && (
                   <div className="empty-performers">
                     <User width={32} height={32} />
-                    <p>No deals won yet</p>
+                    <p>{t('reports.noDealsWonYet')}</p>
                   </div>
                 )}
               </div>

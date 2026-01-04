@@ -141,7 +141,7 @@ export default function Dashboard() {
     labels: monthLabels,
     datasets: [
       {
-        label: t('dashboard.revenue'),
+        label: t('common.revenue'),
         data: getMonthlyRevenue(),
         borderColor: '#244066',
         backgroundColor: 'rgba(36, 64, 102, 0.1)',
@@ -301,7 +301,11 @@ export default function Dashboard() {
     return (
       <div className="loading-container">
         <div className="loading-spinner">
-          <div className="spinner-ring"></div>
+          <div className="loader-dots">
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+          </div>
           <span>{t('common.loading')}</span>
         </div>
       </div>
@@ -444,8 +448,7 @@ export default function Dashboard() {
         <div className="chart-card pipeline-chart">
           <div className="chart-header">
             <div>
-              <h3>{t('deals.pipeline')}</h3>
-              <p>{stats?.pipeline?.name || t('dashboard.dealDistribution')}</p>
+              <h3>{t('dashboard.salesPipeline')}</h3>
             </div>
           </div>
           <div className="chart-body">

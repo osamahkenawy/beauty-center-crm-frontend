@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import SEO from '../components/SEO';
 import './CRMPages.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export default function Notes() {
+  const { t, i18n } = useTranslation();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -108,17 +110,17 @@ export default function Notes() {
         setShowModal(false);
         fetchNotes();
       } else {
-        setMessage({ type: 'error', text: data.message || 'Failed to save note' });
+        setMessage({ type: 'error', text: data.message || t('notes.failedToSave') });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'An error occurred' });
+      setMessage({ type: 'error', text: t('notes.errorOccurred') });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    if (!confirm(t('notes.deleteConfirm'))) return;
 
     try {
       const token = localStorage.getItem('crm_token');
@@ -137,9 +139,15 @@ export default function Notes() {
 
   const formatDate = (date) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('en-US', {
+    const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-US';
+    return new Date(date).toLocaleDateString(locale, {
       month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
+  };
+
+  const translateRelatedType = (type) => {
+    if (!type) return '';
+    return t(`notes.${type}`, { defaultValue: type });
   };
 
   const getTypeIcon = (type) => {
@@ -237,21 +245,21 @@ export default function Notes() {
         <div className="notes-filters">
           <input
             type="text"
-            placeholder="🔍 Search notes..."
+            placeholder={`🔍 ${t('notes.searchNotes')}`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-            <option value="">All Types</option>
-            <option value="account">Account Notes</option>
-            <option value="contact">Contact Notes</option>
-            <option value="lead">Lead Notes</option>
-            <option value="deal">Deal Notes</option>
-            <option value="activity">Activity Notes</option>
+            <option value="">{t('notes.allTypes')}</option>
+            <option value="account">{t('notes.accountNotes')}</option>
+            <option value="contact">{t('notes.contactNotes')}</option>
+            <option value="lead">{t('notes.leadNotes')}</option>
+            <option value="deal">{t('notes.dealNotes')}</option>
+            <option value="activity">{t('notes.activityNotes')}</option>
           </select>
         </div>
         <button className="btn-create" onClick={openCreateModal}>
-          <i className="iconoir-plus"></i> New Note
+          <i className="iconoir-plus"></i> {t('notes.newNote')}
         </button>
       </div>
 
@@ -262,8 +270,8 @@ export default function Notes() {
       ) : sortedNotes.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📝</div>
-          <h4>No notes yet</h4>
-          <p>Create your first note to get started</p>
+          <h4>{t('notes.noNotesYet')}</h4>
+          <p>{t('notes.createFirstNote')}</p>
         </div>
       ) : (
         <div className="notes-grid">
@@ -271,14 +279,14 @@ export default function Notes() {
             <div key={note.id} className={`note-card ${(note.is_pinned === 1 || note.is_pinned === true) ? 'pinned' : ''}`}>
               <div className="note-header">
                 <div>
-                  <h5 className="note-title">{note.title || 'Untitled'}</h5>
+                  <h5 className="note-title">{note.title || t('notes.untitled')}</h5>
                   <div className="note-meta">
                     {note.related_type && (
                       <span className="note-type">
-                        {getTypeIcon(note.related_type)} {note.related_type}
+                        {getTypeIcon(note.related_type)} {translateRelatedType(note.related_type)}
                       </span>
                     )}
-                    {(note.is_private === 1 || note.is_private === true) && <span className="private-badge">🔒 Private</span>}
+                    {(note.is_private === 1 || note.is_private === true) && <span className="private-badge">🔒 {t('notes.private')}</span>}
                   </div>
                 </div>
               </div>
@@ -286,8 +294,8 @@ export default function Notes() {
               <div className="note-footer">
                 <span className="note-date">{formatDate(note.updated_at || note.created_at)}</span>
                 <div className="note-actions">
-                  <button className="btn-edit" onClick={() => openEditModal(note)}>Edit</button>
-                  <button className="btn-delete" onClick={() => handleDelete(note.id)}>Delete</button>
+                  <button className="btn-edit" onClick={() => openEditModal(note)}>{t('notes.edit')}</button>
+                  <button className="btn-delete" onClick={() => handleDelete(note.id)}>{t('notes.delete')}</button>
                 </div>
               </div>
             </div>
@@ -300,7 +308,7 @@ export default function Notes() {
         <div className="crm-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="crm-modal-container" onClick={e => e.stopPropagation()}>
             <div className="crm-modal-header">
-              <h5 className="crm-modal-title">{editing ? 'Edit Note' : 'New Note'}</h5>
+              <h5 className="crm-modal-title">{editing ? t('notes.editNote') : t('notes.newNote')}</h5>
               <button className="crm-modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
             <form onSubmit={handleSubmit}>
@@ -308,46 +316,46 @@ export default function Notes() {
                 {message.text && <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'}`}>{message.text}</div>}
 
                 <div className="form-group">
-                  <label className="form-label">Title</label>
-                  <input type="text" className="form-control" name="title" value={formData.title} onChange={handleInputChange} placeholder="Note title" />
+                  <label className="form-label">{t('notes.formTitle')}</label>
+                  <input type="text" className="form-control" name="title" value={formData.title} onChange={handleInputChange} placeholder={t('notes.noteTitlePlaceholder')} />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Content *</label>
-                  <textarea className="form-control" name="content" value={formData.content} onChange={handleInputChange} required placeholder="Write your note here..."></textarea>
+                  <label className="form-label">{t('notes.content')} *</label>
+                  <textarea className="form-control" name="content" value={formData.content} onChange={handleInputChange} required placeholder={t('notes.writeNotePlaceholder')}></textarea>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Related To</label>
+                    <label className="form-label">{t('notes.relatedTo')}</label>
                     <select className="form-select" name="related_type" value={formData.related_type} onChange={handleInputChange}>
-                      <option value="">None</option>
-                      <option value="account">Account</option>
-                      <option value="contact">Contact</option>
-                      <option value="lead">Lead</option>
-                      <option value="deal">Deal</option>
-                      <option value="activity">Activity</option>
+                      <option value="">{t('notes.none')}</option>
+                      <option value="account">{t('notes.account')}</option>
+                      <option value="contact">{t('notes.contact')}</option>
+                      <option value="lead">{t('notes.lead')}</option>
+                      <option value="deal">{t('notes.deal')}</option>
+                      <option value="activity">{t('notes.activity')}</option>
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Related ID</label>
-                    <input type="number" className="form-control" name="related_id" value={formData.related_id} onChange={handleInputChange} placeholder="ID" />
+                    <label className="form-label">{t('notes.relatedId')}</label>
+                    <input type="number" className="form-control" name="related_id" value={formData.related_id} onChange={handleInputChange} placeholder={t('notes.idPlaceholder')} />
                   </div>
                 </div>
 
                 <div className="form-check">
                   <input type="checkbox" className="form-check-input" id="is_pinned" name="is_pinned" checked={formData.is_pinned} onChange={handleInputChange} />
-                  <label htmlFor="is_pinned">📌 Pin this note</label>
+                  <label htmlFor="is_pinned">📌 {t('notes.pinThisNote')}</label>
                 </div>
                 <div className="form-check">
                   <input type="checkbox" className="form-check-input" id="is_private" name="is_private" checked={formData.is_private} onChange={handleInputChange} />
-                  <label htmlFor="is_private">🔒 Private (only visible to me)</label>
+                  <label htmlFor="is_private">🔒 {t('notes.privateOnlyVisible')}</label>
                 </div>
               </div>
               <div className="crm-modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>{t('notes.cancel')}</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Saving...' : (editing ? 'Update' : 'Create')}
+                  {saving ? t('notes.saving') : (editing ? t('notes.update') : t('notes.create'))}
                 </button>
               </div>
             </form>

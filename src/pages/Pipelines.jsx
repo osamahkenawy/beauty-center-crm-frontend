@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   GraphUp, Plus, EditPencil, Trash, Xmark, Check,
   Percentage, Trophy, XmarkCircle, ArrowDown, Drag
@@ -8,6 +9,7 @@ import SEO from '../components/SEO';
 import './Pipelines.css';
 
 export default function Pipelines() {
+  const { t } = useTranslation();
   const [pipelines, setPipelines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -17,6 +19,12 @@ export default function Pipelines() {
     name: '', description: '', industry: '', is_default: false, stages: []
   });
   const [toast, setToast] = useState({ show: false, type: '', text: '' });
+
+  const translateStageName = (stageName) => {
+    if (!stageName) return '';
+    const stageKey = `pipelineStages.${stageName.toLowerCase().replace(/\s+/g, '')}`;
+    return t(stageKey, { defaultValue: stageName });
+  };
 
   useEffect(() => {
     fetchPipelines();
@@ -44,12 +52,12 @@ export default function Pipelines() {
     setFormData({
       name: '', description: '', industry: '', is_default: false,
       stages: [
-        { name: 'Qualification', color: '#3b82f6', probability: 10 },
-        { name: 'Needs Analysis', color: '#8b5cf6', probability: 25 },
-        { name: 'Proposal', color: '#f59e0b', probability: 50 },
-        { name: 'Negotiation', color: '#ec4899', probability: 75 },
-        { name: 'Closed Won', color: '#22c55e', probability: 100, is_won: true },
-        { name: 'Closed Lost', color: '#6b7280', probability: 0, is_lost: true },
+        { name: t('pipelineStages.qualification', { defaultValue: 'Qualification' }), color: '#3b82f6', probability: 10 },
+        { name: t('pipelineStages.needsanalysis', { defaultValue: 'Needs Analysis' }), color: '#8b5cf6', probability: 25 },
+        { name: t('pipelineStages.proposal', { defaultValue: 'Proposal' }), color: '#f59e0b', probability: 50 },
+        { name: t('pipelineStages.negotiation', { defaultValue: 'Negotiation' }), color: '#ec4899', probability: 75 },
+        { name: t('pipelineStages.closedwon', { defaultValue: 'Closed Won' }), color: '#22c55e', probability: 100, is_won: true },
+        { name: t('pipelineStages.closedlost', { defaultValue: 'Closed Lost' }), color: '#6b7280', probability: 0, is_lost: true },
       ]
     });
     setShowModal(true);
@@ -76,31 +84,31 @@ export default function Pipelines() {
         : await api.post('/pipelines', formData);
       
       if (data.success) {
-        showToast('success', data.message || 'Pipeline saved successfully');
+        showToast('success', data.message || t('pipelines.pipelineSaved'));
         fetchPipelines();
         setShowModal(false);
       } else {
-        showToast('error', data.message || 'Failed to save pipeline');
+        showToast('error', data.message || t('pipelines.failedToSave'));
       }
     } catch (error) {
-      showToast('error', 'An error occurred');
+      showToast('error', t('pipelines.errorOccurred'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this pipeline? This cannot be undone.')) return;
+    if (!confirm(t('pipelines.deleteConfirm'))) return;
     try {
       const data = await api.delete(`/pipelines/${id}`);
       if (data.success) {
-        showToast('success', 'Pipeline deleted');
+        showToast('success', t('pipelines.pipelineDeleted'));
         fetchPipelines();
       } else {
         showToast('error', data.message);
       }
     } catch (error) {
-      showToast('error', 'Failed to delete pipeline');
+      showToast('error', t('pipelines.failedToDelete'));
     }
   };
 
@@ -152,7 +160,7 @@ export default function Pipelines() {
           </div>
           <div className="stat-info">
             <div className="stat-value">{stats.total}</div>
-            <div className="stat-label">Total Pipelines</div>
+            <div className="stat-label">{t('pipelines.totalPipelines')}</div>
           </div>
         </div>
         <div className="stat-card">
@@ -161,7 +169,7 @@ export default function Pipelines() {
           </div>
           <div className="stat-info">
             <div className="stat-value">{stats.totalStages}</div>
-            <div className="stat-label">Total Stages</div>
+            <div className="stat-label">{t('pipelines.totalStages')}</div>
           </div>
         </div>
         <div className="stat-card">
@@ -170,7 +178,7 @@ export default function Pipelines() {
           </div>
           <div className="stat-info">
             <div className="stat-value">{stats.industries || 0}</div>
-            <div className="stat-label">Industries</div>
+            <div className="stat-label">{t('pipelines.industries')}</div>
           </div>
         </div>
       </div>
@@ -179,12 +187,12 @@ export default function Pipelines() {
       <div className="page-card">
         <div className="card-header">
           <div className="header-left">
-            <h2>Pipelines</h2>
+            <h2>{t('pipelines.title')}</h2>
             <span className="count-badge">{pipelines.length}</span>
           </div>
           <button className="btn-create" onClick={openCreateModal}>
             <Plus width={18} height={18} />
-            <span>New Pipeline</span>
+            <span>{t('pipelines.newPipeline')}</span>
           </button>
         </div>
 
@@ -192,18 +200,18 @@ export default function Pipelines() {
           {loading ? (
             <div className="loading-state">
               <div className="spinner"></div>
-              <p>Loading pipelines...</p>
+              <p>{t('pipelines.loadingPipelines')}</p>
             </div>
           ) : pipelines.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">
                 <GraphUp width={48} height={48} />
               </div>
-              <h3>No pipelines found</h3>
-              <p>Create your first pipeline to track deals</p>
+              <h3>{t('pipelines.noPipelinesFound')}</h3>
+              <p>{t('pipelines.createFirstPipeline')}</p>
               <button className="btn-create" onClick={openCreateModal}>
                 <Plus width={18} height={18} />
-                <span>New Pipeline</span>
+                <span>{t('pipelines.newPipeline')}</span>
               </button>
             </div>
           ) : (
@@ -214,21 +222,21 @@ export default function Pipelines() {
                     <div className="pipeline-title">
                       <h3>{pipeline.name}</h3>
                       {pipeline.is_default === 1 && (
-                        <span className="default-badge">Default</span>
+                        <span className="default-badge">{t('pipelines.default')}</span>
                       )}
                     </div>
                     <div className="pipeline-actions">
                       <button 
                         className="action-btn edit" 
                         onClick={() => openEditModal(pipeline)}
-                        title="Edit Pipeline"
+                        title={t('pipelines.editPipeline')}
                       >
                         <EditPencil width={20} height={20} />
                       </button>
                       <button 
                         className="action-btn delete" 
                         onClick={() => handleDelete(pipeline.id)}
-                        title="Delete Pipeline"
+                        title={t('pipelines.deletePipeline')}
                       >
                         <Trash width={20} height={20} />
                       </button>
@@ -247,7 +255,7 @@ export default function Pipelines() {
 
                   <div className="stages-container">
                     <div className="stages-header">
-                      <span>Stages ({pipeline.stages?.length || 0})</span>
+                      <span>{t('pipelines.stages')} ({pipeline.stages?.length || 0})</span>
                     </div>
                     <div className="stages-flow">
                       {pipeline.stages?.map((stage, i) => (
@@ -265,7 +273,7 @@ export default function Pipelines() {
                             )}
                           </div>
                           <div className="stage-details">
-                            <span className="stage-name">{stage.name}</span>
+                            <span className="stage-name">{translateStageName(stage.name)}</span>
                             <span className="stage-probability">{stage.probability}%</span>
                           </div>
                           {i < (pipeline.stages?.length || 0) - 1 && (
@@ -289,7 +297,7 @@ export default function Pipelines() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-container modal-lg" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{editingPipeline ? 'Edit Pipeline' : 'New Pipeline'}</h3>
+              <h3>{editingPipeline ? t('pipelines.editPipeline') : t('pipelines.newPipeline')}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>
                 <Xmark width={20} height={20} />
               </button>
@@ -300,37 +308,37 @@ export default function Pipelines() {
                   <div className="form-group">
                     <label className="form-label">
                       <GraphUp width={14} height={14} />
-                      Pipeline Name *
+                      {t('pipelines.pipelineName')} *
                     </label>
                     <input 
                       type="text" 
                       className="form-input" 
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                      placeholder="e.g., Sales Pipeline"
+                      placeholder={t('pipelines.defaultSalesPipeline', { defaultValue: 'e.g., Sales Pipeline' })}
                       required 
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Industry</label>
+                    <label className="form-label">{t('pipelines.industry')}</label>
                     <input 
                       type="text" 
                       className="form-input" 
                       value={formData.industry}
                       onChange={(e) => setFormData({...formData, industry: e.target.value})}
-                      placeholder="e.g., Real Estate, Technology" 
+                      placeholder={t('pipelines.industry', { defaultValue: 'e.g., Real Estate, Technology' })}
                     />
                   </div>
                 </div>
                 
                 <div className="form-group">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">{t('pipelines.description')}</label>
                   <textarea 
                     className="form-input" 
                     value={formData.description} 
                     rows={2}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    placeholder="Brief description of this pipeline..."
+                    placeholder={t('pipelines.description', { defaultValue: 'Brief description of this pipeline...' })}
                   />
                 </div>
 
@@ -342,16 +350,16 @@ export default function Pipelines() {
                       onChange={(e) => setFormData({...formData, is_default: e.target.checked})} 
                     />
                     <span className="checkmark"></span>
-                    Set as Default Pipeline
+                    {t('pipelines.setAsDefault')}
                   </label>
                 </div>
                 
                 <div className="stages-section">
                   <div className="section-header">
-                    <h4>Pipeline Stages</h4>
+                    <h4>{t('pipelines.pipelineStages')}</h4>
                     <button type="button" className="btn-add-stage" onClick={addStage}>
                       <Plus width={16} height={16} />
-                      Add Stage
+                      {t('pipelines.addStage')}
                     </button>
                   </div>
                   
@@ -371,7 +379,7 @@ export default function Pipelines() {
                         <input
                           type="text"
                           className="form-input stage-name-input"
-                          placeholder="Stage name"
+                          placeholder={t('pipelines.stageName')}
                           value={stage.name}
                           onChange={(e) => updateStage(index, 'name', e.target.value)}
                           required
@@ -408,7 +416,7 @@ export default function Pipelines() {
                           type="button" 
                           className="btn-remove-stage" 
                           onClick={() => removeStage(index)}
-                          title="Remove Stage"
+                          title={t('pipelines.removeStage')}
                         >
                           <Trash width={14} height={14} />
                         </button>
@@ -419,10 +427,10 @@ export default function Pipelines() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
-                  Cancel
+                  {t('pipelines.cancel')}
                 </button>
                 <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving ? 'Saving...' : (editingPipeline ? 'Update Pipeline' : 'Create Pipeline')}
+                  {saving ? t('pipelines.saving') : (editingPipeline ? t('pipelines.updatePipeline') : t('pipelines.createPipeline'))}
                 </button>
               </div>
             </form>

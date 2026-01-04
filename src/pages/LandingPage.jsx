@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Language } from 'iconoir-react';
 import { DirhamSymbol } from 'dirham-symbol';
 import 'dirham-symbol/dist/index.css';
 import SEO from '../components/SEO';
@@ -10,6 +12,20 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState(2);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const { t, i18n } = useTranslation();
+
+  const isRTL = i18n.language === 'ar';
+
+  useEffect(() => {
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [isRTL, i18n.language]);
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+    setShowLangMenu(false);
+  };
   
   // Contact form state
   const [contactForm, setContactForm] = useState({
@@ -27,6 +43,16 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showLangMenu && !event.target.closest('.lang-switcher-landing')) {
+        setShowLangMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showLangMenu]);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -79,12 +105,38 @@ export default function LandingPage() {
           </button>
         </div>
         <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-          <a onClick={() => scrollToSection('home')}>Home</a>
-          <a onClick={() => scrollToSection('features')}>Features</a>
-          <a onClick={() => scrollToSection('faq')}>FAQ</a>
-          <a onClick={() => scrollToSection('contact')}>Contact</a>
-          <Link to="/login">Login</Link>
-          <Link to="/register" className="btn-mobile-cta">Get Started</Link>
+          {/* Language Switcher Mobile */}
+          <div className="lang-switcher-landing mobile-lang-switcher">
+            <button 
+              className="lang-toggle-landing"
+              onClick={() => setShowLangMenu(!showLangMenu)}
+            >
+              <Language width={18} height={18} />
+              <span>{i18n.language.toUpperCase()}</span>
+            </button>
+            {showLangMenu && (
+              <div className="lang-dropdown-landing mobile-lang-dropdown">
+                <button 
+                  className={`lang-option-landing ${i18n.language === 'en' ? 'active' : ''}`}
+                  onClick={() => changeLanguage('en')}
+                >
+                  🇺🇸 English
+                </button>
+                <button 
+                  className={`lang-option-landing ${i18n.language === 'ar' ? 'active' : ''}`}
+                  onClick={() => changeLanguage('ar')}
+                >
+                  🇦🇪 العربية
+                </button>
+              </div>
+            )}
+          </div>
+          <a onClick={() => scrollToSection('home')}>{t('landing.home')}</a>
+          <a onClick={() => scrollToSection('features')}>{t('landing.features')}</a>
+          <a onClick={() => scrollToSection('faq')}>{t('landing.faq')}</a>
+          <a onClick={() => scrollToSection('contact')}>{t('landing.contact')}</a>
+          <Link to="/login">{t('landing.login')}</Link>
+          <Link to="/register" className="btn-mobile-cta">{t('landing.getStarted')}</Link>
         </div>
       </div>
 
@@ -100,16 +152,42 @@ export default function LandingPage() {
             
             <nav className="main-nav">
               <ul>
-                <li><a onClick={() => scrollToSection('home')} className="active">Home</a></li>
-                <li><a onClick={() => scrollToSection('features')}>Features</a></li>
-                <li><a onClick={() => scrollToSection('faq')}>FAQ</a></li>
-                <li><a onClick={() => scrollToSection('contact')}>Contact</a></li>
+                <li><a onClick={() => scrollToSection('home')} className="active">{t('landing.home')}</a></li>
+                <li><a onClick={() => scrollToSection('features')}>{t('landing.features')}</a></li>
+                <li><a onClick={() => scrollToSection('faq')}>{t('landing.faq')}</a></li>
+                <li><a onClick={() => scrollToSection('contact')}>{t('landing.contact')}</a></li>
               </ul>
             </nav>
             
             <div className="header-right">
-              <Link to="/login" className="btn-text">Login</Link>
-              <Link to="/register" className="btn-flat">Get Started</Link>
+              {/* Language Switcher */}
+              <div className="lang-switcher-landing">
+                <button 
+                  className="lang-toggle-landing"
+                  onClick={() => setShowLangMenu(!showLangMenu)}
+                >
+                  <Language width={18} height={18} />
+                  <span>{i18n.language.toUpperCase()}</span>
+                </button>
+                {showLangMenu && (
+                  <div className="lang-dropdown-landing">
+                    <button 
+                      className={`lang-option-landing ${i18n.language === 'en' ? 'active' : ''}`}
+                      onClick={() => changeLanguage('en')}
+                    >
+                      🇺🇸 English
+                    </button>
+                    <button 
+                      className={`lang-option-landing ${i18n.language === 'ar' ? 'active' : ''}`}
+                      onClick={() => changeLanguage('ar')}
+                    >
+                      🇦🇪 العربية
+                    </button>
+                  </div>
+                )}
+              </div>
+              <Link to="/login" className="btn-text">{t('landing.login')}</Link>
+              <Link to="/register" className="btn-flat">{t('landing.getStarted')}</Link>
             </div>
           </div>
         </div>
@@ -120,11 +198,11 @@ export default function LandingPage() {
         <div className="hero-bg"></div>
         <div className="container">
           <div className="hero-content">
-            <h1>Grow your business faster</h1>
+            <h1>{t('landing.heroTitle')}</h1>
             <p className="hero-subtitle">
-              Close more deals. Build stronger relationships. Scale without limits.
+              {t('landing.heroSubtitle')}
             </p>
-            <Link to="/register" className="btn-primary">Get Started</Link>
+            <Link to="/register" className="btn-primary">{t('landing.getStarted')}</Link>
             
             <div className="hero-image">
               <img src="/assets/images/crm-dashboard-trasealla-solutions.png" alt="CRM Dashboard" />
@@ -142,9 +220,9 @@ export default function LandingPage() {
           {/* Feature Row 1 */}
           <div className="feature-row">
             <div className="feature-text">
-              <h2>Smart Lead Management</h2>
-              <p className="feature-description">Turn prospects into customers with intelligent tracking. One dashboard, complete visibility.</p>
-              <Link to="/register" className="btn-primary">Discover</Link>
+              <h2>{t('landing.smartLeadManagement')}</h2>
+              <p className="feature-description">{t('landing.smartLeadManagementDesc')}</p>
+              <Link to="/register" className="btn-primary">{t('landing.discover')}</Link>
             </div>
             <div className="feature-image">
               <img src="/assets/images/crm-reports-trasealla-solutions.png" alt="Lead Management" />
@@ -157,18 +235,18 @@ export default function LandingPage() {
               <img src="/assets/images/crm-deals-trasealla-solutions.png" alt="Sales Pipeline" />
             </div>
             <div className="feature-text">
-              <h2>Visual Sales Pipeline</h2>
-              <p className="feature-description">Drag, drop, and close. See your entire sales journey at a glance.</p>
-              <Link to="/register" className="btn-primary">Discover</Link>
+              <h2>{t('landing.visualSalesPipeline')}</h2>
+              <p className="feature-description">{t('landing.visualSalesPipelineDesc')}</p>
+              <Link to="/register" className="btn-primary">{t('landing.discover')}</Link>
             </div>
           </div>
 
           {/* Feature Row 3 */}
           <div className="feature-row">
             <div className="feature-text">
-              <h2>Actionable Analytics</h2>
-              <p className="feature-description">Data that drives decisions. Reports that actually matter.</p>
-              <Link to="/register" className="btn-primary">Discover</Link>
+              <h2>{t('landing.actionableAnalytics')}</h2>
+              <p className="feature-description">{t('landing.actionableAnalyticsDesc')}</p>
+              <Link to="/register" className="btn-primary">{t('landing.discover')}</Link>
             </div>
             <div className="feature-image">
               <img src="/assets/images/crm-products-trasealla-solutions.png" alt="Product Management" />
@@ -188,10 +266,10 @@ export default function LandingPage() {
                 </svg>
               </div>
               <div className="boxed-feature-content">
-                <h3>Quick Setup</h3>
-                <p className="feature-tagline">Implement</p>
-                <p>Ready in minutes. Pre-built templates for every industry.</p>
-                <a href="#" className="styled-link">Learn More</a>
+                <h3>{t('landing.quickSetup')}</h3>
+                <p className="feature-tagline">{t('landing.implement')}</p>
+                <p>{t('landing.quickSetupDesc')}</p>
+                <a href="#" className="styled-link">{t('landing.learnMore')}</a>
               </div>
             </div>
 
@@ -202,10 +280,10 @@ export default function LandingPage() {
                 </svg>
               </div>
               <div className="boxed-feature-content">
-                <h3>Bank-Level Security</h3>
-                <p className="feature-tagline">Secure</p>
-                <p>Your data, fully protected. Role-based access included.</p>
-                <a href="#" className="styled-link">Learn More</a>
+                <h3>{t('landing.bankLevelSecurity')}</h3>
+                <p className="feature-tagline">{t('landing.secure')}</p>
+                <p>{t('landing.bankLevelSecurityDesc')}</p>
+                <a href="#" className="styled-link">{t('landing.learnMore')}</a>
               </div>
             </div>
 
@@ -216,10 +294,10 @@ export default function LandingPage() {
                 </svg>
               </div>
               <div className="boxed-feature-content">
-                <h3>Smart Automation</h3>
-                <p className="feature-tagline">Automate</p>
-                <p>Set it once, let it work. Focus on what matters.</p>
-                <a href="#" className="styled-link">Learn More</a>
+                <h3>{t('landing.smartAutomation')}</h3>
+                <p className="feature-tagline">{t('landing.automate')}</p>
+                <p>{t('landing.smartAutomationDesc')}</p>
+                <a href="#" className="styled-link">{t('landing.learnMore')}</a>
               </div>
             </div>
           </div>
@@ -230,7 +308,7 @@ export default function LandingPage() {
       <section className="why-different-section">
         <div className="container">
           <div className="section-header">
-            <h2>Why Trasealla?</h2>
+            <h2>{t('landing.whyTrasealla')}</h2>
             <div className="styled-divider"></div>
           </div>
 
@@ -245,8 +323,8 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 <div className="line-feature-border"></div>
-                <h4>Built for Teams</h4>
-                <p>Multi-tenant. Complete data isolation. One platform, endless possibilities.</p>
+                <h4>{t('landing.builtForTeams')}</h4>
+                <p>{t('landing.builtForTeamsDesc')}</p>
               </div>
 
               <div className="line-feature">
@@ -257,8 +335,8 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 <div className="line-feature-border"></div>
-                <h4>Your Industry, Your Way</h4>
-                <p>Real estate. Healthcare. Tech. Ready-made templates for instant setup.</p>
+                <h4>{t('landing.yourIndustryYourWay')}</h4>
+                <p>{t('landing.yourIndustryYourWayDesc')}</p>
               </div>
 
               <div className="line-feature">
@@ -269,8 +347,8 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 <div className="line-feature-border"></div>
-                <h4>AI That Works</h4>
-                <p>Smart recommendations. Predictive insights. Less guesswork.</p>
+                <h4>{t('landing.aiThatWorks')}</h4>
+                <p>{t('landing.aiThatWorksDesc')}</p>
               </div>
             </div>
 
@@ -292,7 +370,7 @@ export default function LandingPage() {
       {/* FAQ Section */}
       <section id="faq" className="faq-section">
         <div className="container">
-          <h3 className="faq-title">Frequently asked questions</h3>
+          <h3 className="faq-title">{t('landing.frequentlyAskedQuestions')}</h3>
           
           <div className="faq-grid">
             <div className="faq-column">
@@ -333,9 +411,9 @@ export default function LandingPage() {
                 <img src="/assets/images/crm-calendar-trasealla-solutions.png" alt="Get Started" />
               </div>
               <div className="cta-box-content">
-                <h3>Ready to grow?</h3>
-                <p className="cta-description">Join thousands of businesses closing more deals.</p>
-                <Link to="/register" className="btn-primary">Start Free Trial</Link>
+                <h3>{t('landing.readyToGrow')}</h3>
+                <p className="cta-description">{t('landing.joinThousands')}</p>
+                <Link to="/register" className="btn-primary">{t('landing.startFreeTrial')}</Link>
               </div>
             </div>
           </div>
@@ -346,8 +424,8 @@ export default function LandingPage() {
       <section className="how-it-works-section">
         <div className="container">
           <div className="section-header">
-            <h2>How It Works</h2>
-            <p className="section-subtitle">Three steps. That's it.</p>
+            <h2>{t('landing.howItWorks')}</h2>
+            <p className="section-subtitle">{t('landing.threeSteps')}</p>
             <div className="styled-divider"></div>
           </div>
 
@@ -362,22 +440,22 @@ export default function LandingPage() {
                 className={`tab-item ${activeTab === 1 ? 'active' : ''}`}
                 onClick={() => setActiveTab(1)}
               >
-                <h4>Sign Up Free</h4>
-                <p>Email. Password. Done.</p>
+                <h4>{t('landing.signUpFree')}</h4>
+                <p>{t('landing.signUpFreeDesc')}</p>
               </button>
               <button 
                 className={`tab-item ${activeTab === 2 ? 'active' : ''}`}
                 onClick={() => setActiveTab(2)}
               >
-                <h4>Import & Connect</h4>
-                <p>Bring your data. We handle the rest.</p>
+                <h4>{t('landing.importConnect')}</h4>
+                <p>{t('landing.importConnectDesc')}</p>
               </button>
               <button 
                 className={`tab-item ${activeTab === 3 ? 'active' : ''}`}
                 onClick={() => setActiveTab(3)}
               >
-                <h4>Close Deals</h4>
-                <p>Start selling. Watch revenue grow.</p>
+                <h4>{t('landing.closeDeals')}</h4>
+                <p>{t('landing.closeDealsDesc')}</p>
               </button>
             </div>
           </div>
@@ -406,8 +484,8 @@ export default function LandingPage() {
       <section id="contact" className="contact-section">
         <div className="container">
           <div className="section-header">
-            <h2>Get in Touch</h2>
-            <p className="section-subtitle">Questions? Let's talk.</p>
+            <h2>{t('landing.getInTouch')}</h2>
+            <p className="section-subtitle">{t('landing.questionsLetsTalk')}</p>
             <div className="styled-divider"></div>
           </div>
 
@@ -426,7 +504,7 @@ export default function LandingPage() {
                   </span>
                   <input 
                     type="text" 
-                    placeholder="Your name" 
+                    placeholder={t('landing.yourName')} 
                     value={contactForm.name}
                     onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
                     required 
@@ -441,7 +519,7 @@ export default function LandingPage() {
                   </span>
                   <input 
                     type="email" 
-                    placeholder="your.email@example.com" 
+                    placeholder={t('landing.yourEmail')} 
                     value={contactForm.email}
                     onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
                     required 
@@ -455,16 +533,16 @@ export default function LandingPage() {
                   </span>
                   <textarea 
                     rows="4" 
-                    placeholder="Write your message..." 
+                    placeholder={t('landing.yourMessage')} 
                     value={contactForm.message}
                     onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
                     required
                   ></textarea>
                 </div>
                 {formStatus.error && <p className="form-error">{formStatus.error}</p>}
-                {formStatus.success && <p className="form-success">Thank you! We'll get back to you soon.</p>}
+                {formStatus.success && <p className="form-success">{t('landing.messageSent')}</p>}
                 <button type="submit" className="btn-secondary" disabled={formStatus.loading}>
-                  {formStatus.loading ? 'Sending...' : 'Submit'}
+                  {formStatus.loading ? t('landing.sending') : t('landing.sendMessage')}
                 </button>
               </form>
             </div>
@@ -480,29 +558,29 @@ export default function LandingPage() {
               <Link to="/" className="logo">
                 <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" />
               </Link>
-              <p>Your growth partner. From first contact to closed deal.</p>
-              <p className="copyright">© 2025 Trasealla. All rights reserved.</p>
+              <p>{t('landing.growthPartner')}</p>
+              <p className="copyright">{t('landing.copyright')}</p>
             </div>
 
             <div className="footer-links-group">
-              <h4>Company</h4>
+              <h4>{t('landing.company')}</h4>
               <ul>
-                <li><button onClick={() => scrollToSection('features')}>Features</button></li>
-                <li><button onClick={() => scrollToSection('contact')}>Contact</button></li>
+                <li><button onClick={() => scrollToSection('features')}>{t('landing.features')}</button></li>
+                <li><button onClick={() => scrollToSection('contact')}>{t('landing.contact')}</button></li>
               </ul>
             </div>
 
             <div className="footer-links-group">
-              <h4>Support</h4>
+              <h4>{t('landing.support')}</h4>
               <ul>
-                <li><button onClick={() => scrollToSection('faq')}>Help Center</button></li>
-                <li><Link to="/privacy">Privacy Policy</Link></li>
-                <li><Link to="/terms">Terms of Service</Link></li>
+                <li><button onClick={() => scrollToSection('faq')}>{t('landing.helpCenter')}</button></li>
+                <li><Link to="/privacy">{t('landing.privacyPolicy')}</Link></li>
+                <li><Link to="/terms">{t('landing.termsOfService')}</Link></li>
               </ul>
             </div>
 
             <div className="footer-newsletter">
-              <h4>Newsletter</h4>
+              <h4>{t('landing.newsletter')}</h4>
               <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
                 <div className="newsletter-input">
                   <span className="form-icon">
@@ -511,9 +589,9 @@ export default function LandingPage() {
                       <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
-                  <input type="email" placeholder="Email address" />
+                  <input type="email" placeholder={t('landing.emailAddress')} />
                 </div>
-                <button type="submit" className="btn-primary">Subscribe</button>
+                <button type="submit" className="btn-primary">{t('landing.subscribe')}</button>
               </form>
               <div className="social-links">
                 <a href="https://wa.me/971503920037" target="_blank" rel="noopener noreferrer" className="social-link" title="WhatsApp" itemProp="sameAs">
