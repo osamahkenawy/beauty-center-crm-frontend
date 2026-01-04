@@ -679,13 +679,14 @@
 }
 
 .pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 30px;
   width: 100%;
-  max-width: 1050px;
+  max-width: 1200px;
   margin: 0 auto;
-  justify-items: center;
+  flex-wrap: wrap;
 }
 
 .pricing-card {
@@ -1300,6 +1301,15 @@
   fill: var(--lp-white);
 }
 
+/* WhatsApp specific hover color */
+.social-link[href*="wa.me"]:hover {
+  background: #25D366;
+}
+
+.social-link[href*="wa.me"]:hover svg {
+  fill: white;
+}
+
 /* Responsive Styles */
 @media (max-width: 1024px) {
   .boxed-features-grid {
@@ -1308,8 +1318,7 @@
   }
 
   .pricing-grid {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 700px;
+    max-width: 750px;
   }
   
   .pricing-card.featured {
@@ -1378,8 +1387,13 @@
   }
 
   .pricing-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     max-width: 360px;
+  }
+  
+  .pricing-card {
+    width: 100%;
+    max-width: 100%;
   }
   
   .pricing-card.featured {
