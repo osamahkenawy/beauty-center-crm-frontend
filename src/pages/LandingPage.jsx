@@ -26,14 +26,43 @@ export default function LandingPage() {
     i18n.changeLanguage(lng);
     setShowLangMenu(false);
   };
+
+  // Helper function to get language-specific image path
+  const getImagePath = (englishPath) => {
+    if (i18n.language === 'ar') {
+      // Map English image names to Arabic versions
+      const imageMappings = {
+        'crm-dashboard-trasealla-solutions.png': 'crm_arabic/crm_dashboard_arabic.png',
+        'crm-reports-trasealla-solutions.png': 'crm_arabic/crm_reports_arabic.png',
+        'crm-deals-trasealla-solutions.png': 'crm_arabic/crm_pipliens_arabic.png',
+        'crm-notes-trasealla-solutions.png': 'crm_arabic/crm_notes_arabic.png',
+      };
+      
+      // Extract filename from path
+      const fileName = englishPath.split('/').pop();
+      
+      // Check if we have an Arabic version
+      if (imageMappings[fileName]) {
+        // Return the Arabic version path
+        return `/assets/images/${imageMappings[fileName]}`;
+      }
+    }
+    // Return original path for English or unmapped images
+    return englishPath;
+  };
   
   // Contact form state
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
-    subject: 'CRM Inquiry',
+    subject: '',
     message: ''
   });
+
+  // Initialize subject with translation when language changes
+  useEffect(() => {
+    setContactForm(prev => ({ ...prev, subject: t('landing.crmInquiry') }));
+  }, [i18n.language, t]);
   const [formStatus, setFormStatus] = useState({ loading: false, success: false, error: '' });
 
   useEffect(() => {
@@ -79,12 +108,12 @@ export default function LandingPage() {
 
       if (response.ok) {
         setFormStatus({ loading: false, success: true, error: '' });
-        setContactForm({ name: '', email: '', subject: 'CRM Inquiry', message: '' });
+        setContactForm({ name: '', email: '', subject: t('landing.crmInquiry'), message: '' });
       } else {
-        setFormStatus({ loading: false, success: false, error: data.error || 'Something went wrong' });
+        setFormStatus({ loading: false, success: false, error: data.error || t('landing.somethingWentWrong') });
       }
     } catch (error) {
-      setFormStatus({ loading: false, success: false, error: 'Failed to send message. Please try again.' });
+      setFormStatus({ loading: false, success: false, error: t('landing.failedToSendMessage') });
     }
   };
 
@@ -95,7 +124,7 @@ export default function LandingPage() {
       <div className={`mobile-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="container">
           <Link to="/" className="logo">
-            <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" />
+            <img src="/assets/images/logos/trasealla-solutions-logo.png" alt={t('landing.altTrasealla')} />
           </Link>
           <button 
             className={`hamburger ${mobileMenuOpen ? 'active' : ''}`}
@@ -146,7 +175,7 @@ export default function LandingPage() {
           <div className="header-inner">
             <div className="header-left">
               <Link to="/" className="logo" onClick={() => scrollToSection('home')}>
-                <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" />
+                <img src="/assets/images/logos/trasealla-solutions-logo.png" alt={t('landing.altTrasealla')} />
               </Link>
             </div>
             
@@ -205,7 +234,7 @@ export default function LandingPage() {
             <Link to="/register" className="btn-primary">{t('landing.getStarted')}</Link>
             
             <div className="hero-image">
-              <img src="/assets/images/crm-dashboard-trasealla-solutions.png" alt="CRM Dashboard" />
+              <img src={getImagePath("/assets/images/crm-dashboard-trasealla-solutions.png")} alt={t('landing.altCrmDashboard')} />
             </div>
           </div>
         </div>
@@ -225,14 +254,14 @@ export default function LandingPage() {
               <Link to="/register" className="btn-primary">{t('landing.discover')}</Link>
             </div>
             <div className="feature-image">
-              <img src="/assets/images/crm-reports-trasealla-solutions.png" alt="Lead Management" />
+              <img src={getImagePath("/assets/images/crm-reports-trasealla-solutions.png")} alt={t('landing.altLeadManagement')} />
             </div>
           </div>
 
           {/* Feature Row 2 */}
           <div className="feature-row reverse">
             <div className="feature-image">
-              <img src="/assets/images/crm-deals-trasealla-solutions.png" alt="Sales Pipeline" />
+              <img src={getImagePath("/assets/images/crm-deals-trasealla-solutions.png")} alt={t('landing.altSalesPipeline')} />
             </div>
             <div className="feature-text">
               <h2>{t('landing.visualSalesPipeline')}</h2>
@@ -249,7 +278,7 @@ export default function LandingPage() {
               <Link to="/register" className="btn-primary">{t('landing.discover')}</Link>
             </div>
             <div className="feature-image">
-              <img src="/assets/images/crm-products-trasealla-solutions.png" alt="Product Management" />
+              <img src="/assets/images/crm-products-trasealla-solutions.png" alt={t('landing.altProductManagement')} />
             </div>
           </div>
         </div>
@@ -258,6 +287,11 @@ export default function LandingPage() {
       {/* Boxed Features Section */}
       <section className="boxed-features-section">
         <div className="container">
+          <div className="section-header">
+            <h2>{t('landing.keyFeatures')}</h2>
+            <p className="section-subtitle">{t('landing.powerfulFeatures')}</p>
+            <div className="styled-divider"></div>
+          </div>
           <div className="boxed-features-grid">
             <div className="boxed-feature">
               <div className="boxed-feature-icon">
@@ -354,7 +388,7 @@ export default function LandingPage() {
 
             <div className="why-video">
               <div className="video-box">
-                <img src="/assets/images/crm-calendar-trasealla-solutions.png" alt="Watch Demo" />
+                <img src="/assets/images/crm-calendar-trasealla-solutions.png" alt={t('landing.altWatchDemo')} />
                 <button className="video-play-btn">
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3"/>
@@ -375,31 +409,31 @@ export default function LandingPage() {
           <div className="faq-grid">
             <div className="faq-column">
               <div className="faq-item">
-                <h4>Can I integrate my existing software with Trasealla?</h4>
-                <p>Yes! Trasealla offers REST APIs and webhooks for seamless integration with your existing tools and workflows.</p>
+                <h4>{t('landing.faq1Question')}</h4>
+                <p>{t('landing.faq1Answer')}</p>
               </div>
               <div className="faq-item">
-                <h4>How many users can I add to my account?</h4>
-                <p>The number of users depends on your plan. Starter includes 5 users, Professional up to 25, and Enterprise offers unlimited users.</p>
+                <h4>{t('landing.faq2Question')}</h4>
+                <p>{t('landing.faq2Answer')}</p>
               </div>
               <div className="faq-item">
-                <h4>What payment methods do you accept?</h4>
-                <p>We accept all major credit cards, bank transfers, and can arrange invoicing for enterprise customers.</p>
+                <h4>{t('landing.faq3Question')}</h4>
+                <p>{t('landing.faq3Answer')}</p>
               </div>
             </div>
 
             <div className="faq-column">
               <div className="faq-item">
-                <h4>Can I install Trasealla on my own servers?</h4>
-                <p>Yes! Our Enterprise plan includes an on-premise deployment option for organizations requiring complete data control.</p>
+                <h4>{t('landing.faq4Question')}</h4>
+                <p>{t('landing.faq4Answer')}</p>
               </div>
               <div className="faq-item">
-                <h4>How secure is my data?</h4>
-                <p>We use enterprise-grade encryption, SOC 2 compliant infrastructure, and regular security audits to protect your data.</p>
+                <h4>{t('landing.faq5Question')}</h4>
+                <p>{t('landing.faq5Answer')}</p>
               </div>
               <div className="faq-item">
-                <h4>Do you offer a free trial?</h4>
-                <p>Absolutely! All plans come with a 14-day free trial. No credit card required to get started.</p>
+                <h4>{t('landing.faq6Question')}</h4>
+                <p>{t('landing.faq6Answer')}</p>
               </div>
             </div>
           </div>
@@ -408,7 +442,7 @@ export default function LandingPage() {
           <div className="cta-box">
             <div className="cta-box-inner">
               <div className="cta-box-image">
-                <img src="/assets/images/crm-calendar-trasealla-solutions.png" alt="Get Started" />
+                <img src="/assets/images/crm-calendar-trasealla-solutions.png" alt={t('landing.altGetStarted')} />
               </div>
               <div className="cta-box-content">
                 <h3>{t('landing.readyToGrow')}</h3>
@@ -431,9 +465,9 @@ export default function LandingPage() {
 
           <div className="tabs-content">
             <div className="tabs-image">
-              {activeTab === 1 && <img src="/assets/images/crm-dashboard-trasealla-solutions.png" alt="Step 1 - Dashboard" />}
-              {activeTab === 2 && <img src="/assets/images/crm-deals-trasealla-solutions.png" alt="Step 2 - Deals" />}
-              {activeTab === 3 && <img src="/assets/images/crm-reports-trasealla-solutions.png" alt="Step 3 - Reports" />}
+              {activeTab === 1 && <img src={getImagePath("/assets/images/crm-dashboard-trasealla-solutions.png")} alt={t('landing.altStep1Dashboard')} />}
+              {activeTab === 2 && <img src={getImagePath("/assets/images/crm-deals-trasealla-solutions.png")} alt={t('landing.altStep2Deals')} />}
+              {activeTab === 3 && <img src={getImagePath("/assets/images/crm-reports-trasealla-solutions.png")} alt={t('landing.altStep3Reports')} />}
             </div>
             <div className="tabs-nav">
               <button 
@@ -468,12 +502,11 @@ export default function LandingPage() {
           <div className="testimonial-slider">
             <div className="testimonial">
               <p className="testimonial-text">
-                "Trasealla CRM transformed how we manage our sales pipeline. 
-                We've increased our close rate by 40% in just 3 months."
+                "{t('landing.testimonialText')}"
               </p>
               <div className="testimonial-author">
-                <h6>Ahmed Al Rashid</h6>
-                <span>Sales Director, Dubai Properties LLC</span>
+                <h6>{t('landing.testimonialAuthor')}</h6>
+                <span>{t('landing.testimonialRole')}</span>
               </div>
             </div>
           </div>
@@ -491,7 +524,7 @@ export default function LandingPage() {
 
           <div className="contact-content">
             <div className="contact-image">
-              <img src="/assets/images/crm-products-trasealla-solutions.png" alt="Contact Us" />
+              <img src="/assets/images/crm-products-trasealla-solutions.png" alt={t('landing.altContactUs')} />
             </div>
             <div className="contact-form">
               <form onSubmit={handleContactSubmit}>
@@ -556,7 +589,7 @@ export default function LandingPage() {
           <div className="footer-grid">
             <div className="footer-brand">
               <Link to="/" className="logo">
-                <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" />
+                <img src="/assets/images/logos/trasealla-solutions-logo.png" alt={t('landing.altTrasealla')} />
               </Link>
               <p>{t('landing.growthPartner')}</p>
               <p className="copyright">{t('landing.copyright')}</p>
@@ -594,19 +627,19 @@ export default function LandingPage() {
                 <button type="submit" className="btn-primary">{t('landing.subscribe')}</button>
               </form>
               <div className="social-links">
-                <a href="https://wa.me/971503920037" target="_blank" rel="noopener noreferrer" className="social-link" title="WhatsApp" itemProp="sameAs">
+                <a href="https://wa.me/971503920037" target="_blank" rel="noopener noreferrer" className="social-link" title={t('landing.socialWhatsApp')} itemProp="sameAs">
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
                 </a>
-                <a href="https://www.instagram.com/trasealla/" target="_blank" rel="noopener noreferrer" className="social-link" title="Instagram">
+                <a href="https://www.instagram.com/trasealla/" target="_blank" rel="noopener noreferrer" className="social-link" title={t('landing.socialInstagram')}>
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" strokeWidth="2"/>
                     <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2"/>
                     <circle cx="18" cy="6" r="1.5"/>
                   </svg>
                 </a>
-                <a href="https://www.facebook.com/profile.php?id=61582271193231" target="_blank" rel="noopener noreferrer" className="social-link" title="Facebook">
+                <a href="https://www.facebook.com/profile.php?id=61582271193231" target="_blank" rel="noopener noreferrer" className="social-link" title={t('landing.socialFacebook')}>
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
                   </svg>

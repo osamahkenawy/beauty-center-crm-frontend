@@ -24,6 +24,10 @@ export default function RegisterPage() {
     'Construction', 'Legal', 'Marketing', 'Insurance', 'Other'
   ];
 
+  const translateIndustry = (industry) => {
+    return t(`industries.${industry}`, { defaultValue: industry });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -35,12 +39,12 @@ export default function RegisterPage() {
     setError('');
 
     if (formData.password !== formData.confirm_password) {
-      setError(t('Passwords do not match'));
+      setError(t('auth.passwordsDoNotMatch'));
       return;
     }
 
     if (formData.password.length < 8) {
-      setError(t('Password must be at least 8 characters'));
+      setError(t('auth.passwordMustBeAtLeast8Characters'));
       return;
     }
 
@@ -68,11 +72,11 @@ export default function RegisterPage() {
         navigate('/dashboard');
         window.location.reload();
       } else {
-        setError(data.message || t('Registration failed'));
+        setError(data.message || t('auth.registrationFailed'));
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setError(t('Registration failed. Please try again.'));
+      setError(t('auth.registrationFailedPleaseTryAgain'));
     } finally {
       setLoading(false);
     }
@@ -88,38 +92,38 @@ export default function RegisterPage() {
             <img src="/assets/images/logos/TRASEALLA._WHITE_LOGOsvg.svg" alt="Trasealla CRM" />
           </div>
 
-          <h2>{t('Transform Your Business with Powerful CRM')}</h2>
+          <h2>{t('auth.transformYourBusiness')}</h2>
           <p className="tagline">
-            {t('Join thousands of businesses that trust Trasealla CRM to manage their customer relationships and drive growth.')}
+            {t('auth.joinThousands')}
           </p>
 
           <ul className="features-list">
             <li>
               <div className="feature-icon gradient-1">📊</div>
               <div className="feature-content">
-                <strong>{t('Complete CRM Solution')}</strong>
-                <p>{t('Manage leads, deals, contacts, and accounts all in one unified platform')}</p>
+                <strong>{t('auth.completeCrmSolution')}</strong>
+                <p>{t('auth.manageLeadsDeals')}</p>
               </div>
             </li>
             <li>
               <div className="feature-icon gradient-2">🚀</div>
               <div className="feature-content">
-                <strong>{t('Built for Growth')}</strong>
-                <p>{t('Scale seamlessly from startup to enterprise with flexible plans')}</p>
+                <strong>{t('auth.builtForGrowth')}</strong>
+                <p>{t('auth.scaleSeamlessly')}</p>
               </div>
             </li>
             <li>
               <div className="feature-icon gradient-3">🌍</div>
               <div className="feature-content">
-                <strong>{t('Multi-Language & Currency')}</strong>
-                <p>{t('Support for Arabic, English, and multiple currencies including AED')}</p>
+                <strong>{t('auth.multiLanguageCurrency')}</strong>
+                <p>{t('auth.supportForArabic')}</p>
               </div>
             </li>
             <li>
               <div className="feature-icon gradient-4">🔒</div>
               <div className="feature-content">
-                <strong>{t('Enterprise Security')}</strong>
-                <p>{t('Role-based access, audit logs, and complete data protection')}</p>
+                <strong>{t('auth.enterpriseSecurity')}</strong>
+                <p>{t('auth.roleBasedAccess')}</p>
               </div>
             </li>
           </ul>
@@ -127,15 +131,15 @@ export default function RegisterPage() {
           <div className="stats-bar">
             <div className="stat-item">
               <span className="stat-number">10K+</span>
-              <span className="stat-label">{t('Users')}</span>
+              <span className="stat-label">{t('auth.users')}</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">50+</span>
-              <span className="stat-label">{t('Countries')}</span>
+              <span className="stat-label">{t('auth.countries')}</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">99.9%</span>
-              <span className="stat-label">{t('Uptime')}</span>
+              <span className="stat-label">{t('auth.uptime')}</span>
             </div>
           </div>
         </div>
@@ -144,8 +148,8 @@ export default function RegisterPage() {
         <div className="register-form-section">
           <div className="register-card">
             <div className="register-header">
-              <h1>{t('Create Your Account')}</h1>
-              <p>{t('Start your 14-day free trial today')}</p>
+              <h1>{t('auth.createYourAccount')}</h1>
+              <p>{t('auth.startFreeTrialToday')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="register-form">
@@ -153,7 +157,7 @@ export default function RegisterPage() {
 
               <div className="form-group">
                 <label htmlFor="company_name">
-                  {t('Company Name')} <span className="required">*</span>
+                  {t('auth.companyName')} <span className="required">*</span>
                 </label>
                 <input
                   type="text"
@@ -161,7 +165,7 @@ export default function RegisterPage() {
                   name="company_name"
                   value={formData.company_name}
                   onChange={handleChange}
-                  placeholder={t('Enter your company name')}
+                  placeholder={t('auth.enterCompanyName')}
                   required
                   autoFocus
                 />
@@ -169,7 +173,7 @@ export default function RegisterPage() {
 
               <div className="form-group">
                 <label htmlFor="full_name">
-                  {t('Your Name')} <span className="required">*</span>
+                  {t('auth.yourName')} <span className="required">*</span>
                 </label>
                 <input
                   type="text"
@@ -177,7 +181,7 @@ export default function RegisterPage() {
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleChange}
-                  placeholder={t('Enter your full name')}
+                  placeholder={t('auth.enterFullName')}
                   required
                 />
               </div>
@@ -185,7 +189,7 @@ export default function RegisterPage() {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="email">
-                    {t('Work Email')} <span className="required">*</span>
+                    {t('auth.workEmail')} <span className="required">*</span>
                   </label>
                   <input
                     type="email"
@@ -193,21 +197,21 @@ export default function RegisterPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder={t('you@company.com')}
+                    placeholder={t('auth.youAtCompany')}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="industry">{t('Industry')}</label>
+                  <label htmlFor="industry">{t('auth.industry')}</label>
                   <select
                     id="industry"
                     name="industry"
                     value={formData.industry}
                     onChange={handleChange}
                   >
-                    <option value="">{t('Select industry')}</option>
+                    <option value="">{t('auth.selectIndustry')}</option>
                     {industries.map(ind => (
-                      <option key={ind} value={ind}>{t(ind)}</option>
+                      <option key={ind} value={ind}>{translateIndustry(ind)}</option>
                     ))}
                   </select>
                 </div>
@@ -216,7 +220,7 @@ export default function RegisterPage() {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="password">
-                    {t('Password')} <span className="required">*</span>
+                    {t('auth.password')} <span className="required">*</span>
                   </label>
                   <input
                     type="password"
@@ -224,14 +228,14 @@ export default function RegisterPage() {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder={t('Min 8 characters')}
+                    placeholder={t('auth.min8Characters')}
                     required
                     minLength={8}
                   />
                 </div>
                 <div className="form-group">
                   <label htmlFor="confirm_password">
-                    {t('Confirm')} <span className="required">*</span>
+                    {t('auth.confirmPassword')} <span className="required">*</span>
                   </label>
                   <input
                     type="password"
@@ -239,7 +243,7 @@ export default function RegisterPage() {
                     name="confirm_password"
                     value={formData.confirm_password}
                     onChange={handleChange}
-                    placeholder={t('Repeat password')}
+                    placeholder={t('auth.repeatPassword')}
                     required
                   />
                 </div>
@@ -249,29 +253,29 @@ export default function RegisterPage() {
                 {loading ? (
                   <>
                     <span className="spinner"></span>
-                    {t('Creating Account...')}
+                    {t('auth.creatingAccount')}
                   </>
                 ) : (
                   <>
-                    {t('Start Free Trial')}
+                    {t('auth.startFreeTrial')}
                     <span style={{ marginLeft: '8px' }}>→</span>
                   </>
                 )}
               </button>
 
               <div className="trial-benefits">
-                <span><span className="check-icon">✓</span> {t('14-day free trial')}</span>
-                <span><span className="check-icon">✓</span> {t('No credit card')}</span>
-                <span><span className="check-icon">✓</span> {t('Cancel anytime')}</span>
+                <span><span className="check-icon">✓</span> {t('auth.dayFreeTrial')}</span>
+                <span><span className="check-icon">✓</span> {t('auth.noCreditCard')}</span>
+                <span><span className="check-icon">✓</span> {t('auth.cancelAnytime')}</span>
               </div>
             </form>
 
             <div className="register-footer">
               <p>
-                {t('Already have an account?')}{' '}
-                <Link to="/login">{t('Sign In')}</Link>
+                {t('auth.alreadyHaveAccount')}{' '}
+                <Link to="/login">{t('auth.signIn')}</Link>
               </p>
-              <Link to="/" className="back-home">← {t('Back to Home')}</Link>
+              <Link to="/" className="back-home">← {t('auth.backToHome')}</Link>
             </div>
           </div>
         </div>
