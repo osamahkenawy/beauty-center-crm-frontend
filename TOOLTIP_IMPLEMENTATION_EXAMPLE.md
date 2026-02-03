@@ -524,3 +524,4 @@ See the complete implementation in:
 - `/src/i18n/locales/ar.json` (الترجمات العربية)
 - `/src/i18n/locales/en.json` (الترجمات الإنجليزية)
 
+

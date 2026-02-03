@@ -6,7 +6,7 @@ import {
   HomeSimple, Mail, Building, User, Flash, Wallet, ViewColumns3,
   List, Calendar, Notes, Label, Cube, Page, Folder, Megaphone,
   City, Settings, Activity, StatsUpSquare, ClockRotateRight, Menu,
-  LogOut, Language, Group, MailIn, Network
+  LogOut, Language, Group, MailIn, Network, Sparks
 } from 'iconoir-react';
 import AIChatbot from './AIChatbot';
 import './Layout.css';
@@ -35,7 +35,8 @@ const iconMap = {
   'workflows': Activity,
   'reports': StatsUpSquare,
   'audit-logs': ClockRotateRight,
-};
+  'mwasalat-ai': Sparks,
+}; 
 
 const navSections = [
   {
@@ -43,6 +44,7 @@ const navSections = [
     items: [
       { path: '/dashboard', labelKey: 'common.dashboard', iconKey: 'dashboard' },
       { path: '/inbox', labelKey: 'common.inbox', iconKey: 'inbox' },
+      { path: '/mwasalat-ai', labelKey: 'ai.traseallaAI', iconKey: 'mwasalat-ai'},
     ]
   },
   {
@@ -165,10 +167,11 @@ export default function Layout({ children }) {
                 <div key={item.path} className="sidebar-nav-item">
                   <Link
                     to={item.path}
-                    className={`sidebar-nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                    className={`sidebar-nav-link ${location.pathname === item.path ? 'active' : ''} ${item.isNew ? 'ai-link' : ''}`}
                   >
                     {renderIcon(item.iconKey)}
                     <span>{t(item.labelKey)}</span>
+                    {item.isNew && <span className="nav-new-badge">NEW</span>}
                   </Link>
                 </div>
               ))}

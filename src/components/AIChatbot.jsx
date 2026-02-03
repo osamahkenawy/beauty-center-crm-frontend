@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useContext } from 'react';
 import { 
   ChatBubble, Send, Xmark, Refresh, LightBulb,
-  User, Flash, Wallet, Building, Calendar, Search, Sparks
+  User, Flash, Wallet, Building, Calendar, Search, Sparks, ArrowRight
 } from 'iconoir-react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../App';
@@ -25,6 +25,11 @@ export default function AIChatbot() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const { user } = useContext(AuthContext);
+
+  const openFullPage = () => {
+    setIsOpen(false);
+    window.location.href = '/mwasalat-ai';
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -237,6 +242,9 @@ export default function AIChatbot() {
                 <span className="gpt-badge">Powered by ChatGPT</span>
               </span>
             </div>
+            <button className="expand-btn" onClick={openFullPage} title="Open Full Page">
+              <ArrowRight width={18} height={18} />
+            </button>
             <button className="reset-btn" onClick={handleReset} title="Reset Chat">
               <Refresh width={18} height={18} />
             </button>

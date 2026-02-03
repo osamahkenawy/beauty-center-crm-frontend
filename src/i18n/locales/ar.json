@@ -1117,5 +1117,22 @@
     "socialWhatsApp": "واتساب",
     "socialInstagram": "إنستغرام",
     "socialFacebook": "فيسبوك"
+  },
+  "ai": {
+    "traseallaAI": "تراسيلا AI",
+    "welcomeTitle": "مرحباً بك في Mwasalat AI",
+    "welcomeSubtitle": "مساعدك الذكي لإدارة علاقات العملاء. اسألني أي شيء عن العملاء المحتملين والصفقات والأنشطة والمزيد.",
+    "askAnything": "اسأل Mwasalat AI أي شيء...",
+    "disclaimer": "يستخدم Mwasalat AI الذكاء الاصطناعي لتقديم رؤى ذكية بناءً على بيانات CRM الخاصة بك.",
+    "clear": "مسح",
+    "copy": "نسخ",
+    "copied": "تم النسخ",
+    "tip": "نصيحة: يمكنك طرح أسئلة متابعة للحصول على مزيد من التفاصيل",
+    "salesOverview": "نظرة عامة على المبيعات",
+    "hotLeads": "العملاء المحتملين الساخنين",
+    "todaysTasks": "مهام اليوم",
+    "topAccounts": "أفضل الحسابات",
+    "pipelineHealth": "صحة خط الأنابيب",
+    "suggestions": "اقتراحات"
   }
 }

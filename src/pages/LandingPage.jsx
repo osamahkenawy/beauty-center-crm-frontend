@@ -33,8 +33,8 @@ export default function LandingPage() {
       // Map English image names to Arabic versions
       const imageMappings = {
         'crm-dashboard-trasealla-solutions.png': 'crm_arabic/crm_dashboard_arabic.png',
-        'crm-reports-trasealla-solutions.png': 'crm_arabic/crm_reports_arabic.png',
-        'crm-deals-trasealla-solutions.png': 'crm_arabic/crm_pipliens_arabic.png',
+        'crm-reports-trasealla-solutions.jpg': 'crm_arabic/crm_reports_arabic.jpg',
+        'crm-deals-trasealla-solutions.jpg': 'crm_arabic/crm_pipliens_arabic.jpg',
         'crm-notes-trasealla-solutions.png': 'crm_arabic/crm_notes_arabic.png',
       };
       

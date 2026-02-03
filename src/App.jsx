@@ -28,6 +28,7 @@ import Workflows from './pages/Workflows';
 import CustomFields from './pages/CustomFields';
 import Documents from './pages/Documents';
 import AuditLogs from './pages/AuditLogs';
+import TrasealaAI from './pages/TrasealaAI';
 
 // Super Admin Pages
 import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
@@ -214,6 +215,9 @@ function App() {
         <Route path="/workflows" element={user ? <Layout><Workflows /></Layout> : <Navigate to="/login" />} />
         <Route path="/custom-fields" element={user ? <Layout><CustomFields /></Layout> : <Navigate to="/login" />} />
         <Route path="/audit-logs" element={user ? <Layout><AuditLogs /></Layout> : <Navigate to="/login" />} />
+        
+        {/* AI Assistant - Full Page */}
+        <Route path="/mwasalat-ai" element={user ? <TrasealaAI /> : <Navigate to="/login" />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />

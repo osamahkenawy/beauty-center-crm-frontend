@@ -86,3 +86,4 @@ export const getSecuritySettingsForPage = (pathname) => {
 
 export default securityConfig;
 
+

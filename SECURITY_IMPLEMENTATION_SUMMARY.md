@@ -388,3 +388,4 @@ Your CRM now has basic security protections active for all logged-in users. The 
 
 **Questions?** Check the detailed guide in `SECURITY_PROTECTION_GUIDE.md`
 
+

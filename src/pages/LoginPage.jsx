@@ -110,50 +110,11 @@ export default function LoginPage() {
       </div>
 
       <div className="login-right">
-        <div className="showcase">
-          <div className="showcase-content">
-            <h2>Manage Your Business<br/>Like Never Before</h2>
-            <ul className="feature-list">
-              <li>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Track leads and opportunities
-              </li>
-              <li>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Visualize your sales pipeline
-              </li>
-              <li>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Automate workflows
-              </li>
-              <li>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Get real-time analytics
-              </li>
-            </ul>
-          </div>
-          <div className="showcase-illustration">
-            <div className="mock-dashboard">
-              <div className="mock-stat">
-                <div className="mock-stat-value">$124K</div>
-                <div className="mock-stat-label">Revenue</div>
-              </div>
-              <div className="mock-stat">
-                <div className="mock-stat-value">256</div>
-                <div className="mock-stat-label">Leads</div>
-              </div>
-              <div className="mock-chart"></div>
-            </div>
-          </div>
-        </div>
+        <img 
+          src="/assets/images/Trasealla_CRM_Background.png" 
+          alt="Trasealla CRM Background" 
+          className="login-background-image"
+        />
       </div>
     </div>
   );

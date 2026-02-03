@@ -101,3 +101,4 @@ const SecurityBadge = ({
 
 export default SecurityBadge;
 
+

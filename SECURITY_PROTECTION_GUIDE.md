@@ -355,3 +355,4 @@ For issues or questions:
 
 **Remember**: Client-side security is about creating **friction** and **deterrence**, not absolute prevention. Always prioritize server-side security measures for protecting sensitive data.
 
+

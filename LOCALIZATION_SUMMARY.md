@@ -470,3 +470,4 @@ If you need help:
 
 **© 2025 Trasealla CRM - Comprehensive Arabic Localization**
 
+

@@ -226,6 +226,7 @@
     "lastSixMonths": "Last 6 Months",
     "thisQuarter": "This Quarter",
     "salesPerformance": "Here's your sales performance overview",
+    "salesPerformanceOverview": "Here's your sales performance overview",
     "totalLeads": "Total Leads",
     "openDeals": "Open Deals",
     "wonRevenue": "Won Revenue",
@@ -1102,5 +1103,22 @@
     "socialWhatsApp": "WhatsApp",
     "socialInstagram": "Instagram",
     "socialFacebook": "Facebook"
+  },
+  "ai": {
+    "traseallaAI": "Mwasalat AI",
+    "welcomeTitle": "Welcome to Mwasalat AI",
+    "welcomeSubtitle": "Your intelligent CRM assistant. Ask me anything about your leads, deals, activities, and more.",
+    "askAnything": "Ask Mwasalat AI anything...",
+    "disclaimer": "Mwasalat AI uses artificial intelligence to provide intelligent insights based on your CRM data.",
+    "clear": "Clear",
+    "copy": "Copy",
+    "copied": "Copied",
+    "tip": "Tip: You can ask follow-up questions for more details",
+    "salesOverview": "Sales Overview",
+    "hotLeads": "Hot Leads",
+    "todaysTasks": "Today's Tasks",
+    "topAccounts": "Top Accounts",
+    "pipelineHealth": "Pipeline Health",
+    "suggestions": "Suggestions"
   }
 }

@@ -301,12 +301,28 @@ export default function Dashboard() {
     return (
       <div className="loading-container">
         <div className="loading-spinner">
-          <div className="loader-dots">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
+          <div className="loader-orbital">
+            <div className="loader-core"></div>
+            <div className="loader-ring loader-ring-1"></div>
+            <div className="loader-ring loader-ring-2"></div>
+            <div className="loader-ring loader-ring-3"></div>
+            <div className="loader-particle loader-particle-1"></div>
+            <div className="loader-particle loader-particle-2"></div>
+            <div className="loader-particle loader-particle-3"></div>
+            <div className="loader-particle loader-particle-4"></div>
           </div>
-          <span>{t('common.loading')}</span>
+          <div className="loader-text">
+            <span className="loader-letter">L</span>
+            <span className="loader-letter">o</span>
+            <span className="loader-letter">a</span>
+            <span className="loader-letter">d</span>
+            <span className="loader-letter">i</span>
+            <span className="loader-letter">n</span>
+            <span className="loader-letter">g</span>
+            <span className="loader-dots-text">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </div>
         </div>
       </div>
     );
