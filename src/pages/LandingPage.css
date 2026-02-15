@@ -637,12 +637,23 @@
   border-radius: var(--lp-radius-lg);
   overflow: hidden;
   box-shadow: var(--lp-shadow-lg);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.video-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 80px rgba(36, 64, 102, 0.2);
 }
 
 .video-box img {
   width: 100%;
   height: auto;
   display: block;
+  transition: transform 0.4s ease;
+}
+
+.video-box:hover img {
+  transform: scale(1.02);
 }
 
 .video-play-btn {
@@ -650,28 +661,66 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  background: var(--lp-secondary);
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, var(--lp-secondary) 0%, var(--lp-secondary-light) 100%);
   border: none;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 40px rgba(242, 66, 27, 0.4);
+  z-index: 10;
+}
+
+/* Pulsing ring animation */
+.video-play-btn::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--lp-secondary);
+  opacity: 0.3;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 .video-play-btn:hover {
-  background: var(--lp-secondary-light);
+  background: linear-gradient(135deg, var(--lp-secondary-light) 0%, var(--lp-secondary) 100%);
   transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 15px 50px rgba(242, 66, 27, 0.5);
+}
+
+.video-play-btn:hover::before {
+  animation: none;
+  opacity: 0;
+}
+
+.video-play-btn:active {
+  transform: translate(-50%, -50%) scale(0.95);
 }
 
 .video-play-btn svg {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   fill: var(--lp-white);
   margin-left: 5px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 /* Pricing Section */
@@ -1594,3 +1643,103 @@
     font-size: 22px;
   }
 }
+/* Video Modal Styles */
+.video-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.video-modal {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.video-modal-close {
+  position: absolute;
+  top: -45px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.video-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.video-modal-close svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Responsive Video Modal */
+@media (max-width: 768px) {
+  .video-modal {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+
+  .video-modal-close {
+    top: -40px;
+    width: 35px;
+    height: 35px;
+  }
+
+  .video-modal-close svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Video Play Button Enhancement - Removed duplicate, styles are in main section */

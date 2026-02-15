@@ -22,7 +22,14 @@ export default function LoginPage() {
     try {
       const result = await login(username, password);
       if (result.success) {
-        navigate('/dashboard');
+        // If user already has a saved business type, navigate directly
+        // If not, the App-level BusinessTypeSelector popup will appear
+        const savedType = result.businessType;
+        if (savedType) {
+          navigate(savedType === 'beauty' ? '/beauty-dashboard' : '/dashboard');
+        }
+        // If no savedType, the popup handles navigation — we stay on current page briefly
+        // (the popup is rendered at App level so it's visible even during route transitions)
       } else {
         setError(result.message || 'Login failed');
       }
@@ -39,8 +46,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page">
-      <SEO page="login" />
+    <>
+      <div className="login-page">
+        <SEO page="login" />
       <div className="login-left">
         <Link to="/" className="back-link">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -117,6 +125,7 @@ export default function LoginPage() {
         />
       </div>
     </div>
+    </>
   );
 }
 

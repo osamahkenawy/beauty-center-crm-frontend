@@ -29,6 +29,16 @@ import CustomFields from './pages/CustomFields';
 import Documents from './pages/Documents';
 import AuditLogs from './pages/AuditLogs';
 import TrasealaAI from './pages/TrasealaAI';
+import BeautyDashboard from './pages/BeautyDashboard';
+import Appointments from './pages/Appointments';
+import BeautyServices from './pages/BeautyServices';
+import StaffSchedule from './pages/StaffSchedule';
+import LoyaltyProgram from './pages/LoyaltyProgram';
+import BeautyClients from './pages/BeautyClients';
+import BeautyPayments from './pages/BeautyPayments';
+import BeautyReports from './pages/BeautyReports';
+import BeautySettings from './pages/BeautySettings';
+import GiftCards from './pages/GiftCards';
 
 // Super Admin Pages
 import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
@@ -38,6 +48,8 @@ import SuperAdminTenants from './pages/SuperAdmin/SuperAdminTenants';
 
 // Components
 import Layout from './components/Layout';
+import BeautyLayout from './components/BeautyLayout';
+import BusinessTypeSelector from './components/BusinessTypeSelector';
 
 // Security Hook
 import useSecurityProtection from './hooks/useSecurityProtection';
@@ -49,6 +61,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showBusinessSelector, setShowBusinessSelector] = useState(false);
 
   // Initialize security protections (only for logged-in users)
   useSecurityProtection({
@@ -129,7 +142,15 @@ function App() {
         }
         
         setUser(userData);
-        return { success: true };
+        
+        // Check if user needs business type selection
+        const savedType = localStorage.getItem('crm_business_type');
+        if (!savedType && userData.role !== 'super_admin') {
+          // First login — show business type selector
+          setShowBusinessSelector(true);
+        }
+        
+        return { success: true, businessType: savedType, role: userData.role };
       }
     }
     return { success: false, message: data.message };
@@ -175,10 +196,23 @@ function App() {
 
   return (
     <AuthContext.Provider value={{ user, tenant, login, logout, checkSession, setUser, setTenant }}>
+      {/* Business Type Selector — shown after first login */}
+      <BusinessTypeSelector
+        show={showBusinessSelector}
+        onSelect={(typeId) => setShowBusinessSelector(false)}
+        onClose={() => setShowBusinessSelector(false)}
+      />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
+        <Route path="/login" element={
+          user 
+            ? (showBusinessSelector 
+                ? <LoginPage /> 
+                : <Navigate to={localStorage.getItem('crm_business_type') === 'beauty' ? '/beauty-dashboard' : '/dashboard'} />
+              ) 
+            : <LoginPage />
+        } />
         <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} />
         
         {/* Protected routes - Core CRM */}
@@ -218,6 +252,26 @@ function App() {
         
         {/* AI Assistant - Full Page */}
         <Route path="/mwasalat-ai" element={user ? <TrasealaAI /> : <Navigate to="/login" />} />
+        
+        {/* Beauty Center Routes - Use BeautyLayout */}
+        <Route path="/beauty-dashboard" element={user ? <BeautyLayout><BeautyDashboard /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/appointments" element={user ? <BeautyLayout><Appointments /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/appointments/*" element={user ? <BeautyLayout><Appointments /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-services" element={user ? <BeautyLayout><BeautyServices /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-services/*" element={user ? <BeautyLayout><BeautyServices /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/staff-schedule" element={user ? <BeautyLayout><StaffSchedule /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/staff-schedule/*" element={user ? <BeautyLayout><StaffSchedule /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/loyalty" element={user ? <BeautyLayout><LoyaltyProgram /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-clients" element={user ? <BeautyLayout><BeautyClients /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-clients/*" element={user ? <BeautyLayout><BeautyClients /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-payments" element={user ? <BeautyLayout><BeautyPayments /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-payments/*" element={user ? <BeautyLayout><BeautyPayments /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-invoices" element={user ? <BeautyLayout><BeautyPayments /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-reports" element={user ? <BeautyLayout><BeautyReports /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-reports/*" element={user ? <BeautyLayout><BeautyReports /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-settings" element={user ? <BeautyLayout><BeautySettings /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-settings/*" element={user ? <BeautyLayout><BeautySettings /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/gift-cards" element={user ? <BeautyLayout><GiftCards /></BeautyLayout> : <Navigate to="/login" />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />

@@ -1,0 +1,497 @@
+/*
+  Beauty Center Theme Bridge
+  Imports the admin template theme CSS scoped for beauty center pages.
+  Only import this inside beauty center page components.
+*/
+
+/* Theme fonts & icons (these are global-safe) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+/* Bootstrap (scoped via .beauty-theme wrapper) */
+.beauty-theme {
+  --bs-primary: #0074FF;
+  --bs-secondary: #1C2430;
+  --bs-success: #28c76f;
+  --bs-danger: #ea5455;
+  --bs-warning: #ff9f43;
+  --bs-info: #00cfe8;
+
+  --card: #fff;
+  --text-dark: #10131e;
+  --text-gray: #737B8B;
+  --text: #666;
+  --body-bg: #F9F9FB;
+  --light: #e9eff6;
+  --border: #DEE1ED;
+  --primary: #E91E63;
+  --secondary: #1C2430;
+  --primary-light: rgba(233, 30, 99, 0.05);
+  --primary-hover: #C2185B;
+  --rgba-primary-1: rgba(233, 30, 99, 0.1);
+  --rgba-primary-2: rgba(233, 30, 99, 0.2);
+
+  --font-family-base: 'Inter', sans-serif;
+  --font-family-title: 'Poppins', sans-serif;
+  --title: #000;
+
+  font-family: 'Inter', sans-serif;
+  color: #333;
+}
+
+/* ======================== */
+/* Card Styles              */
+/* ======================== */
+.beauty-theme .card {
+  background: var(--card);
+  border: 0;
+  border-radius: 1.25rem;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.03);
+  margin-bottom: 1.875rem;
+  transition: all 0.3s ease;
+}
+.beauty-theme .card:hover {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+.beauty-theme .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.875rem;
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+}
+.beauty-theme .card-header.border-0 {
+  border-bottom: 0;
+}
+.beauty-theme .card-body {
+  padding: 1.25rem 1.875rem;
+}
+.beauty-theme .card-footer {
+  padding: 1.25rem 1.875rem;
+  background: transparent;
+  border-top: 1px solid var(--border);
+}
+.beauty-theme .card-title {
+  font-family: var(--font-family-title);
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0;
+}
+
+/* ======================== */
+/* IC Chart Card            */
+/* ======================== */
+.beauty-theme .ic-chart-card {
+  overflow: hidden;
+}
+.beauty-theme .ic-chart-card .card-header {
+  padding-bottom: 0;
+}
+.beauty-theme .ic-chart-card .data-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: var(--font-family-title);
+  color: var(--text-dark);
+  display: block;
+  margin-top: 8px;
+}
+
+/* ======================== */
+/* Badge Styles             */
+/* ======================== */
+.beauty-theme .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35em 0.65em;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.beauty-theme .badge-sm {
+  padding: 0.25em 0.5em;
+  font-size: 0.7rem;
+}
+.beauty-theme .badge-success {
+  background: rgba(40, 199, 111, 0.12) !important;
+  color: #28c76f !important;
+}
+.beauty-theme .badge-danger {
+  background: rgba(234, 84, 85, 0.12) !important;
+  color: #ea5455 !important;
+}
+.beauty-theme .badge-info {
+  background: rgba(0, 207, 232, 0.12) !important;
+  color: #00cfe8 !important;
+}
+.beauty-theme .badge-warning {
+  background: rgba(255, 159, 67, 0.12) !important;
+  color: #ff9f43 !important;
+}
+.beauty-theme .badge.light {
+  font-weight: 600;
+}
+
+/* ======================== */
+/* Avatar Styles            */
+/* ======================== */
+.beauty-theme .avtar-list {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.beauty-theme .avtar-list li {
+  margin-left: -10px;
+}
+.beauty-theme .avtar-list li:first-child {
+  margin-left: 0;
+}
+.beauty-theme .avatar {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+}
+.beauty-theme .avatar-circle {
+  border-radius: 50%;
+}
+.beauty-theme .borderd {
+  border: 2px solid #fff;
+}
+.beauty-theme .avatar-label {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f0f2f5;
+  color: #555;
+}
+
+/* ======================== */
+/* Button Styles            */
+/* ======================== */
+.beauty-theme .btn {
+  font-family: var(--font-family-base);
+  font-weight: 500;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.beauty-theme .btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.beauty-theme .btn-primary:hover {
+  background: var(--primary-hover);
+  color: #fff;
+}
+.beauty-theme .btn-outline-secondary {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dark);
+}
+.beauty-theme .btn-outline-secondary:hover {
+  background: var(--light);
+}
+.beauty-theme .btn-sm {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+/* ======================== */
+/* Page Head                */
+/* ======================== */
+.beauty-theme .page-head {
+  margin-bottom: 1.5rem;
+}
+.beauty-theme .page-head h3 {
+  font-family: var(--font-family-title);
+  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 1.5rem;
+}
+.beauty-theme .page-head p {
+  color: var(--text-gray);
+  font-size: 0.875rem;
+}
+
+/* ======================== */
+/* Table Styles             */
+/* ======================== */
+.beauty-theme .table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.beauty-theme .table th {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.875rem 1rem;
+  border-bottom: 2px solid var(--border);
+}
+.beauty-theme .table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: 0.875rem;
+  vertical-align: middle;
+  color: var(--text);
+}
+.beauty-theme .table tbody tr:hover {
+  background: var(--primary-light);
+}
+.beauty-theme .sorting {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ======================== */
+/* Tab Styles               */
+/* ======================== */
+.beauty-theme .nav-pills .nav-link {
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.45rem 1rem;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.beauty-theme .nav-pills .nav-link.active,
+.beauty-theme .nav-pills .nav-link:hover {
+  background: var(--primary);
+  color: #fff;
+}
+.beauty-theme .mix-chart-tab {
+  gap: 4px;
+}
+
+/* ======================== */
+/* TTL Project Stats        */
+/* ======================== */
+.beauty-theme .ttl-project {
+  display: flex;
+  justify-content: space-around;
+  padding: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.beauty-theme .ttl-project .pr-data {
+  text-align: center;
+}
+.beauty-theme .ttl-project .pr-data h5 {
+  font-weight: 700;
+  font-family: var(--font-family-title);
+  margin-bottom: 4px;
+}
+.beauty-theme .ttl-project .pr-data span {
+  font-size: 0.75rem;
+  color: var(--text-gray);
+}
+
+/* ======================== */
+/* Seller Card              */
+/* ======================== */
+.beauty-theme .card.saller {
+  background: linear-gradient(135deg, var(--primary) 0%, #880E4F 100%);
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+.beauty-theme .card.saller .card-header {
+  border: 0;
+}
+.beauty-theme .product {
+  padding: 0;
+  text-align: center;
+}
+.beauty-theme .product img {
+  width: 100%;
+  border-radius: 0.75rem;
+  margin-bottom: 8px;
+}
+.beauty-theme .product-imfo {
+  padding: 0 4px;
+}
+.beauty-theme .product-details h4 {
+  color: #fff;
+  font-family: var(--font-family-title);
+}
+.beauty-theme .product-details p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+/* ======================== */
+/* Transaction Section      */
+/* ======================== */
+.beauty-theme .transaction {
+  gap: 8px;
+}
+.beauty-theme .search-area {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  max-width: 200px;
+}
+.beauty-theme .search-area .input-group-text {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-right: 0;
+  padding: 0.5rem 0.75rem;
+}
+.beauty-theme .search-area .form-control {
+  border: 1px solid var(--border);
+  border-left: 0;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}
+.beauty-theme .search-area .form-control:focus {
+  box-shadow: none;
+  border-color: var(--primary);
+}
+
+/* ======================== */
+/* Balance Card             */
+/* ======================== */
+.beauty-theme .card.blance .card-header {
+  padding-bottom: 0;
+}
+.beauty-theme .blance-media h5 {
+  margin-bottom: 4px;
+}
+.beauty-theme .blance-media h4 {
+  font-weight: 700;
+}
+
+/* ======================== */
+/* Form Styles              */
+/* ======================== */
+.beauty-theme .form-control {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+.beauty-theme .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 0.15rem var(--rgba-primary-2);
+}
+.beauty-theme .form-select {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* ======================== */
+/* Dropdown Styles          */
+/* ======================== */
+.beauty-theme .dropdown-menu {
+  border-radius: 0.75rem;
+  border: 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+}
+.beauty-theme .dropdown-item {
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.beauty-theme .dropdown-item:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* ======================== */
+/* Progress Bar             */
+/* ======================== */
+.beauty-theme .progress {
+  height: 5px;
+  border-radius: 4px;
+  background: #f0f2f5;
+}
+.beauty-theme .progress-bar {
+  border-radius: 4px;
+}
+
+/* ======================== */
+/* Utility Classes          */
+/* ======================== */
+.beauty-theme .text-success { color: #28c76f !important; }
+.beauty-theme .text-danger { color: #ea5455 !important; }
+.beauty-theme .text-primary { color: var(--primary) !important; }
+.beauty-theme .text-warning { color: #ff9f43 !important; }
+.beauty-theme .text-dark { color: var(--text-dark) !important; }
+.beauty-theme .font-w600 { font-weight: 600; }
+.beauty-theme .fs-13 { font-size: 13px; }
+.beauty-theme .fs-14 { font-size: 14px; }
+.beauty-theme .c-pointer { cursor: pointer; }
+
+/* ======================== */
+/* Responsive               */
+/* ======================== */
+@media (max-width: 768px) {
+  .beauty-theme .ttl-project {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .beauty-theme .ttl-project .pr-data {
+    min-width: 45%;
+  }
+  .beauty-theme .card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* ======================== */
+/* Swiper Overrides         */
+/* ======================== */
+.beauty-theme .swiper {
+  padding: 0 4px;
+}
+.beauty-theme .swiper-slide {
+  height: auto;
+}
+
+/* ======================== */
+/* ApexCharts Overrides     */
+/* ======================== */
+.beauty-theme .apexcharts-canvas {
+  font-family: var(--font-family-base) !important;
+}
+.beauty-theme .chart-offset {
+  margin: 0 -8px;
+}
+
+/* ======================== */
+/* Animation                */
+/* ======================== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.beauty-theme .row > [class*="col-"] {
+  animation: fadeInUp 0.4s ease forwards;
+}
+.beauty-theme .row > [class*="col-"]:nth-child(1) { animation-delay: 0.05s; }
+.beauty-theme .row > [class*="col-"]:nth-child(2) { animation-delay: 0.1s; }
+.beauty-theme .row > [class*="col-"]:nth-child(3) { animation-delay: 0.15s; }
+.beauty-theme .row > [class*="col-"]:nth-child(4) { animation-delay: 0.2s; }
+.beauty-theme .row > [class*="col-"]:nth-child(5) { animation-delay: 0.25s; }
+.beauty-theme .row > [class*="col-"]:nth-child(6) { animation-delay: 0.3s; }

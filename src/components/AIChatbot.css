@@ -533,9 +533,7 @@
 
 [dir="rtl"] .message-actions {
   flex-direction: row-reverse;
-}
-
-[dir="rtl"] .quick-suggestions {
+}[dir="rtl"] .quick-suggestions {
   flex-direction: row-reverse;
 }
 

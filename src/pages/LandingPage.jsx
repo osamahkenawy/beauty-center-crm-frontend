@@ -13,7 +13,10 @@ export default function LandingPage() {
   const [activeTab, setActiveTab] = useState(2);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const { t, i18n } = useTranslation();
+
+  const DEMO_VIDEO_URL = "https://www.youtube.com/embed/4QuSoqAEFbo?autoplay=1";
 
   const isRTL = i18n.language === 'ar';
 
@@ -389,7 +392,7 @@ export default function LandingPage() {
             <div className="why-video">
               <div className="video-box">
                 <img src="/assets/images/crm-calendar-trasealla-solutions.png" alt={t('landing.altWatchDemo')} />
-                <button className="video-play-btn">
+                <button className="video-play-btn" onClick={() => setShowVideoModal(true)}>
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                   </svg>
@@ -652,6 +655,29 @@ export default function LandingPage() {
 
       {/* WhatsApp Floating Button */}
       <WhatsAppButton phoneNumber="971503920037" />
+
+      {/* Video Modal */}
+      {showVideoModal && (
+        <div className="video-modal-overlay" onClick={() => setShowVideoModal(false)}>
+          <div className="video-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="video-modal-close" onClick={() => setShowVideoModal(false)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <div className="video-container">
+              <iframe
+                src={DEMO_VIDEO_URL}
+                title="Trasealla CRM Demo"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

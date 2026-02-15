@@ -22,51 +22,26 @@ The app will be available at `http://localhost:5173`
 
 ## 🎨 Features
 
-### Landing Page
-- Modern, responsive design
-- Feature showcase
-- Industry templates overview
-- Demo credentials section
+### Core CRM Features
+- **Landing Page**: Modern, responsive design with feature showcase
+- **Authentication**: Login with session management and protected routes
+- **Dashboard**: Statistics overview, recent leads and deals, quick actions
+- **Leads Management**: List view with filters, create/edit modal, rating system
+- **Deals Management**: Kanban board view, pipeline stage visualization
+- **Contacts & Accounts**: Full CRUD operations with search and filter
+- **Activities**: Task management with calendar integration
+- **Pipelines**: Custom pipeline creation with stage management
 
-### Authentication
-- Login page with demo credentials
-- Session management
-- Protected routes
-
-### Dashboard
-- Statistics overview
-- Recent leads and deals
-- Quick actions
-- Activity summary
-
-### Leads Management
-- List view with filters
-- Create/Edit modal
-- Lead rating (Hot/Warm/Cold)
-- Status tracking
-
-### Deals Management
-- Kanban board view
-- List view
-- Pipeline stage visualization
-- Deal value tracking
-
-### Contacts & Accounts
-- Full CRUD operations
-- Search and filter
-- Linked relationships
-
-### Activities
-- Task management
-- Calendar integration
-- Priority and status tracking
-- Overdue indicators
-
-### Pipelines
-- Custom pipeline creation
-- Stage management
-- Color coding
-- Default pipeline setting
+### Beauty Center Features
+- **Appointment Booking**: Multi-step booking modal (Service → Schedule → Client)
+- **Calendar View**: Month/Week/Day views with appointment visualization
+- **Time Slot Picker**: Smart time slot selection with conflict detection
+- **Client Management**: Search existing clients or create new ones
+- **Staff Scheduling**: Staff availability and schedule management
+- **Service Management**: Service catalog with pricing and duration
+- **Status Management**: Appointment status workflow with confirmations
+- **Pagination**: Server-side pagination with date range filtering
+- **Toast Notifications**: Success/error notifications for user actions
 
 ## 🛠️ Tech Stack
 

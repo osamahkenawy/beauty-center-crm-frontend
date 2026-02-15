@@ -6,7 +6,8 @@ import {
   HomeSimple, Mail, Building, User, Flash, Wallet, ViewColumns3,
   List, Calendar, Notes, Label, Cube, Page, Folder, Megaphone,
   City, Settings, Activity, StatsUpSquare, ClockRotateRight, Menu,
-  LogOut, Language, Group, MailIn, Network, Sparks
+  LogOut, Language, Group, MailIn, Network, Sparks,
+  Heart, Clock, Star, Medal, Dashboard
 } from 'iconoir-react';
 import AIChatbot from './AIChatbot';
 import './Layout.css';
@@ -36,6 +37,12 @@ const iconMap = {
   'reports': StatsUpSquare,
   'audit-logs': ClockRotateRight,
   'mwasalat-ai': Sparks,
+  'beauty-dashboard': Dashboard,
+  'appointments': Calendar,
+  'beauty-services': Heart,
+  'staff-schedule': Clock,
+  'loyalty': Star,
+  'beauty-clients': Medal,
 }; 
 
 const navSections = [
@@ -86,6 +93,17 @@ const navSections = [
       { path: '/workflows', labelKey: 'common.workflows', iconKey: 'workflows' },
       { path: '/reports', labelKey: 'common.reports', iconKey: 'reports' },
       { path: '/audit-logs', labelKey: 'common.auditLogs', iconKey: 'audit-logs' },
+    ]
+  },
+  {
+    titleKey: 'Beauty Center',
+    items: [
+      { path: '/beauty-dashboard', labelKey: 'beauty.dashboard', iconKey: 'beauty-dashboard' },
+      { path: '/appointments', labelKey: 'beauty.appointments', iconKey: 'appointments' },
+      { path: '/beauty-services', labelKey: 'beauty.services', iconKey: 'beauty-services' },
+      { path: '/staff-schedule', labelKey: 'beauty.staffSchedule', iconKey: 'staff-schedule' },
+      { path: '/loyalty', labelKey: 'beauty.loyalty', iconKey: 'loyalty' },
+      { path: '/beauty-clients', labelKey: 'beauty.clients', iconKey: 'beauty-clients' },
     ]
   }
 ];
@@ -161,8 +179,11 @@ export default function Layout({ children }) {
 
         <nav className="sidebar-nav">
           {navSections.map((section) => (
-            <div key={section.titleKey} className="nav-section">
-              <div className="sidebar-nav-label">{t(`layout.${section.titleKey}`)}</div>
+            <div key={section.titleKey} className={`nav-section ${section.titleKey === 'Beauty Center' ? 'beauty-section' : ''}`}>
+              <div className={`sidebar-nav-label ${section.titleKey === 'Beauty Center' ? 'beauty-label' : ''}`}>
+                {section.titleKey === 'Beauty Center' && <span style={{ marginRight: 6 }}>💇‍♀️</span>}
+                {t(`layout.${section.titleKey}`)}
+              </div>
               {section.items.map((item) => (
                 <div key={item.path} className="sidebar-nav-item">
                   <Link

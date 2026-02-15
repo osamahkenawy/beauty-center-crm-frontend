@@ -869,7 +869,8 @@
     "CRM": "CRM",
     "Sales": "Sales",
     "Marketing": "Marketing",
-    "Settings": "Settings"
+    "Settings": "Settings",
+    "Beauty Center": "Beauty Center"
   },
   "auth": {
     "login": "Login",
@@ -1120,5 +1121,13 @@
     "topAccounts": "Top Accounts",
     "pipelineHealth": "Pipeline Health",
     "suggestions": "Suggestions"
+  },
+  "beauty": {
+    "dashboard": "Beauty Dashboard",
+    "appointments": "Appointments",
+    "services": "Services",
+    "staffSchedule": "Staff Schedule",
+    "loyalty": "Loyalty Program",
+    "clients": "Beauty Clients"
   }
 }

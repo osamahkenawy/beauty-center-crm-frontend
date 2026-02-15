@@ -875,7 +875,8 @@
     "CRM": "إدارة علاقات العملاء",
     "Sales": "المبيعات",
     "Marketing": "التسويق",
-    "Settings": "الإعدادات"
+    "Settings": "الإعدادات",
+    "Beauty Center": "مركز التجميل"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -1134,5 +1135,13 @@
     "topAccounts": "أفضل الحسابات",
     "pipelineHealth": "صحة خط الأنابيب",
     "suggestions": "اقتراحات"
+  },
+  "beauty": {
+    "dashboard": "لوحة التجميل",
+    "appointments": "المواعيد",
+    "services": "الخدمات",
+    "staffSchedule": "جداول الموظفين",
+    "loyalty": "برنامج الولاء",
+    "clients": "عملاء التجميل"
   }
 }
