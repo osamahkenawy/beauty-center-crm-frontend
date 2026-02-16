@@ -48,7 +48,7 @@ export default function AuditLogs() {
   const getActionColor = (action) => {
     const colors = {
       created: '#10b981', updated: '#3b82f6', deleted: '#ef4444', viewed: '#6b7280',
-      exported: '#8b5cf6', converted: '#f59e0b', assigned: '#06b6d4', status_changed: '#ec4899'
+      exported: '#f2421b', converted: '#f59e0b', assigned: '#06b6d4', status_changed: '#ec4899'
     };
     return colors[action] || '#6b7280';
   };

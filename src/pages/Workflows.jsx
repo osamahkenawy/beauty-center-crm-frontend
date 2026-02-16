@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { Workflow, Plus, Edit, Trash2, Check, Play, Pause, Zap, Settings, History } from 'lucide-react';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -170,23 +171,7 @@ export default function Workflows() {
     }
   };
 
-  const handleDelete = async (workflow) => {
-    if (!confirm(`Delete workflow "${workflow.name}"?`)) return;
-    try {
-      const token = localStorage.getItem('crm_token');
-      const res = await fetch(`${API_URL}/workflows/${workflow.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('success', 'Workflow deleted');
-        fetchWorkflows();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   return (
     <div className="crm-page">

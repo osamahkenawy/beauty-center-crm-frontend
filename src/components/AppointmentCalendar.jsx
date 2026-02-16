@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { NavArrowLeft, NavArrowRight, Plus } from 'iconoir-react';
+import { useState } from 'react';
+import { NavArrowLeft, NavArrowRight, Plus, Xmark } from 'iconoir-react';
 import './AppointmentCalendar.css';
 
 const STATUS_COLORS = {
@@ -19,7 +19,8 @@ export default function AppointmentCalendar({
   selectedDate 
 }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState('month'); // 'month', 'week', 'day'
+  const [viewMode, setViewMode] = useState('month');
+  const [expandedDay, setExpandedDay] = useState(null); // { date, appointments }
 
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 
@@ -52,8 +53,8 @@ export default function AppointmentCalendar({
       });
     }
     
-    // Next month days
-    const remainingDays = 42 - days.length; // 6 rows * 7 days
+    // Next month days (fill to complete the grid)
+    const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       days.push({
         date: new Date(year, month + 1, i),
@@ -98,7 +99,9 @@ export default function AppointmentCalendar({
 
   const isSelected = (date) => {
     if (!selectedDate) return false;
-    return date.toDateString() === new Date(selectedDate).toDateString();
+    // Parse selectedDate safely
+    const sel = typeof selectedDate === 'string' ? new Date(selectedDate + 'T00:00:00') : selectedDate;
+    return date.toDateString() === sel.toDateString();
   };
 
   const navigateMonth = (direction) => {
@@ -116,14 +119,23 @@ export default function AppointmentCalendar({
   const goToToday = () => {
     setCurrentDate(new Date());
     if (onDateSelect) {
-      onDateSelect(new Date().toISOString().split('T')[0]);
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      onDateSelect(dateStr);
     }
   };
 
   const handleDateClick = (date) => {
+    // Build local date string to avoid timezone issues
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     if (onDateSelect) {
-      onDateSelect(date.toISOString().split('T')[0]);
+      onDateSelect(dateStr);
     }
+  };
+
+  const handleMoreClick = (e, date, dayAppointments) => {
+    e.stopPropagation();
+    setExpandedDay({ date, appointments: dayAppointments });
   };
 
   const formatTime = (dateStr) => {
@@ -136,7 +148,7 @@ export default function AppointmentCalendar({
 
   const days = viewMode === 'month' ? getDaysInMonth(currentDate) : getWeekDays(currentDate);
 
-  // Generate time slots for day/week view
+  // Time slots for day view
   const timeSlots = [];
   for (let hour = 8; hour <= 21; hour++) {
     timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
@@ -151,7 +163,10 @@ export default function AppointmentCalendar({
             <NavArrowLeft width={20} height={20} />
           </button>
           <h2 className="calendar-title">
-            {months[currentDate.getMonth()]} {currentDate.getFullYear()}
+            {viewMode === 'day' 
+              ? currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+              : `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`
+            }
           </h2>
           <button className="nav-btn" onClick={() => navigateMonth(1)}>
             <NavArrowRight width={20} height={20} />
@@ -181,7 +196,7 @@ export default function AppointmentCalendar({
             </button>
           </div>
           {onNewAppointment && (
-            <button className="new-apt-btn" onClick={onNewAppointment}>
+            <button className="new-apt-btn" onClick={() => onNewAppointment()}>
               <Plus width={18} height={18} /> New Booking
             </button>
           )}
@@ -214,7 +229,7 @@ export default function AppointmentCalendar({
                   
                   {dayAppointments.length > 0 && (
                     <div className="day-appointments">
-                      {dayAppointments.slice(0, 3).map((apt, i) => (
+                      {dayAppointments.slice(0, 3).map((apt) => (
                         <div
                           key={apt.id}
                           className={`apt-indicator status-${apt.status}`}
@@ -232,7 +247,10 @@ export default function AppointmentCalendar({
                         </div>
                       ))}
                       {dayAppointments.length > 3 && (
-                        <div className="more-indicator">
+                        <div 
+                          className="more-indicator"
+                          onClick={(e) => handleMoreClick(e, dayObj.date, dayAppointments)}
+                        >
                           +{dayAppointments.length - 3} more
                         </div>
                       )}
@@ -248,9 +266,6 @@ export default function AppointmentCalendar({
       {/* Day View */}
       {viewMode === 'day' && (
         <div className="day-view">
-          <div className="day-view-header">
-            <h3>{currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-          </div>
           <div className="time-grid">
             {timeSlots.map(time => {
               const hour = parseInt(time.split(':')[0]);
@@ -285,9 +300,13 @@ export default function AppointmentCalendar({
                       <div 
                         className="empty-slot"
                         onClick={() => {
-                          const newDate = new Date(currentDate);
-                          newDate.setHours(hour, 0, 0, 0);
-                          if (onNewAppointment) onNewAppointment(newDate);
+                          if (onNewAppointment) {
+                            // Pass the date string for the selected time slot
+                            const d = new Date(currentDate);
+                            d.setHours(hour, 0, 0, 0);
+                            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                            onNewAppointment(dateStr);
+                          }
                         }}
                       >
                         <Plus width={14} height={14} /> Add booking
@@ -297,6 +316,44 @@ export default function AppointmentCalendar({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Day Popup ("+N more" click) */}
+      {expandedDay && (
+        <div className="calendar-day-popup-overlay" onClick={() => setExpandedDay(null)}>
+          <div className="calendar-day-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="calendar-day-popup-header">
+              <h4>
+                {expandedDay.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                <span className="popup-count">{expandedDay.appointments.length} appointments</span>
+              </h4>
+              <button onClick={() => setExpandedDay(null)} className="popup-close">
+                <Xmark width={18} height={18} />
+              </button>
+            </div>
+            <div className="calendar-day-popup-list">
+              {expandedDay.appointments
+                .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+                .map(apt => (
+                <div
+                  key={apt.id}
+                  className="popup-apt-item"
+                  style={{ borderLeftColor: STATUS_COLORS[apt.status] || STATUS_COLORS.scheduled }}
+                  onClick={() => { setExpandedDay(null); if (onAppointmentClick) onAppointmentClick(apt); }}
+                >
+                  <div className="popup-apt-time">{formatTime(apt.start_time)}</div>
+                  <div className="popup-apt-info">
+                    <span className="popup-apt-client">{apt.customer_first_name} {apt.customer_last_name}</span>
+                    <span className="popup-apt-service">{apt.service_name} · {apt.staff_name}</span>
+                  </div>
+                  <span className="popup-apt-badge" style={{ backgroundColor: STATUS_COLORS[apt.status] }}>
+                    {apt.status}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

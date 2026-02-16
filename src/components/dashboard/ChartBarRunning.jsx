@@ -1,6 +1,8 @@
 import ReactApexChart from "react-apexcharts";
+import useCurrency from "../../hooks/useCurrency";
 
 const ChartBarRunning = ({ variant = 1 }) => {
+  const { currency } = useCurrency();
   // Different data variants for tabs
   const dataVariants = {
     1: [
@@ -81,7 +83,7 @@ const ChartBarRunning = ({ variant = 1 }) => {
       theme: "dark",
       y: {
         formatter: function (val) {
-          return "AED " + val + "K";
+          return currency + " " + val + "K";
         }
       }
     }

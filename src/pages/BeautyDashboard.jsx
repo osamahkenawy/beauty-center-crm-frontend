@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Dropdown, Nav, Tab } from 'react-bootstrap';
 import { AuthContext } from '../App';
+import useCurrency from '../hooks/useCurrency';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './BeautyDashboard.css';
 import 'swiper/css';
@@ -55,20 +56,21 @@ const contactdata = [
 
 // Service data
 const serviceData = [
-  { name: 'Hair Styling', price: 'AED 150', image: IMAGES.swipershirt1 },
-  { name: 'Facial', price: 'AED 120', image: IMAGES.swipershirt2 },
-  { name: 'Nails', price: 'AED 80', image: IMAGES.swipershirt3 },
-  { name: 'Massage', price: 'AED 200', image: IMAGES.swipershirt4 },
+  { name: 'Hair Styling', price: '150', image: IMAGES.swipershirt1 },
+  { name: 'Facial', price: '120', image: IMAGES.swipershirt2 },
+  { name: 'Nails', price: '80', image: IMAGES.swipershirt3 },
+  { name: 'Massage', price: '200', image: IMAGES.swipershirt4 },
 ];
 
 const BeautyDashboard = () => {
   const { user } = useContext(AuthContext);
+  const { currency } = useCurrency();
   const [data, setData] = useState([
-    { id: 'TXN001', date: '18 Feb 2025', client: 'Sarah Johnson', payment: 'AED 250', status: 'Completed' },
-    { id: 'TXN002', date: '18 Feb 2025', client: 'Emily Davis', payment: 'AED 180', status: 'Pending' },
-    { id: 'TXN003', date: '18 Feb 2025', client: 'Jessica Brown', payment: 'AED 320', status: 'Completed' },
-    { id: 'TXN004', date: '18 Feb 2025', client: 'Amanda White', payment: 'AED 200', status: 'Pending' },
-    { id: 'TXN005', date: '18 Feb 2025', client: 'Rachel Green', payment: 'AED 280', status: 'Completed' },
+    { id: 'TXN001', date: '18 Feb 2025', client: 'Sarah Johnson', payment: '250', status: 'Completed' },
+    { id: 'TXN002', date: '18 Feb 2025', client: 'Emily Davis', payment: '180', status: 'Pending' },
+    { id: 'TXN003', date: '18 Feb 2025', client: 'Jessica Brown', payment: '320', status: 'Completed' },
+    { id: 'TXN004', date: '18 Feb 2025', client: 'Amanda White', payment: '200', status: 'Pending' },
+    { id: 'TXN005', date: '18 Feb 2025', client: 'Rachel Green', payment: '280', status: 'Completed' },
   ]);
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' });
 
@@ -117,14 +119,18 @@ const BeautyDashboard = () => {
   return (
     <>
       <div className="page-head">
-        <div className="row">
-          <div className="col-sm-6 mb-sm-4 mb-3">
-            <h3 className="mb-0">Good Morning, {user?.full_name || 'Demo User'}</h3>
-            <p className="mb-0">Here's what's happening with your beauty center today</p>
+        <div className="row" style={{ marginLeft: 0, marginRight: 0 }}>
+          <div className="col-12 col-md-7 col-lg-8 mb-sm-4 mb-3" style={{ overflow: 'visible', wordWrap: 'break-word', overflowWrap: 'break-word' }}>
+            <h3 className="mb-0" style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip', wordWrap: 'break-word' }}>
+              Good Morning, {user?.full_name || 'Demo User'}
+            </h3>
+            <p className="mb-0" style={{ whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip', wordWrap: 'break-word' }}>
+              Here's what's happening with your beauty center today
+            </p>
           </div>
-          <div className="col-sm-6 mb-4 text-sm-end">
+          <div className="col-12 col-md-5 col-lg-4 mb-4 page-head-buttons">
             <Link to="/appointments" className="btn btn-outline-secondary">Add Appointment</Link>
-            <Link to="/services" className="btn btn-primary ms-2">New Service</Link>
+            <Link to="/services" className="btn btn-primary">New Service</Link>
           </div>
         </div>
       </div>
@@ -158,7 +164,7 @@ const BeautyDashboard = () => {
                     <h6 className="mb-0">Revenue</h6>
                     <span className="badge badge-sm badge-info light">+8.2%</span>
                   </div>
-                  <span className="data-value">AED<br/>24.5k</span>
+                  <span className="data-value">{currency}<br/>24.5k</span>
                 </div>
                 <div className="card-body p-0 pb-3">
                   <div id="handleOrderChart">
@@ -287,7 +293,7 @@ const BeautyDashboard = () => {
                 <div className="card-header align-items-baseline border-0 pb-0">
                   <div>
                     <h5 className="mb-0">Your Balance</h5>
-                    <h4 className="mb-0">AED 25,217k</h4>
+                    <h4 className="mb-0">{currency} 25,217k</h4>
                   </div>
                   <p className="mb-0 fs-14 ms-auto"><span className="text-success">+2.7% </span>than last week</p>
                 </div>
@@ -335,7 +341,7 @@ const BeautyDashboard = () => {
                           <div className="product-imfo">
                             <div className="d-flex justify-content-between">
                               <span className="text-danger">Popular</span>
-                              <h6 className="font-w600">{service.price}</h6>
+                              <h6 className="font-w600">{currency} {service.price}</h6>
                             </div>
                             <div className="d-flex justify-content-between">
                               <h6 className="font-w600">{service.name}</h6>
@@ -377,7 +383,7 @@ const BeautyDashboard = () => {
               <div className="card-header border-0 pb-0 flex-wrap">
                 <div className="blance-media">
                   <h5 className="mb-0">Sales Revenues</h5>
-                  <h4 className="mb-0">AED 25,217k <span className="badge badge-sm badge-success light">+2.7%</span></h4>
+                  <h4 className="mb-0">{currency} 25,217k <span className="badge badge-sm badge-success light">+2.7%</span></h4>
                 </div>
                 <Nav className="nav nav-pills mix-chart-tab" defaultActiveKey="week">
                   <Nav.Item className="nav-item">
@@ -427,7 +433,7 @@ const BeautyDashboard = () => {
                     <span>Active Projects</span>
                   </div>
                   <div className="pr-data">
-                    <h5>AED 2,50,523</h5>
+                    <h5>{currency} 2,50,523</h5>
                     <span>Revenue</span>
                   </div>
                   <div className="pr-data">
@@ -486,7 +492,7 @@ const BeautyDashboard = () => {
                           </td>
                           <td><p className="mb-0 ms-2">{item.date}</p></td>
                           <td><span>{item.client}</span></td>
-                          <td><span className={item.status === 'Completed' ? 'text-success' : 'text-warning'}>{item.payment}</span></td>
+                          <td><span className={item.status === 'Completed' ? 'text-success' : 'text-warning'}>{currency} {item.payment}</span></td>
                           <td className="pe-0">
                             <span className={`badge badge-sm ${item.status === 'Completed' ? 'badge-primary' : 'badge-warning'} light`}>
                               {item.status}
@@ -535,11 +541,11 @@ const BeautyDashboard = () => {
                   }}
                 >
                   {[
-                    { name: 'Hair Styling', price: 'AED 150', icon: '💇' },
-                    { name: 'Facial', price: 'AED 120', icon: '💆' },
-                    { name: 'Nails', price: 'AED 80', icon: '💅' },
-                    { name: 'Massage', price: 'AED 200', icon: '🧖' },
-                    { name: 'Makeup', price: 'AED 90', icon: '💄' },
+                    { name: 'Hair Styling', price: '150', icon: '💇' },
+                    { name: 'Facial', price: '120', icon: '💆' },
+                    { name: 'Nails', price: '80', icon: '💅' },
+                    { name: 'Massage', price: '200', icon: '🧖' },
+                    { name: 'Makeup', price: '90', icon: '💄' },
                   ].map((service, i) => (
                     <SwiperSlide key={i}>
                       <div className="card service-card">
@@ -550,11 +556,11 @@ const BeautyDashboard = () => {
                           <div className="product-imfo">
                             <div className="d-flex justify-content-between">
                               <span className="text-danger">up to 79% off</span>
-                              <h6 className="font-w600">{service.price}</h6>
+                              <h6 className="font-w600">{currency} {service.price}</h6>
                             </div>
                             <div className="d-flex justify-content-between">
                               <h6 className="font-w600">{service.name}</h6>
-                              <span><del>AED 200</del></span>
+                              <span><del>{currency} 200</del></span>
                             </div>
                           </div>
                         </div>

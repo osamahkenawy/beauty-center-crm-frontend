@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { Label as TagIcon, Plus, EditPencil, Trash, Check } from 'iconoir-react';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Tags() {
@@ -105,20 +106,7 @@ export default function Tags() {
     }
   };
 
-  const handleDelete = async (tag) => {
-    if (!window.confirm(`Delete tag "${tag.name}"? This action cannot be undone.`)) return;
-    try {
-      const data = await api.delete(`/tags/${tag.id}`);
-      if (data.success) {
-        showToast('success', 'Tag deleted successfully');
-        fetchTags();
-      } else {
-        showToast('error', data.message || 'Failed to delete');
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete tag');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   // Filter tags based on search and type
   const filteredTags = tags.filter(tag => {

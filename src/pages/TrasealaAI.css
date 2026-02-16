@@ -30,7 +30,7 @@
 .tai-orb-1 {
   width: 600px;
   height: 600px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #f2421b 100%);
   top: -200px;
   left: -200px;
   animation-delay: 0s;
@@ -48,7 +48,7 @@
 .tai-orb-3 {
   width: 400px;
   height: 400px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #f2421b 0%, #ec4899 100%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -122,7 +122,7 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #f2421b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +233,7 @@
   width: 100px;
   height: 100px;
   border-radius: 28px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #f2421b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -370,7 +370,7 @@
 }
 
 .tai-message-avatar {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #f2421b 100%);
   color: white;
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }

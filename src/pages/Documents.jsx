@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { FileIcon, Plus, Edit, Trash2, Check, Search, Download, Eye, Upload } from 'lucide-react';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -98,23 +99,7 @@ export default function Documents() {
     }
   };
 
-  const handleDelete = async (doc) => {
-    if (!confirm(`Delete "${doc.title}"?`)) return;
-    try {
-      const token = localStorage.getItem('crm_token');
-      const res = await fetch(`${API_URL}/documents/${doc.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('success', 'Document deleted');
-        fetchDocuments();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const filteredDocs = documents.filter(d =>
     d.title?.toLowerCase().includes(search.toLowerCase()) ||

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Group, Plus, EditPencil, Trash, Eye, RefreshDouble, UserPlus } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Audiences() {
@@ -89,18 +90,7 @@ export default function Audiences() {
     }
   };
 
-  const handleDelete = async (audience) => {
-    if (!confirm(`Delete audience "${audience.name}"?`)) return;
-    try {
-      const data = await api.delete(`/audiences/${audience.id}`);
-      if (data.success) {
-        showToast('success', 'Audience deleted');
-        fetchAudiences();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete audience');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const handleSync = async (audience) => {
     try {

@@ -1,8 +1,10 @@
-import { useState, useContext, useEffect, useReducer, Fragment } from 'react';
+import { useState, useContext, useEffect, useReducer, useCallback, Fragment } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Collapse } from 'react-bootstrap';
+import { Menu, X } from 'lucide-react';
 import { AuthContext } from '../App';
+import api from '../lib/api';
 import AIChatbot from './AIChatbot';
 import './BeautyLayout.css';
 
@@ -37,11 +39,6 @@ const beautyMenuList = [
   },
   { title: 'SERVICES', classsChange: 'menu-title' },
   {
-    title: 'Services',
-    to: '/beauty-services',
-    iconStyle: <i className="flaticon-heart" />,
-  },
-  {
     title: 'Staff',
     to: '/staff-schedule',
     iconStyle: <i className="flaticon-user-1" />,
@@ -63,6 +60,31 @@ const beautyMenuList = [
     iconStyle: <i className="flaticon-price-tag" />,
   },
   {
+    title: 'Packages',
+    to: '/packages',
+    iconStyle: <i className="flaticon-app" />,
+  },
+  {
+    title: 'Memberships',
+    to: '/memberships',
+    iconStyle: <i className="flaticon-user-1" />,
+  },
+  {
+    title: 'Promotions',
+    to: '/promotions',
+    iconStyle: <i className="flaticon-price-tag" />,
+  },
+  {
+    title: 'Reviews',
+    to: '/reviews',
+    iconStyle: <i className="flaticon-heart-1" />,
+  },
+  {
+    title: 'Waitlist',
+    to: '/waitlists',
+    iconStyle: <i className="flaticon-calendar-2" />,
+  },
+  {
     title: 'Reports',
     to: '/beauty-reports',
     iconStyle: <i className="flaticon-bar-chart" />,
@@ -73,9 +95,16 @@ const beautyMenuList = [
     classsChange: 'mm-collapse',
     iconStyle: <i className="flaticon-app" />,
     content: [
-      { title: 'Business Info', to: '/beauty-settings' },
+      { title: 'Business Info', to: '/beauty-settings/business' },
+      { title: 'Locations', to: '/beauty-settings/branches' },
+      { title: 'Categories', to: '/beauty-settings/categories' },
+      { title: 'Service Menu', to: '/beauty-settings/services' },
+      { title: 'Resources', to: '/beauty-settings/resources' },
       { title: 'Working Hours', to: '/beauty-settings/hours' },
       { title: 'Notifications', to: '/beauty-settings/notifications' },
+      { title: 'Online Booking', to: '/beauty-settings/booking' },
+      { title: 'Team', to: '/beauty-settings/team' },
+      { title: 'Sales', to: '/beauty-settings/sales' },
     ],
   },
 ];
@@ -91,6 +120,8 @@ export default function BeautyLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+
+  // Sidebar logo – reserved for platform branding (leave empty for now)
 
   const isRTL = i18n.language === 'ar';
 
@@ -169,22 +200,13 @@ export default function BeautyLayout({ children }) {
       {/* Nav Header (Logo) */}
       <div className="nav-header">
         <Link to="/beauty-dashboard" className="brand-logo">
-          <img 
-            src="/assets/images/logos/TRASEALLA._WHITE_LOGOsvg.svg" 
-            alt="Trasealla" 
-            className="logo-abbr"
-            style={{ height: '40px' }} 
-          />
+          <span className="logo-placeholder" />
         </Link>
         <div 
           className="nav-control"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
-          <div className={`hamburger ${sidebarOpen ? 'is-active' : ''}`}>
-            <span className="line"></span>
-            <span className="line"></span>
-            <span className="line"></span>
-          </div>
+          <Menu size={24} color="#fff" strokeWidth={2.2} />
         </div>
       </div>
 

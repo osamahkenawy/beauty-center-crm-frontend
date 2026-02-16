@@ -10,6 +10,8 @@ import api from '../lib/api';
 import SEO from '../components/SEO';
 import AppointmentCalendar from '../components/AppointmentCalendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
+import useCurrency from '../hooks/useCurrency';
+import { showContactSupport } from '../utils/supportAlert';
 import './CRMPages.css';
 import './BeautyPages.css';
 import './AppointmentsPage.css';
@@ -36,11 +38,13 @@ const svgDots = (
 
 export default function Appointments() {
   const { t } = useTranslation();
+  const { currency } = useCurrency();
   const [appointments, setAppointments] = useState([]);
   const [allAppointments, setAllAppointments] = useState([]);
   const [staff, setStaff] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [services, setServices] = useState([]);
+  const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -62,7 +66,7 @@ export default function Appointments() {
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
 
   const emptyForm = {
-    customer_id: '', service_id: '', staff_id: '',
+    customer_id: '', service_id: '', staff_id: '', branch_id: '',
     booking_date: new Date().toISOString().split('T')[0],
     booking_time: '',
     notes: '', status: 'scheduled'
@@ -74,6 +78,15 @@ export default function Appointments() {
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState({ show: false, id: null, status: '', message: '' });
+
+  // Checkout modal state
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutAppt, setCheckoutAppt] = useState(null);
+  const [checkoutForm, setCheckoutForm] = useState({
+    payment_method: 'cash', discount_amount: 0, discount_type: 'fixed', tax_rate: 5, tip: 0, pay_now: true
+  });
+  const [checkoutResult, setCheckoutResult] = useState(null);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const showToast = useCallback((type, message) => {
     setToast({ show: true, type, message });
@@ -141,14 +154,16 @@ export default function Appointments() {
 
   const fetchDropdownData = useCallback(async () => {
     try {
-      const [staffData, contactsData, productsData] = await Promise.all([
+      const [staffData, contactsData, productsData, branchesData] = await Promise.all([
         api.get('/staff'),
         api.get('/contacts?limit=500'),
-        api.get('/products?category=service'),
+        api.get('/products?active=true'),
+        api.get('/branches?active=true'),
       ]);
       if (staffData.success) setStaff(staffData.data || []);
       if (contactsData.success) setContacts(contactsData.data || []);
       if (productsData.success) setServices(productsData.data || []);
+      if (branchesData.success) setBranches(branchesData.data || []);
     } catch (error) {
       console.error('Failed to fetch dropdown data:', error);
     }
@@ -170,7 +185,9 @@ export default function Appointments() {
   const getBookedSlotsForStaff = () => {
     if (!formData.staff_id || !formData.booking_date) return [];
     return allAppointments.filter(apt => {
-      const aptDate = new Date(apt.start_time).toISOString().split('T')[0];
+      // Use local date parts to compare (avoids UTC date shift near midnight)
+      const s = new Date(apt.start_time);
+      const aptDate = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}`;
       return apt.staff_id === parseInt(formData.staff_id) && 
              aptDate === formData.booking_date &&
              apt.status !== 'cancelled';
@@ -180,17 +197,25 @@ export default function Appointments() {
   const getServiceDuration = () => {
     if (!formData.service_id) return 60;
     const service = services.find(s => s.id === parseInt(formData.service_id));
-    return service?.duration || 60;
+    if (!service) return 60;
+    // Total slot = service duration + processing time + finishing time
+    return (service.duration || 60) + (service.processing_time || 0) + (service.finishing_time || 0);
   };
 
   const openCreateModal = (presetDate = null) => {
     setEditingItem(null);
     setBookingStep(1);
+    let dateStr = new Date().toISOString().split('T')[0];
+    if (presetDate) {
+      if (presetDate instanceof Date) {
+        dateStr = `${presetDate.getFullYear()}-${String(presetDate.getMonth() + 1).padStart(2, '0')}-${String(presetDate.getDate()).padStart(2, '0')}`;
+      } else {
+        dateStr = presetDate;
+      }
+    }
     setFormData({
       ...emptyForm,
-      booking_date: presetDate 
-        ? (presetDate instanceof Date ? presetDate.toISOString().split('T')[0] : presetDate)
-        : new Date().toISOString().split('T')[0]
+      booking_date: dateStr
     });
     setShowModal(true);
   };
@@ -199,11 +224,15 @@ export default function Appointments() {
     setEditingItem(item);
     setBookingStep(1);
     const startTime = item.start_time ? new Date(item.start_time) : new Date();
+    // Use local date parts to avoid UTC date shift near midnight
+    const yr = startTime.getFullYear();
+    const mo = String(startTime.getMonth() + 1).padStart(2, '0');
+    const dy = String(startTime.getDate()).padStart(2, '0');
     setFormData({
       customer_id: String(item.customer_id || ''),
       service_id: String(item.service_id || ''),
       staff_id: String(item.staff_id || ''),
-      booking_date: startTime.toISOString().split('T')[0],
+      booking_date: `${yr}-${mo}-${dy}`,
       booking_time: `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`,
       notes: item.notes || '',
       status: item.status || 'scheduled',
@@ -221,8 +250,9 @@ export default function Appointments() {
     setSaving(true);
     try {
       const [hours, minutes] = formData.booking_time.split(':').map(Number);
-      const startDateTime = new Date(formData.booking_date);
-      startDateTime.setHours(hours, minutes, 0, 0);
+      // Parse date parts manually to avoid UTC-midnight shift in negative-offset timezones
+      const [year, month, day] = formData.booking_date.split('-').map(Number);
+      const startDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
       
       const duration = getServiceDuration();
       const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
@@ -263,19 +293,7 @@ export default function Appointments() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this appointment?')) return;
-    try {
-      const data = await api.delete(`/appointments/${id}`);
-      if (data.success) {
-        showToast('success', 'Appointment deleted');
-        fetchAppointments(pagination.page, pagination.limit);
-        fetchAllAppointments();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => showContactSupport();
 
   const openConfirmModal = (id, newStatus) => {
     const statusLabel = STATUS_MAP[newStatus]?.label || newStatus;
@@ -300,6 +318,43 @@ export default function Appointments() {
       }
     } catch (error) {
       showToast('error', 'Failed to update status');
+    }
+  };
+
+  // ── Checkout Flow ──
+  const openCheckout = (appt) => {
+    setCheckoutAppt(appt);
+    setCheckoutForm({ payment_method: 'cash', discount_amount: 0, discount_type: 'fixed', tax_rate: 5, tip: 0, pay_now: true });
+    setCheckoutResult(null);
+    setShowCheckout(true);
+    if (showViewModal) setShowViewModal(false);
+  };
+
+  const checkoutSubtotal = checkoutAppt ? parseFloat(checkoutAppt.service_price || 0) + parseFloat(checkoutForm.tip || 0) : 0;
+  const checkoutDiscount = checkoutForm.discount_type === 'percentage'
+    ? checkoutSubtotal * (checkoutForm.discount_amount / 100)
+    : parseFloat(checkoutForm.discount_amount || 0);
+  const checkoutAfterDisc = checkoutSubtotal - checkoutDiscount;
+  const checkoutTax = checkoutAfterDisc * (checkoutForm.tax_rate / 100);
+  const checkoutTotal = checkoutAfterDisc + checkoutTax;
+
+  const handleCheckout = async () => {
+    if (!checkoutAppt) return;
+    setCheckingOut(true);
+    try {
+      const data = await api.post(`/appointments/${checkoutAppt.id}/checkout`, checkoutForm);
+      if (data.success) {
+        setCheckoutResult(data.data);
+        showToast('success', data.message || 'Checkout complete!');
+        fetchAppointments(pagination.page, pagination.limit);
+        fetchAllAppointments();
+      } else {
+        showToast('error', data.message || 'Checkout failed');
+      }
+    } catch (error) {
+      showToast('error', error.message || 'Checkout failed');
+    } finally {
+      setCheckingOut(false);
     }
   };
 
@@ -351,6 +406,15 @@ export default function Appointments() {
   const selectedService = services.find(s => s.id === parseInt(formData.service_id));
   const selectedStaff = staff.find(s => s.id === parseInt(formData.staff_id));
   const selectedClient = contacts.find(c => c.id === parseInt(formData.customer_id));
+
+  // Filter services and staff by selected branch
+  const filteredServices = formData.branch_id
+    ? services.filter(s => String(s.branch_id) === formData.branch_id || !s.branch_id)
+    : services;
+
+  const filteredStaff = formData.branch_id
+    ? staff.filter(s => s.is_active && (String(s.branch_id) === formData.branch_id || !s.branch_id))
+    : staff.filter(s => s.is_active);
 
   return (
     <div className="appointments-page">
@@ -569,7 +633,7 @@ export default function Appointments() {
                           <td>
                             <Badge bg={`${statusInfo.variant} light`}>{statusInfo.label}</Badge>
                           </td>
-                          <td className="price-cell">AED {parseFloat(appt.service_price || 0).toFixed(0)}</td>
+                          <td className="price-cell">{currency} {parseFloat(appt.service_price || 0).toFixed(0)}</td>
                           <td className="text-end">
                             <Dropdown align="end">
                               <Dropdown.Toggle variant="light" className="action-dropdown">
@@ -591,8 +655,8 @@ export default function Appointments() {
                                   </Dropdown.Item>
                                 )}
                                 {appt.status !== 'completed' && appt.status !== 'cancelled' && (
-                                  <Dropdown.Item onClick={() => openConfirmModal(appt.id, 'completed')}>
-                                    <Check width={14} height={14} className="me-2" /> Complete
+                                  <Dropdown.Item onClick={() => openCheckout(appt)} className="text-success fw-semibold">
+                                    <Check width={14} height={14} className="me-2" /> Checkout
                                   </Dropdown.Item>
                                 )}
                                 {appt.status !== 'cancelled' && appt.status !== 'completed' && (
@@ -726,10 +790,36 @@ export default function Appointments() {
               {/* Step 1 */}
               {bookingStep === 1 && (
                 <div className="step-content">
+                  {/* Branch Selection */}
+                  {branches.length > 0 && (
+                    <div className="form-section">
+                      <label className="section-label">Select Branch</label>
+                      <div className="staff-selection">
+                        <div 
+                          className={`staff-option ${formData.branch_id === '' ? 'selected' : ''}`}
+                          onClick={() => setFormData(prev => ({ ...prev, branch_id: '', service_id: '', staff_id: '' }))}
+                        >
+                          <div className="staff-avatar-sm" style={{ background: '#667085' }}>A</div>
+                          <span>All Branches</span>
+                        </div>
+                        {branches.map(b => (
+                          <div 
+                            key={b.id}
+                            className={`staff-option ${formData.branch_id === String(b.id) ? 'selected' : ''}`}
+                            onClick={() => setFormData(prev => ({ ...prev, branch_id: String(b.id), service_id: '', staff_id: '' }))}
+                          >
+                            <div className="staff-avatar-sm">{(b.name)?.charAt(0)}</div>
+                            <span>{b.name} {b.is_headquarters ? '(HQ)' : ''}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="form-section">
                     <label className="section-label">Select Service</label>
                     <div className="selection-grid">
-                      {services.map(s => (
+                      {filteredServices.length > 0 ? filteredServices.map(s => (
                         <div 
                           key={s.id}
                           className={`selection-card ${formData.service_id === String(s.id) ? 'selected' : ''}`}
@@ -738,17 +828,19 @@ export default function Appointments() {
                           <div className="selection-card-title">{s.name}</div>
                           <div className="selection-card-meta">
                             <span><Clock width={12} height={12} /> {s.duration || 60}min</span>
-                            <span className="price">AED {parseFloat(s.unit_price || 0).toFixed(0)}</span>
+                            <span className="price">{currency} {parseFloat(s.unit_price || 0).toFixed(0)}</span>
                           </div>
                         </div>
-                      ))}
+                      )) : (
+                        <div className="empty-selection-msg">No services available{formData.branch_id ? ' for this branch' : ''}. Add services in Settings.</div>
+                      )}
                     </div>
                   </div>
 
                   <div className="form-section">
                     <label className="section-label">Select Staff</label>
                     <div className="staff-selection">
-                      {staff.filter(s => s.is_active).map(s => (
+                      {filteredStaff.length > 0 ? filteredStaff.map(s => (
                         <div 
                           key={s.id}
                           className={`staff-option ${formData.staff_id === String(s.id) ? 'selected' : ''}`}
@@ -756,8 +848,11 @@ export default function Appointments() {
                         >
                           <div className="staff-avatar-sm">{(s.full_name || s.username)?.charAt(0)}</div>
                           <span>{s.full_name || s.username}</span>
+                          {s.branch_name && <small style={{ opacity: 0.6, fontSize: 10 }}>{s.branch_name}</small>}
                         </div>
-                      ))}
+                      )) : (
+                        <div className="empty-selection-msg">No staff available{formData.branch_id ? ' for this branch' : ''}.</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -848,7 +943,7 @@ export default function Appointments() {
                     </div>
                     <div className="summary-item total">
                       <span>Total</span>
-                      <strong>AED {parseFloat(selectedService?.unit_price || 0).toFixed(0)}</strong>
+                      <strong>{currency} {parseFloat(selectedService?.unit_price || 0).toFixed(0)}</strong>
                     </div>
                   </div>
                 </div>
@@ -978,18 +1073,25 @@ export default function Appointments() {
               </div>
               <div className="view-status-row">
                 <Badge bg={`${STATUS_MAP[viewingItem.status]?.variant} light`}>{STATUS_MAP[viewingItem.status]?.label}</Badge>
-                <span className="view-price">AED {parseFloat(viewingItem.service_price || 0).toFixed(0)}</span>
+                <span className="view-price">{currency} {parseFloat(viewingItem.service_price || 0).toFixed(0)}</span>
               </div>
               <div className="view-actions-row">
-                <button className="btn-action" onClick={() => { setShowViewModal(false); openEditModal(viewingItem); }}>
-                  <EditPencil width={16} height={16} /> Edit
-                </button>
-                <button className="btn-action success" onClick={() => openConfirmModal(viewingItem.id, 'completed')}>
-                  <Check width={16} height={16} /> Complete
-                </button>
-                <button className="btn-action danger" onClick={() => openConfirmModal(viewingItem.id, 'cancelled')}>
-                  <Xmark width={16} height={16} /> Cancel
-                </button>
+                {viewingItem.status !== 'completed' && viewingItem.status !== 'cancelled' && (
+                  <>
+                    <button className="btn-action" onClick={() => { setShowViewModal(false); openEditModal(viewingItem); }}>
+                      <EditPencil width={16} height={16} /> Edit
+                    </button>
+                    <button className="btn-action success" onClick={() => openCheckout(viewingItem)}>
+                      <Check width={16} height={16} /> Checkout
+                    </button>
+                    <button className="btn-action danger" onClick={() => openConfirmModal(viewingItem.id, 'cancelled')}>
+                      <Xmark width={16} height={16} /> Cancel
+                    </button>
+                  </>
+                )}
+                {viewingItem.status === 'completed' && (
+                  <span className="text-success fw-semibold">✅ Checked out</span>
+                )}
               </div>
             </div>
           </div>
@@ -1023,6 +1125,135 @@ export default function Appointments() {
                 Yes, {STATUS_MAP[confirmModal.status]?.label}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Checkout Modal ═══ */}
+      {showCheckout && checkoutAppt && (
+        <div className="confirm-modal-overlay" onClick={() => !checkingOut && setShowCheckout(false)}>
+          <div className="checkout-modal" onClick={(e) => e.stopPropagation()}>
+            {!checkoutResult ? (
+              <>
+                <div className="checkout-header">
+                  <h3>💳 Checkout</h3>
+                  <button className="checkout-close" onClick={() => setShowCheckout(false)}>
+                    <Xmark width={20} height={20} />
+                  </button>
+                </div>
+
+                {/* Appointment Summary */}
+                <div className="checkout-summary">
+                  <div className="checkout-client">
+                    <div className="checkout-avatar">
+                      {checkoutAppt.customer_first_name?.charAt(0)}{checkoutAppt.customer_last_name?.charAt(0)}
+                    </div>
+                    <div>
+                      <strong>{checkoutAppt.customer_first_name} {checkoutAppt.customer_last_name}</strong>
+                      <span className="checkout-service">{checkoutAppt.service_name}</span>
+                    </div>
+                  </div>
+                  <div className="checkout-staff">
+                    <Scissor width={14} height={14} /> {checkoutAppt.staff_name}
+                  </div>
+                </div>
+
+                {/* Line Items */}
+                <div className="checkout-items">
+                  <div className="checkout-item">
+                    <span>{checkoutAppt.service_name}</span>
+                    <strong>{currency} {parseFloat(checkoutAppt.service_price || 0).toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                {/* Options */}
+                <div className="checkout-options">
+                  <div className="checkout-row">
+                    <label>Payment Method</label>
+                    <select value={checkoutForm.payment_method} onChange={e => setCheckoutForm(p => ({ ...p, payment_method: e.target.value }))}>
+                      <option value="cash">💵 Cash</option>
+                      <option value="card">💳 Card</option>
+                      <option value="bank_transfer">🏦 Bank Transfer</option>
+                      <option value="gift_card">🎁 Gift Card</option>
+                      <option value="other">📋 Other</option>
+                    </select>
+                  </div>
+                  <div className="checkout-row-inline">
+                    <div className="checkout-field">
+                      <label>Discount</label>
+                      <input type="number" min="0" value={checkoutForm.discount_amount} onChange={e => setCheckoutForm(p => ({ ...p, discount_amount: parseFloat(e.target.value) || 0 }))} />
+                    </div>
+                    <div className="checkout-field-sm">
+                      <label>Type</label>
+                      <select value={checkoutForm.discount_type} onChange={e => setCheckoutForm(p => ({ ...p, discount_type: e.target.value }))}>
+                        <option value="fixed">Fixed</option>
+                        <option value="percentage">%</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="checkout-row-inline">
+                    <div className="checkout-field">
+                      <label>Tax Rate (%)</label>
+                      <input type="number" min="0" max="100" step="0.5" value={checkoutForm.tax_rate} onChange={e => setCheckoutForm(p => ({ ...p, tax_rate: parseFloat(e.target.value) || 0 }))} />
+                    </div>
+                    <div className="checkout-field">
+                      <label>Tip</label>
+                      <input type="number" min="0" value={checkoutForm.tip} onChange={e => setCheckoutForm(p => ({ ...p, tip: parseFloat(e.target.value) || 0 }))} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="checkout-totals">
+                  <div className="checkout-total-row">
+                    <span>Subtotal</span>
+                    <span>{currency} {checkoutSubtotal.toFixed(2)}</span>
+                  </div>
+                  {checkoutDiscount > 0 && (
+                    <div className="checkout-total-row discount">
+                      <span>Discount</span>
+                      <span>−{currency} {checkoutDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {checkoutTax > 0 && (
+                    <div className="checkout-total-row">
+                      <span>Tax ({checkoutForm.tax_rate}%)</span>
+                      <span>{currency} {checkoutTax.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="checkout-total-row grand">
+                    <span>Total</span>
+                    <strong>{currency} {checkoutTotal.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                {/* Pay toggle */}
+                <label className="checkout-pay-toggle">
+                  <input type="checkbox" checked={checkoutForm.pay_now} onChange={e => setCheckoutForm(p => ({ ...p, pay_now: e.target.checked }))} />
+                  <span>Mark as paid now</span>
+                </label>
+
+                {/* Action */}
+                <button className="checkout-btn" onClick={handleCheckout} disabled={checkingOut}>
+                  {checkingOut ? 'Processing...' : `Complete & ${checkoutForm.pay_now ? 'Pay' : 'Invoice'} — ${currency} ${checkoutTotal.toFixed(2)}`}
+                </button>
+              </>
+            ) : (
+              /* ── Success State ── */
+              <div className="checkout-success">
+                <div className="checkout-success-icon">✅</div>
+                <h3>Checkout Complete!</h3>
+                <p className="checkout-inv-num">{checkoutResult.invoice_number}</p>
+                <p>Total: <strong>{currency} {parseFloat(checkoutResult.total || 0).toFixed(2)}</strong></p>
+                <p className="checkout-status-label">
+                  {checkoutResult.status === 'paid'
+                    ? <Badge bg="success light">Paid</Badge>
+                    : <Badge bg="warning light">Invoice Sent</Badge>
+                  }
+                </p>
+                <button className="checkout-btn" onClick={() => setShowCheckout(false)}>Done</button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import {
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Leads() {
@@ -125,22 +126,7 @@ export default function Leads() {
     }
   };
 
-  const handleDelete = async (lead) => {
-    if (!confirm(`Delete lead "${lead.first_name} ${lead.last_name || ''}"?`)) return;
-    try {
-      const token = localStorage.getItem('crm_token');
-      const res = await fetch(`${API_URL}/leads/${lead.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        showToast('success', 'Lead deleted successfully!');
-        fetchLeads();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete lead');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const handleStatusChange = async (lead, newStatus) => {
     try {

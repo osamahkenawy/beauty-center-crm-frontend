@@ -30,14 +30,37 @@ export async function apiFetch(endpoint, options = {}) {
   return response.json();
 }
 
+// Upload helper for FormData (multipart)
+export async function apiUpload(endpoint, formData) {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+  if (response.status === 401) {
+    localStorage.removeItem('crm_token');
+    localStorage.removeItem('crm_user');
+    window.location.href = '/login';
+    return { success: false, message: 'Session expired' };
+  }
+  return response.json();
+}
+
 // Convenience methods
 export const api = {
   get: (endpoint) => apiFetch(endpoint, { method: 'GET' }),
   
-  post: (endpoint, data) => apiFetch(endpoint, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
+  post: (endpoint, data, options) => {
+    // Support FormData uploads
+    if (data instanceof FormData) return apiUpload(endpoint, data);
+    return apiFetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
   
   put: (endpoint, data) => apiFetch(endpoint, {
     method: 'PUT',
@@ -50,6 +73,8 @@ export const api = {
   }),
   
   delete: (endpoint) => apiFetch(endpoint, { method: 'DELETE' }),
+  
+  upload: apiUpload,
 };
 
 export default api;

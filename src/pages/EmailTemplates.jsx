@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SendMail, Plus, EditPencil, Trash, Copy, Eye, Check, Xmark } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 const CATEGORIES = [
@@ -133,18 +134,7 @@ export default function EmailTemplates() {
     }
   };
 
-  const handleDelete = async (template) => {
-    if (!confirm(`Delete template "${template.name}"?`)) return;
-    try {
-      const data = await api.delete(`/email-templates/${template.id}`);
-      if (data.success) {
-        showToast('success', 'Template deleted');
-        fetchTemplates();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete template');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const handleDuplicate = async (template) => {
     try {

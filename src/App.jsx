@@ -39,6 +39,11 @@ import BeautyPayments from './pages/BeautyPayments';
 import BeautyReports from './pages/BeautyReports';
 import BeautySettings from './pages/BeautySettings';
 import GiftCards from './pages/GiftCards';
+import Waitlists from './pages/Waitlists';
+import PackagesPage from './pages/Packages';
+import MembershipsPage from './pages/Memberships';
+import PromotionsPage from './pages/Promotions';
+import ReviewsPage from './pages/Reviews';
 
 // Super Admin Pages
 import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
@@ -257,8 +262,8 @@ function App() {
         <Route path="/beauty-dashboard" element={user ? <BeautyLayout><BeautyDashboard /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/appointments" element={user ? <BeautyLayout><Appointments /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/appointments/*" element={user ? <BeautyLayout><Appointments /></BeautyLayout> : <Navigate to="/login" />} />
-        <Route path="/beauty-services" element={user ? <BeautyLayout><BeautyServices /></BeautyLayout> : <Navigate to="/login" />} />
-        <Route path="/beauty-services/*" element={user ? <BeautyLayout><BeautyServices /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-services" element={user ? <Navigate to="/beauty-settings/services" /> : <Navigate to="/login" />} />
+        <Route path="/beauty-services/*" element={user ? <Navigate to="/beauty-settings/services" /> : <Navigate to="/login" />} />
         <Route path="/staff-schedule" element={user ? <BeautyLayout><StaffSchedule /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/staff-schedule/*" element={user ? <BeautyLayout><StaffSchedule /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/loyalty" element={user ? <BeautyLayout><LoyaltyProgram /></BeautyLayout> : <Navigate to="/login" />} />
@@ -272,6 +277,11 @@ function App() {
         <Route path="/beauty-settings" element={user ? <BeautyLayout><BeautySettings /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-settings/*" element={user ? <BeautyLayout><BeautySettings /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/gift-cards" element={user ? <BeautyLayout><GiftCards /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/waitlists" element={user ? <BeautyLayout><Waitlists /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/packages" element={user ? <BeautyLayout><PackagesPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/memberships" element={user ? <BeautyLayout><MembershipsPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/promotions" element={user ? <BeautyLayout><PromotionsPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/reviews" element={user ? <BeautyLayout><ReviewsPage /></BeautyLayout> : <Navigate to="/login" />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />

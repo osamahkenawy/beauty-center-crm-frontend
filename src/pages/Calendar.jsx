@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { EditPencil, Trash } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Calendar() {
@@ -258,19 +259,7 @@ export default function Calendar() {
     }
   };
 
-  const handleDelete = async (activity) => {
-    if (!window.confirm(`Delete "${activity.subject}"?`)) return;
-    try {
-      const data = await api.delete(`/activities/${activity.id}`);
-      if (data.success) {
-        showToast('success', 'Deleted successfully');
-        fetchActivities();
-        setShowDayModal(false);
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const getTypeData = (type) => {
     return activityTypes.find(t => t.value === type) || activityTypes[3];

@@ -1,0 +1,79 @@
+.wl-page { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.wl-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+.wl-title { font-size: 24px; font-weight: 700; color: #1a1a2e; margin: 0; }
+.wl-subtitle { color: #666; font-size: 14px; margin: 4px 0 0; }
+.wl-btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; background: #101820; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.wl-btn-primary:hover { background: #2d3748; transform: translateY(-1px); }
+.wl-btn-outline { padding: 10px 20px; background: #fff; color: #333; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; }
+.wl-btn-outline:hover { border-color: #999; }
+
+/* Stats */
+.wl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.wl-stat-card { background: #fff; border-radius: 12px; padding: 16px; border-left: 4px solid; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.wl-stat-num { font-size: 28px; font-weight: 700; }
+.wl-stat-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+
+/* Filters */
+.wl-filters { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+.wl-search-wrap { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 5px 12px; flex: 1; min-width: 200px; max-width: 350px; height: 36px; }
+.wl-search-wrap input { border: none; outline: none; flex: 1; font-size: 14px; background: transparent; }
+.wl-search-wrap svg { color: #999; flex-shrink: 0; }
+.wl-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.wl-tab { padding: 6px 14px; border: 1px solid #e0e0e0; border-radius: 20px; background: #fff; font-size: 13px; cursor: pointer; transition: all .2s; color: #666; }
+.wl-tab.active { background: #101820; color: #fff; border-color: #101820; }
+.wl-tab:hover:not(.active) { border-color: #999; }
+
+/* List */
+.wl-list { display: flex; flex-direction: column; gap: 8px; }
+.wl-card { display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); transition: all .2s; gap: 16px; }
+.wl-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); transform: translateY(-1px); }
+.wl-card-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.wl-card-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; }
+.wl-card-info h4 { margin: 0; font-size: 15px; font-weight: 600; color: #1a1a2e; }
+.wl-card-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.wl-meta-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #666; background: #f5f5f5; padding: 2px 8px; border-radius: 12px; }
+.wl-card-notes { margin: 6px 0 0; font-size: 12px; color: #888; font-style: italic; }
+.wl-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.wl-status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.wl-card-actions { display: flex; gap: 4px; }
+.wl-action-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #e0e0e0; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #666; transition: all .15s; }
+.wl-action-btn:hover { background: #f5f5f5; color: #333; }
+.wl-action-book { color: #2e7d32; border-color: #c8e6c9; }
+.wl-action-book:hover { background: #e8f5e9; color: #1b5e20; }
+.wl-action-cancel { color: #e65100; border-color: #ffe0b2; }
+.wl-action-cancel:hover { background: #fff3e0; color: #bf360c; }
+.wl-action-delete { color: #c62828; border-color: #ffcdd2; }
+.wl-action-delete:hover { background: #fce4ec; color: #b71c1c; }
+
+/* Empty state */
+.wl-empty { text-align: center; padding: 80px 20px; color: #999; }
+.wl-empty h3 { margin: 16px 0 8px; color: #333; }
+.wl-empty p { color: #888; }
+
+/* Modal */
+.wl-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.wl-modal { background: #fff; border-radius: 16px; padding: 28px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.wl-modal h2 { margin: 0 0 20px; font-size: 20px; color: #1a1a2e; }
+.wl-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.wl-field { display: flex; flex-direction: column; gap: 6px; }
+.wl-field label { font-size: 13px; font-weight: 600; color: #555; }
+.wl-field input, .wl-field select, .wl-field textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border-color .2s; }
+.wl-field input:focus, .wl-field select:focus, .wl-field textarea:focus { border-color: #101820; }
+.wl-field-half { grid-column: 1 / -1; }
+.wl-time-range { display: flex; align-items: center; gap: 8px; }
+.wl-time-range input { flex: 1; }
+.wl-time-range span { color: #999; font-size: 13px; }
+.wl-modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
+
+/* Loading */
+.wl-loading { display: flex; justify-content: center; align-items: center; height: 60vh; }
+.wl-spinner { width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #101820; border-radius: 50%; animation: wlSpin 0.8s linear infinite; }
+@keyframes wlSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .wl-page { padding: 16px; }
+  .wl-card { flex-direction: column; align-items: stretch; }
+  .wl-card-right { flex-direction: row; justify-content: space-between; align-items: center; }
+  .wl-form-grid { grid-template-columns: 1fr; }
+  .wl-stats { grid-template-columns: repeat(2, 1fr); }
+}

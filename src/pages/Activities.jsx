@@ -6,6 +6,7 @@ import {
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Activities() {
@@ -212,59 +213,13 @@ export default function Activities() {
     }
   };
 
-  const handleDelete = useCallback((activity) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Activity',
-      message: `Are you sure you want to delete "${activity.subject}"?`,
-      loading: false,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, loading: true }));
-        try {
-          const token = localStorage.getItem('crm_token');
-          const res = await fetch(`${API_URL}/activities/${activity.id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (res.ok) {
-            showToast('success', 'Activity deleted');
-            fetchActivities();
-          }
-        } catch (error) {
-          showToast('error', 'Failed to delete');
-        }
-        setConfirmModal(prev => ({ ...prev, isOpen: false, loading: false }));
-      }
-    });
-  }, [fetchActivities, showToast]);
+  const handleDelete = useCallback(() => {
+    supportAlert();
+  }, []);
 
   const handleBulkDelete = useCallback(() => {
-    if (selectedIds.size === 0) return;
-    
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Multiple Activities',
-      message: `Are you sure you want to delete ${selectedIds.size} selected activities?`,
-      loading: false,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, loading: true }));
-        try {
-          const token = localStorage.getItem('crm_token');
-          const deletePromises = Array.from(selectedIds).map(id =>
-            fetch(`${API_URL}/activities/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
-          );
-          await Promise.all(deletePromises);
-          showToast('success', `${selectedIds.size} activities deleted`);
-          setSelectedIds(new Set());
-          setSelectAll(false);
-          fetchActivities();
-        } catch (error) {
-          showToast('error', 'Failed to delete some activities');
-        }
-        setConfirmModal(prev => ({ ...prev, isOpen: false, loading: false }));
-      }
-    });
-  }, [selectedIds, fetchActivities, showToast]);
+    supportAlert();
+  }, []);
 
   const toggleSelect = useCallback((id) => {
     setSelectedIds(prev => {

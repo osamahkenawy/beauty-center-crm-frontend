@@ -2,9 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { Package, Plus, EditPencil, Trash, Check, Dollar } from 'iconoir-react';
 import SEO from '../components/SEO';
+import useCurrency from '../hooks/useCurrency';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Products() {
+  const { currency } = useCurrency();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -15,7 +18,7 @@ export default function Products() {
   const [toast, setToast] = useState({ show: false, type: '', message: '' });
 
   const [formData, setFormData] = useState({
-    name: '', description: '', sku: '', unit_price: '', currency: 'AED', category: '', is_active: true
+    name: '', description: '', sku: '', unit_price: '', currency: '', category: '', is_active: true
   });
 
   const categories = ['Software', 'Hardware', 'Service', 'Subscription', 'Consulting', 'Training', 'Support', 'Other'];
@@ -49,7 +52,7 @@ export default function Products() {
 
   const openCreateModal = () => {
     setEditingProduct(null);
-    setFormData({ name: '', description: '', sku: '', unit_price: '', currency: 'AED', category: '', is_active: true });
+    setFormData({ name: '', description: '', sku: '', unit_price: '', currency: currency || 'AED', category: '', is_active: true });
     setShowModal(true);
   };
 
@@ -60,7 +63,7 @@ export default function Products() {
       description: product.description || '',
       sku: product.sku || '',
       unit_price: product.unit_price || '',
-      currency: product.currency || 'AED',
+      currency: product.currency || currency || 'AED',
       category: product.category || '',
       is_active: product.is_active === 1 || product.is_active === true
     });
@@ -94,20 +97,7 @@ export default function Products() {
     }
   };
 
-  const handleDelete = async (product) => {
-    if (!window.confirm(`Delete "${product.name}"? This action cannot be undone.`)) return;
-    try {
-      const data = await api.delete(`/products/${product.id}`);
-      if (data.success) {
-        showToast('success', 'Product deleted successfully');
-        fetchProducts();
-      } else {
-        showToast('error', data.message || 'Failed to delete');
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete product');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,8 +106,13 @@ export default function Products() {
     return matchesSearch && matchesCategory;
   });
 
-  const formatCurrency = (amount, currency = 'AED') => {
-    return new Intl.NumberFormat('en-AE', { style: 'currency', currency, minimumFractionDigits: 2 }).format(amount || 0);
+  const formatCurrency = (amount, cur) => {
+    const c = cur || currency || 'AED';
+    try {
+      return new Intl.NumberFormat('en-AE', { style: 'currency', currency: c, minimumFractionDigits: 2 }).format(amount || 0);
+    } catch {
+      return `${c} ${parseFloat(amount || 0).toFixed(2)}`;
+    }
   };
 
   // Get unique categories from products
@@ -376,7 +371,7 @@ export default function Products() {
                       onChange={handleInputChange} 
                       className="form-control"
                     >
-                      <option value="AED">AED - UAE Dirham</option>
+                      <option value={currency || 'AED'}>{currency || 'AED'} (Default)</option>
                       <option value="USD">USD - US Dollar</option>
                       <option value="EUR">EUR - Euro</option>
                       <option value="GBP">GBP - British Pound</option>

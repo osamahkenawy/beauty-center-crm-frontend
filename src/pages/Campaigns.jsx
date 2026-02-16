@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Megaphone, Plus, EditPencil, Trash, Check, Search, Play, Pause, StatsUpSquare } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
+import useCurrency from '../hooks/useCurrency';
 import './CRMPages.css';
 
 export default function Campaigns() {
@@ -99,18 +101,7 @@ export default function Campaigns() {
     }
   };
 
-  const handleDelete = async (campaign) => {
-    if (!confirm(`Delete campaign "${campaign.name}"?`)) return;
-    try {
-      const data = await api.delete(`/campaigns/${campaign.id}`);
-      if (data.success) {
-        showToast('success', 'Campaign deleted');
-        fetchCampaigns();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const getStatusColor = (status) => {
     const colors = { draft: 'secondary', scheduled: 'info', running: 'success', completed: 'primary', cancelled: 'danger' };
@@ -122,8 +113,9 @@ export default function Campaigns() {
     return icons[type] || '📢';
   };
 
+  const { currency: tenantCurrency } = useCurrency();
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED', minimumFractionDigits: 0 }).format(amount || 0);
+    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: tenantCurrency || 'AED', minimumFractionDigits: 0 }).format(amount || 0);
   };
 
   return (

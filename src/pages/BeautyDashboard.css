@@ -21,6 +21,66 @@
 /* Page Head */
 .page-head {
   margin-bottom: 1.5rem;
+  width: 100% !important;
+  overflow: visible !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.content-body .container-fluid {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+}
+
+.page-head .row {
+  width: 100% !important;
+  overflow: visible !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.page-head .row > [class*="col-"] {
+  overflow: visible !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+}
+
+.page-head [class*="col-"]:first-child {
+  overflow: visible !important;
+  min-width: 0 !important;
+}
+
+.page-head-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.page-head-buttons .btn {
+  display: inline-flex !important;
+  flex-shrink: 0 !important;
+  width: auto !important;
+  min-width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 768px) {
+  .page-head-buttons {
+    justify-content: flex-end !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .page-head-buttons {
+    justify-content: flex-start !important;
+  }
 }
 
 .page-head h3 {
@@ -29,12 +89,29 @@
   color: var(--text);
   margin-bottom: 0.25rem;
   font-family: 'Inter', sans-serif;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+  max-width: 100% !important;
+  width: auto !important;
+  display: block !important;
 }
 
 .page-head p {
   color: var(--text-gray);
   font-size: 14px;
   margin-bottom: 0;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+  max-width: none !important;
+  width: 100% !important;
+  display: block !important;
+  min-width: 0 !important;
 }
 
 /* Buttons */
@@ -290,7 +367,7 @@
 }
 
 .bg-purple-light {
-  background: rgba(156, 39, 176, 0.1) !important;
+  background: rgba(242, 66, 27, 0.1) !important;
 }
 
 .bg-cream-light {
@@ -819,6 +896,13 @@
   
   .page-head h3 {
     font-size: 1.25rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .page-head p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   
   .mix-chart-tab .nav-item .nav-link {
@@ -845,8 +929,26 @@
 }
 
 @media (max-width: 576px) {
-  .page-head .col-sm-6.text-sm-end {
-    text-align: left !important;
+  .page-head [class*="col-"]:last-child {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+  }
+  
+  .page-head [class*="col-"]:last-child .btn {
+    flex: 1 1 auto !important;
+    min-width: 140px !important;
+  }
+  
+  .page-head h3,
+  .page-head p {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
   
   .btn-outline-secondary,

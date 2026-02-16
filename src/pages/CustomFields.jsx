@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
+import { supportAlert } from '../utils/supportAlert';
+import {
   Settings, Plus, EditPencil, Trash, Check, Xmark,
   Text, Calendar, List, CheckCircle, Mail, Phone, 
   Link as LinkIcon, ColorWheel, Hashtag, Drag
@@ -26,7 +27,7 @@ export default function CustomFields() {
   const entityTypes = [
     { value: 'lead', label: 'Lead', color: '#f59e0b' },
     { value: 'contact', label: 'Contact', color: '#3b82f6' },
-    { value: 'account', label: 'Account', color: '#8b5cf6' },
+    { value: 'account', label: 'Account', color: '#f2421b' },
     { value: 'deal', label: 'Deal', color: '#22c55e' },
     { value: 'activity', label: 'Activity', color: '#ec4899' }
   ];
@@ -125,18 +126,7 @@ export default function CustomFields() {
     }
   };
 
-  const handleDelete = async (field) => {
-    if (!confirm(`Deactivate field "${field.field_label}"?`)) return;
-    try {
-      const data = await api.delete(`/custom-fields/${field.id}`);
-      if (data.success) {
-        showToast('success', 'Field deactivated');
-        fetchFields();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to deactivate');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   // Group fields by entity type
   const groupedFields = fields.reduce((acc, field) => {

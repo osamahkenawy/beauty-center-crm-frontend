@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
+import {
   Page, Plus, Search, EditPencil, Trash, Eye, 
   Calendar, Building, DollarCircle, Check, Xmark,
   FilterList, Send, Clock, Wallet
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
+import useCurrency from '../hooks/useCurrency';
 import './Quotes.css';
 
 export default function Quotes() {
+  const { currency: tenantCurrency } = useCurrency();
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -24,7 +27,7 @@ export default function Quotes() {
 
   const [formData, setFormData] = useState({
     subject: '', deal_id: '', account_id: '', valid_until: '', status: 'draft',
-    subtotal: 0, discount: 0, tax: 0, total: 0, currency: 'AED', notes: '', terms: ''
+    subtotal: 0, discount: 0, tax: 0, total: 0, currency: '', notes: '', terms: ''
   });
 
   const showToast = useCallback((type, message) => {
@@ -83,7 +86,7 @@ export default function Quotes() {
     setEditingQuote(null);
     setFormData({
       subject: '', deal_id: '', account_id: '', valid_until: '', status: 'draft',
-      subtotal: 0, discount: 0, tax: 0, total: 0, currency: 'AED', notes: '', terms: ''
+      subtotal: 0, discount: 0, tax: 0, total: 0, currency: tenantCurrency, notes: '', terms: ''
     });
     setShowModal(true);
   };
@@ -94,7 +97,7 @@ export default function Quotes() {
       subject: quote.subject || '', deal_id: quote.deal_id || '', account_id: quote.account_id || '',
       valid_until: quote.valid_until ? quote.valid_until.split('T')[0] : '',
       status: quote.status || 'draft', subtotal: quote.subtotal || 0, discount: quote.discount || 0,
-      tax: quote.tax || 0, total: quote.total || 0, currency: quote.currency || 'AED',
+      tax: quote.tax || 0, total: quote.total || 0, currency: quote.currency || tenantCurrency,
       notes: quote.notes || '', terms: quote.terms || ''
     });
     setShowModal(true);
@@ -133,18 +136,7 @@ export default function Quotes() {
     }
   };
 
-  const handleDelete = async (quote) => {
-    if (!confirm(`Delete quote "${quote.quote_number}"?`)) return;
-    try {
-      const data = await api.delete(`/quotes/${quote.id}`);
-      if (data.success) {
-        showToast('success', 'Quote deleted');
-        fetchQuotes();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const filteredQuotes = quotes.filter(q =>
     q.quote_number?.toLowerCase().includes(search.toLowerCase()) ||
@@ -152,7 +144,9 @@ export default function Quotes() {
     q.account_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const formatCurrency = (amount, currency = 'AED') => {
+  const formatCurrency = (amount, currency) => {
+    currency = currency || tenantCurrency || 'AED';
+    // formatCurrency override
     return new Intl.NumberFormat('en-AE', { style: 'currency', currency, minimumFractionDigits: 2 }).format(amount || 0);
   };
 
@@ -468,9 +462,11 @@ export default function Quotes() {
                       value={formData.currency} 
                       onChange={handleInputChange}
                     >
-                      <option value="AED">AED</option>
+                      <option value={tenantCurrency}>{tenantCurrency} (Default)</option>
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="SAR">SAR</option>
                     </select>
                   </div>
                 </div>

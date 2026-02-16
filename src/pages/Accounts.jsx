@@ -6,6 +6,7 @@ import {
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './Accounts.css';
 
 export default function Accounts() {
@@ -88,15 +89,7 @@ export default function Accounts() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this account?')) return;
-    try {
-      const data = await api.delete(`/accounts/${id}`);
-      if (data.success) fetchAccounts();
-    } catch (error) {
-      console.error('Delete failed:', error);
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const getStatusColor = (status) => {
     return { active: 'success', inactive: 'secondary', prospect: 'warning' }[status] || 'secondary';

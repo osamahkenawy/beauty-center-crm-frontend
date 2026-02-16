@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { supportAlert } from '../utils/supportAlert';
 import { 
   GraphUp, Plus, EditPencil, Trash, Xmark, Check,
   Percentage, Trophy, XmarkCircle, ArrowDown, Drag
@@ -53,7 +54,7 @@ export default function Pipelines() {
       name: '', description: '', industry: '', is_default: false,
       stages: [
         { name: t('pipelineStages.qualification', { defaultValue: 'Qualification' }), color: '#3b82f6', probability: 10 },
-        { name: t('pipelineStages.needsanalysis', { defaultValue: 'Needs Analysis' }), color: '#8b5cf6', probability: 25 },
+        { name: t('pipelineStages.needsanalysis', { defaultValue: 'Needs Analysis' }), color: '#f2421b', probability: 25 },
         { name: t('pipelineStages.proposal', { defaultValue: 'Proposal' }), color: '#f59e0b', probability: 50 },
         { name: t('pipelineStages.negotiation', { defaultValue: 'Negotiation' }), color: '#ec4899', probability: 75 },
         { name: t('pipelineStages.closedwon', { defaultValue: 'Closed Won' }), color: '#22c55e', probability: 100, is_won: true },
@@ -97,20 +98,7 @@ export default function Pipelines() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm(t('pipelines.deleteConfirm'))) return;
-    try {
-      const data = await api.delete(`/pipelines/${id}`);
-      if (data.success) {
-        showToast('success', t('pipelines.pipelineDeleted'));
-        fetchPipelines();
-      } else {
-        showToast('error', data.message);
-      }
-    } catch (error) {
-      showToast('error', t('pipelines.failedToDelete'));
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const addStage = () => {
     setFormData(prev => ({

@@ -6,6 +6,8 @@ import {
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import useCurrency from '../hooks/useCurrency';
+import { showContactSupport } from '../utils/supportAlert';
 import './CRMPages.css';
 import './BeautyPages.css';
 
@@ -23,6 +25,7 @@ const SERVICE_CATEGORIES = [
 
 export default function BeautyServices() {
   const { t } = useTranslation();
+  const { currency } = useCurrency();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -34,7 +37,7 @@ export default function BeautyServices() {
   const [stats, setStats] = useState({ total: 0, active: 0, categories: 0 });
 
   const emptyForm = {
-    name: '', description: '', sku: '', unit_price: '', currency: 'AED',
+    name: '', description: '', sku: '', unit_price: '', currency: '',
     category: 'hair', duration: '60', stock_quantity: 0, is_active: true,
   };
   const [formData, setFormData] = useState(emptyForm);
@@ -129,18 +132,7 @@ export default function BeautyServices() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this service?')) return;
-    try {
-      const data = await api.delete(`/products/${id}`);
-      if (data.success) {
-        showToast('success', 'Service deleted');
-        fetchServices();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => showContactSupport();
 
   const getCategoryInfo = (cat) => SERVICE_CATEGORIES.find(c => c.value === cat) || SERVICE_CATEGORIES[SERVICE_CATEGORIES.length - 1];
 
@@ -231,7 +223,7 @@ export default function BeautyServices() {
                     <h3 className="service-card-name">{service.name}</h3>
                     <p className="service-card-desc">{service.description || 'No description'}</p>
                     <div className="service-card-meta">
-                      <span className="service-price">AED {parseFloat(service.unit_price || 0).toFixed(0)}</span>
+                      <span className="service-price">{currency} {parseFloat(service.unit_price || 0).toFixed(0)}</span>
                       {service.duration && (
                         <span className="service-duration"><Clock width={14} height={14} /> {service.duration} min</span>
                       )}
@@ -276,7 +268,7 @@ export default function BeautyServices() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Price (AED) *</label>
+                  <label className="form-label">Price ({currency}) *</label>
                   <input type="number" name="unit_price" value={formData.unit_price} onChange={handleInputChange} className="form-control" required min="0" step="0.01" placeholder="0.00" />
                 </div>
                 <div className="form-group">

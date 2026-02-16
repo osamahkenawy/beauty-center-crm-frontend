@@ -23,6 +23,7 @@ import {
 import { AuthContext } from '../App';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import useCurrency from '../hooks/useCurrency';
 import './Dashboard.css';
 
 ChartJS.register(
@@ -74,11 +75,12 @@ export default function Dashboard() {
     return t('dashboard.goodNight');
   };
 
+  const { currency: tenantCurrency } = useCurrency();
   const formatCurrency = (value) => {
     const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-US';
     return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: 'AED',
+      currency: tenantCurrency || 'AED',
       minimumFractionDigits: 0,
     }).format(value || 0);
   };

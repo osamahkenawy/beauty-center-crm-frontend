@@ -122,7 +122,7 @@
 .feature-icon.gradient-1 { background: linear-gradient(135deg, #f2421b 0%, #ff6b4a 100%); }
 .feature-icon.gradient-2 { background: linear-gradient(135deg, #244066 0%, #3b5998 100%); }
 .feature-icon.gradient-3 { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); }
-.feature-icon.gradient-4 { background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%); }
+.feature-icon.gradient-4 { background: linear-gradient(135deg, #f2421b 0%, #ff6b4a 100%); }
 
 .feature-content strong {
   display: block;

@@ -20,6 +20,7 @@ import {
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import useCurrency from '../hooks/useCurrency';
 import './Reports.css';
 
 ChartJS.register(
@@ -58,11 +59,12 @@ export default function Reports() {
     fetchReports();
   }, [fetchReports]);
 
+  const { currency: tenantCurrency } = useCurrency();
   const formatCurrency = (amount) => {
     const locale = i18n.language === 'ar' ? 'ar-AE' : 'en-AE';
     return new Intl.NumberFormat(locale, { 
       style: 'currency', 
-      currency: 'AED', 
+      currency: tenantCurrency || 'AED', 
       minimumFractionDigits: 0 
     }).format(amount || 0);
   };
@@ -115,7 +117,7 @@ export default function Reports() {
     labels: reportData?.sales?.byStage?.map(s => translateStageName(s.name)) || [t('pipelineStages.stage1', { defaultValue: 'Stage 1' }), t('pipelineStages.stage2', { defaultValue: 'Stage 2' }), t('pipelineStages.stage3', { defaultValue: 'Stage 3' })],
     datasets: [{
       data: reportData?.sales?.byStage?.map(s => s.count) || [5, 8, 3],
-      backgroundColor: reportData?.sales?.byStage?.map(s => s.color) || ['#3b82f6', '#8b5cf6', '#f59e0b'],
+      backgroundColor: reportData?.sales?.byStage?.map(s => s.color) || ['#3b82f6', '#f2421b', '#f59e0b'],
       borderWidth: 0,
     }]
   };

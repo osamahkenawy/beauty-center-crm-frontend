@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -119,23 +120,7 @@ export default function Notes() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm(t('notes.deleteConfirm'))) return;
-
-    try {
-      const token = localStorage.getItem('crm_token');
-      const res = await fetch(`${API_URL}/notes/${id}`, { 
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        fetchNotes();
-      }
-    } catch (error) {
-      console.error('Error deleting note:', error);
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const formatDate = (date) => {
     if (!date) return '-';

@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EditPencil, Trash } from 'iconoir-react';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
+import useCurrency from '../hooks/useCurrency';
 import './CRMPages.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export default function Deals() {
+  const { currency: tenantCurrency } = useCurrency();
   const [deals, setDeals] = useState([]);
   const [pipelines, setPipelines] = useState([]);
   const [stats, setStats] = useState({ open_deals: 0, pipeline_value: 0, weighted_value: 0, won_value: 0 });
@@ -19,7 +22,7 @@ export default function Deals() {
   const [toast, setToast] = useState({ show: false, type: '', message: '' });
 
   const [formData, setFormData] = useState({
-    name: '', account_id: '', amount: '', currency: 'AED',
+    name: '', account_id: '', amount: '', currency: '',
     expected_close_date: '', description: '', stage_id: ''
   });
 
@@ -80,7 +83,7 @@ export default function Deals() {
   const openCreateModal = (stageId = null) => {
     setEditing(null);
     setFormData({
-      name: '', account_id: '', amount: '', currency: 'AED',
+      name: '', account_id: '', amount: '', currency: tenantCurrency,
       expected_close_date: '', description: '', stage_id: stageId || ''
     });
     setShowModal(true);
@@ -90,7 +93,7 @@ export default function Deals() {
     setEditing(deal);
     setFormData({
       name: deal.name || '', account_id: deal.account_id || '',
-      amount: deal.amount || '', currency: deal.currency || 'AED',
+      amount: deal.amount || '', currency: deal.currency || tenantCurrency,
       expected_close_date: deal.expected_close_date ? deal.expected_close_date.split('T')[0] : '',
       description: deal.description || '', stage_id: deal.stage_id || ''
     });
@@ -138,25 +141,11 @@ export default function Deals() {
     }
   };
 
-  const handleDelete = async (deal) => {
-    if (!confirm(`Delete deal "${deal.name}"?`)) return;
-    try {
-      const token = localStorage.getItem('crm_token');
-      const res = await fetch(`${API_URL}/deals/${deal.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        showToast('success', 'Deal deleted');
-        fetchDeals();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete deal');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
-  const formatCurrency = (value, currency = 'AED') => {
-    return new Intl.NumberFormat('en-AE', { style: 'currency', currency, minimumFractionDigits: 0 }).format(value || 0);
+  const formatCurrency = (value, cur) => {
+    const c = cur || tenantCurrency || 'AED';
+    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: c, minimumFractionDigits: 0 }).format(value || 0);
   };
 
   const currentPipeline = pipelines.find(p => p.id === selectedPipeline);
@@ -481,7 +470,7 @@ export default function Deals() {
                   <div className="form-group">
                     <label className="form-label">Currency</label>
                     <select className="form-select" name="currency" value={formData.currency} onChange={handleInputChange}>
-                      <option value="AED">AED</option>
+                      <option value={tenantCurrency}>{tenantCurrency}</option>
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
                       <option value="GBP">GBP</option>

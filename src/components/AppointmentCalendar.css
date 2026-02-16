@@ -251,11 +251,18 @@
 
 .more-indicator {
   font-size: 10px;
-  color: #6c757d;
+  color: #f2421b;
   text-align: center;
   padding: 2px 4px;
-  background: #e9ecef;
+  background: #fff5f3;
   border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.more-indicator:hover {
+  background: #f2421b;
+  color: #fff;
 }
 
 /* Day View */
@@ -466,4 +473,120 @@
     padding: 8px;
     font-size: 11px;
   }
+}
+
+/* ── Expanded Day Popup ("+N more" click) ── */
+.calendar-day-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.calendar-day-popup {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 440px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.calendar-day-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f2f4f7;
+}
+.calendar-day-popup-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #101828;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.popup-count {
+  font-size: 11px;
+  font-weight: 600;
+  background: #f2421b;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.popup-close {
+  background: none;
+  border: none;
+  color: #667085;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.popup-close:hover {
+  background: #f2f4f7;
+  color: #101828;
+}
+.calendar-day-popup-list {
+  overflow-y: auto;
+  padding: 8px;
+}
+.popup-apt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.popup-apt-item:hover {
+  background: #f9fafb;
+}
+.popup-apt-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: #344054;
+  min-width: 72px;
+  flex-shrink: 0;
+}
+.popup-apt-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.popup-apt-client {
+  font-size: 13px;
+  font-weight: 600;
+  color: #101828;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popup-apt-service {
+  font-size: 11px;
+  color: #667085;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popup-apt-badge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: #fff;
+  text-transform: capitalize;
+  flex-shrink: 0;
 }

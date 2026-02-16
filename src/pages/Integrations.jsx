@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Network, Plus, EditPencil, Trash, Check, Xmark, RefreshDouble, Link } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 const PLATFORMS = [
@@ -108,18 +109,7 @@ export default function Integrations() {
     }
   };
 
-  const handleDelete = async (integration) => {
-    if (!confirm(`Delete integration "${integration.name}"?`)) return;
-    try {
-      const data = await api.delete(`/integrations/${integration.id}`);
-      if (data.success) {
-        showToast('success', 'Integration deleted');
-        fetchIntegrations();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete integration');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const handleToggle = async (integration) => {
     try {

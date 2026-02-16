@@ -6,6 +6,7 @@ import {
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
 import './CRMPages.css';
 
 export default function Contacts() {
@@ -149,21 +150,7 @@ export default function Contacts() {
     }
   };
 
-  const handleDelete = async (contact) => {
-    if (!window.confirm(`Delete contact "${contact.first_name} ${contact.last_name || ''}"?`)) return;
-    try {
-      const data = await api.delete(`/contacts/${contact.id}`);
-      if (data.success) {
-        showToast('success', 'Contact deleted successfully');
-        fetchContacts();
-      } else {
-        showToast('error', data.message);
-      }
-    } catch (error) {
-      console.error('Delete failed:', error);
-      showToast('error', 'Failed to delete contact');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   const formatDate = (date) => {
     if (!date) return '-';

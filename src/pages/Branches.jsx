@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import { Building2, Plus, Edit, Trash2, Check, MapPin, Phone, Mail, Star } from 'lucide-react';
 import SEO from '../components/SEO';
+import { supportAlert } from '../utils/supportAlert';
+import useCurrency from '../hooks/useCurrency';
 import './CRMPages.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export default function Branches() {
+  const { currency: tenantCurrency } = useCurrency();
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -17,7 +20,7 @@ export default function Branches() {
 
   const [formData, setFormData] = useState({
     name: '', name_ar: '', code: '', address: '', city: '', country: 'UAE',
-    phone: '', email: '', manager_id: '', is_headquarters: false, is_active: true, timezone: 'Asia/Dubai', currency: 'AED'
+    phone: '', email: '', manager_id: '', is_headquarters: false, is_active: true, timezone: 'Asia/Dubai', currency: ''
   });
 
   const showToast = useCallback((type, message) => {
@@ -66,7 +69,7 @@ export default function Branches() {
     setEditingBranch(null);
     setFormData({
       name: '', name_ar: '', code: '', address: '', city: '', country: 'UAE',
-      phone: '', email: '', manager_id: '', is_headquarters: false, is_active: true, timezone: 'Asia/Dubai', currency: 'AED'
+      phone: '', email: '', manager_id: '', is_headquarters: false, is_active: true, timezone: 'Asia/Dubai', currency: tenantCurrency
     });
     setShowModal(true);
   };
@@ -78,7 +81,7 @@ export default function Branches() {
       address: branch.address || '', city: branch.city || '', country: branch.country || 'UAE',
       phone: branch.phone || '', email: branch.email || '', manager_id: branch.manager_id || '',
       is_headquarters: branch.is_headquarters === 1, is_active: branch.is_active === 1,
-      timezone: branch.timezone || 'Asia/Dubai', currency: branch.currency || 'AED'
+      timezone: branch.timezone || 'Asia/Dubai', currency: branch.currency || tenantCurrency
     });
     setShowModal(true);
   };
@@ -108,23 +111,7 @@ export default function Branches() {
     }
   };
 
-  const handleDelete = async (branch) => {
-    if (!confirm(`Delete branch "${branch.name}"?`)) return;
-    try {
-      const token = localStorage.getItem('crm_token');
-      const res = await fetch(`${API_URL}/branches/${branch.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('success', 'Branch deleted');
-        fetchBranches();
-      }
-    } catch (error) {
-      showToast('error', 'Failed to delete');
-    }
-  };
+  const handleDelete = () => supportAlert();
 
   return (
     <div className="crm-page">
@@ -260,9 +247,10 @@ export default function Branches() {
                   <div className="form-group">
                     <label>Currency</label>
                     <select name="currency" value={formData.currency} onChange={handleInputChange} className="form-control">
-                      <option value="AED">AED</option>
+                      <option value={tenantCurrency}>{tenantCurrency} (Default)</option>
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
                       <option value="SAR">SAR</option>
                     </select>
                   </div>

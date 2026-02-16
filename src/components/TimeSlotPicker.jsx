@@ -16,11 +16,17 @@ export default function TimeSlotPicker({
   const stableBookedSlots = bookedSlots || [];
   const stableWorkingHours = workingHours || DEFAULT_WORKING_HOURS;
 
+  // Parse date string safely into local date parts (avoids UTC-midnight shift)
+  const parseLocalDate = (dateStr, hour = 0, minute = 0) => {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d, hour, minute, 0, 0);
+  };
+
   const checkIfBooked = (hour, minute, serviceDuration, date, booked) => {
     if (!date) return false;
 
-    const slotStart = new Date(date);
-    slotStart.setHours(hour, minute, 0, 0);
+    const slotStart = parseLocalDate(date, hour, minute);
     const slotEnd = new Date(slotStart);
     slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration);
 
@@ -34,8 +40,7 @@ export default function TimeSlotPicker({
   const checkIfPast = (hour, minute, date) => {
     if (!date) return false;
 
-    const slotDateTime = new Date(date);
-    slotDateTime.setHours(hour, minute, 0, 0);
+    const slotDateTime = parseLocalDate(date, hour, minute);
 
     const now = new Date();
     now.setMinutes(now.getMinutes() + 30);
