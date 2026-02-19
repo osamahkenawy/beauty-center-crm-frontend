@@ -39,54 +39,70 @@
 }
 .inv-stat-card {
   background: #fff;
-  border-radius: 16px;
-  padding: 20px 22px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
-  position: relative;
   border: 1px solid #f1f5f9;
-  transition: transform 0.15s, box-shadow 0.15s;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  transition: all 0.2s;
+  overflow: hidden;
 }
 .inv-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.inv-stat-card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .inv-stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.inv-stat-card:hover .inv-stat-icon {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+.inv-stat-icon svg {
+  width: 22px;
+  height: 22px;
 }
 .inv-stat-body {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  gap: 2px;
 }
 .inv-stat-val {
-  font-size: 1.1rem;
+  font-size: 22px;
   font-weight: 800;
   color: #1e293b;
-  letter-spacing: -0.3px;
+  line-height: 1.1;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .inv-stat-lbl {
-  font-size: 0.72rem;
+  font-size: 11px;
   color: #94a3b8;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 .inv-stat-count {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  font-size: 0.68rem;
+  align-self: flex-start;
+  font-size: 0.7rem;
   color: #64748b;
   background: #f1f5f9;
   padding: 3px 10px;
@@ -94,6 +110,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   border: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 /* ── Toolbar ── */
@@ -109,32 +126,35 @@
 .inv-view-toggle {
   display: flex;
   background: #f1f5f9;
-  border-radius: 8px;
-  padding: 3px;
-  gap: 2px;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 3px;
   flex-shrink: 0;
+  height: 36px;
+  align-items: center;
+  border: 1px solid #e2e8f0;
 }
 .inv-view-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 30px;
+  width: 28px;
+  height: 26px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 7px;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.15s;
 }
 .inv-view-btn.active {
   background: #fff;
-  color: #1e293b;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  color: #f2421b;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 .inv-view-btn:hover:not(.active) {
-  color: #64748b;
-  background: #e2e8f0;
+  color: #475569;
+  background: #e8edf2;
 }
 
 /* Card / Grid view */
@@ -232,7 +252,33 @@
 }
 .inv-card-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  align-items: center;
+}
+.inv-card-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.inv-card-actions button:hover {
+  background: #f2421b;
+  color: #fff;
+  border-color: #f2421b;
+  box-shadow: 0 2px 8px rgba(242, 66, 27, 0.25);
+  transform: translateY(-1px);
+}
+.inv-card-actions button.inv-act-pay:hover {
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
 }
 .inv-search {
   display: flex;
@@ -300,11 +346,17 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+  box-shadow: 0 2px 8px rgba(242, 66, 27, 0.25);
 }
 .inv-btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+  box-shadow: 0 4px 16px rgba(242, 66, 27, 0.35);
+}
+.inv-btn-primary.btn-print:hover {
+  background: #fff !important;
+  color: #f2421b !important;
+  border: 1.5px solid #f2421b;
+  box-shadow: 0 4px 12px rgba(242, 66, 27, 0.15);
 }
 .inv-btn-primary:disabled {
   opacity: 0.6;
@@ -1366,4 +1418,203 @@
     border: none !important;
   }
   .inv-avatar { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════
+   Loyalty Points Payment Section
+   ═══════════════════════════════════════════════ */
+.inv-loyalty-section {
+  margin-top: 4px;
+}
+.inv-loyalty-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  background: #faf5ff;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: #7c3aed;
+  font-weight: 500;
+  border: 1px solid #e9d5ff;
+}
+.inv-loyalty-balance-card {
+  background: linear-gradient(135deg, #faf5ff, #f0ebff);
+  border: 1px solid #e9d5ff;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.inv-loyalty-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #fff;
+}
+.inv-loyalty-points-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.inv-loyalty-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 10px;
+  padding: 10px 6px;
+}
+.inv-loyalty-stat-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.2;
+}
+.inv-loyalty-stat-lbl {
+  font-size: 0.65rem;
+  color: #7c3aed;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.inv-loyalty-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.inv-loyalty-calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #475569;
+}
+.inv-loyalty-calc-row strong {
+  color: #1e293b;
+}
+.inv-loyalty-warning {
+  font-size: 0.78rem;
+  color: #dc2626;
+  font-weight: 600;
+  padding: 6px 10px;
+  background: #fef2f2;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+}
+.inv-loyalty-success {
+  font-size: 0.78rem;
+  color: #15803d;
+  font-weight: 600;
+  padding: 6px 10px;
+  background: #f0fdf4;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+}
+.inv-loyalty-use-max {
+  display: inline-flex;
+  align-self: flex-end;
+  border: none;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.inv-loyalty-use-max:hover {
+  background: #6d28d9;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+.inv-loyalty-not-enrolled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: #92400e;
+  font-weight: 500;
+}
+.inv-loyalty-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.inv-loyalty-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #7c3aed;
+  cursor: pointer;
+  user-select: none;
+}
+.inv-loyalty-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
+
+/* ── Payment Summary ── */
+.inv-pay-summary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.inv-pay-summary-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #e2e8f0;
+}
+.inv-pay-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #475569;
+}
+.inv-pay-summary-row strong {
+  font-weight: 700;
+}
+.inv-pay-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e293b;
+  padding-top: 8px;
+  border-top: 1.5px solid #e2e8f0;
+  margin-top: 2px;
+}
+.inv-pay-summary-total strong {
+  color: #f2421b;
+  font-size: 1.05rem;
 }

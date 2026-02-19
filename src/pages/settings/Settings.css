@@ -1413,6 +1413,17 @@
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  align-items: center;
+}
+.biz-branch-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  min-width: 24px;
+  text-align: center;
 }
 .biz-badge-hq {
   background: #eff8ff !important;

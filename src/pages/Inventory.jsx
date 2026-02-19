@@ -7,12 +7,13 @@ import {
   Upload, Download, Layers, Tag
 } from 'lucide-react';
 import useCurrency from '../hooks/useCurrency';
+import CurrencySymbol from '../components/CurrencySymbol';
 import api from '../lib/api';
 import Swal from 'sweetalert2';
 import './Inventory.css';
 
 export default function Inventory() {
-  const { symbol, format } = useCurrency();
+  const { symbol, format, currency } = useCurrency();
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -378,8 +379,8 @@ export default function Inventory() {
                     </td>
                     <td><span className="inv-sku">{item.sku || '—'}</span></td>
                     <td>{item.category || '—'}</td>
-                    <td>{symbol} {parseFloat(item.cost_price || 0).toFixed(2)}</td>
-                    <td className="inv-price-cell">{symbol} {parseFloat(item.retail_price || 0).toFixed(2)}</td>
+                    <td><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {parseFloat(item.cost_price || 0).toFixed(2)}</td>
+                    <td className="inv-price-cell"><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {parseFloat(item.retail_price || 0).toFixed(2)}</td>
                     <td>
                       {margin !== null ? (
                         <span className={`inv-margin ${parseFloat(margin) > 30 ? 'good' : parseFloat(margin) > 15 ? 'ok' : 'low'}`}>
@@ -469,11 +470,11 @@ export default function Inventory() {
               </datalist>
             </Form.Group>
             <Form.Group>
-              <Form.Label>Cost Price ({symbol})</Form.Label>
+              <Form.Label>Cost Price (<CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} />)</Form.Label>
               <Form.Control type="number" step="0.01" value={form.cost_price} onChange={e => setForm({...form, cost_price: e.target.value})} />
             </Form.Group>
             <Form.Group>
-              <Form.Label>Retail Price ({symbol})</Form.Label>
+              <Form.Label>Retail Price (<CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} />)</Form.Label>
               <Form.Control type="number" step="0.01" value={form.retail_price} onChange={e => setForm({...form, retail_price: e.target.value})} />
             </Form.Group>
             {!editId && (
@@ -561,7 +562,7 @@ export default function Inventory() {
           </Form.Group>
           {(stockForm.type === 'purchase') && (
             <Form.Group className="mb-3">
-              <Form.Label>Unit Cost ({symbol})</Form.Label>
+              <Form.Label>Unit Cost (<CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} />)</Form.Label>
               <Form.Control type="number" step="0.01" value={stockForm.unit_cost} onChange={e => setStockForm({...stockForm, unit_cost: e.target.value})} />
             </Form.Group>
           )}
@@ -607,11 +608,11 @@ export default function Inventory() {
               <div className="inv-detail-prices">
                 <div className="inv-detail-price">
                   <span>Cost Price</span>
-                  <strong>{symbol} {parseFloat(detailData.cost_price || 0).toFixed(2)}</strong>
+                  <strong><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {parseFloat(detailData.cost_price || 0).toFixed(2)}</strong>
                 </div>
                 <div className="inv-detail-price">
                   <span>Retail Price</span>
-                  <strong>{symbol} {parseFloat(detailData.retail_price || 0).toFixed(2)}</strong>
+                  <strong><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {parseFloat(detailData.retail_price || 0).toFixed(2)}</strong>
                 </div>
                 <div className="inv-detail-price">
                   <span>Margin</span>
@@ -619,7 +620,7 @@ export default function Inventory() {
                 </div>
                 <div className="inv-detail-price">
                   <span>Stock Value</span>
-                  <strong>{symbol} {(detailData.stock_quantity * (detailData.retail_price || 0)).toFixed(2)}</strong>
+                  <strong><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {(detailData.stock_quantity * (detailData.retail_price || 0)).toFixed(2)}</strong>
                 </div>
               </div>
 

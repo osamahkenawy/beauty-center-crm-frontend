@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
+import CurrencySymbol from '../components/CurrencySymbol';
 import './BeautyPayments.css';
 
 const STATUS_CONFIG = {
@@ -50,14 +51,20 @@ export default function BeautyPayments() {
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
   const [staffList, setStaffList] = useState([]);
-  const getEmptyForm = () => ({
-    customer_id: '', staff_id: '', items: [{ name: '', item_type: 'service', item_id: '', unit_price: 0, quantity: 1, discount: 0 }],
-    discount_amount: 0, discount_type: 'fixed', tax_rate: defaultTaxRate, payment_method: 'cash', notes: '', due_date: ''
-  });
+  const getEmptyForm = () => {
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    return {
+      customer_id: '', staff_id: '', items: [{ name: '', item_type: 'service', item_id: '', unit_price: 0, quantity: 1, discount: 0 }],
+      discount_amount: 0, discount_type: 'fixed', tax_rate: defaultTaxRate, payment_method: 'cash', notes: '', due_date: formattedDate
+    };
+  };
   const [form, setForm] = useState(getEmptyForm());
   const [payForm, setPayForm] = useState({ amount: '', payment_method: 'cash', gift_card_code: '' });
   const [payGcBalance, setPayGcBalance] = useState(null);
   const [payGcChecking, setPayGcChecking] = useState(false);
+  const [payLoyalty, setPayLoyalty] = useState(null); // { enrolled, points, monetary_value, point_value, max_redeem_percent }
+  const [payLoyaltyLoading, setPayLoyaltyLoading] = useState(false);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -186,20 +193,37 @@ export default function BeautyPayments() {
     finally { setPayGcChecking(false); }
   };
 
+  const checkLoyaltyBalance = async (customerId) => {
+    if (!customerId) { setPayLoyalty(null); return; }
+    setPayLoyaltyLoading(true);
+    try {
+      const res = await api.get(`/loyalty/check/${customerId}`);
+      setPayLoyalty(res.success ? res.data : null);
+    } catch { setPayLoyalty(null); }
+    finally { setPayLoyaltyLoading(false); }
+  };
+
   const handlePay = async () => {
-    if (!payForm.amount || parseFloat(payForm.amount) <= 0) return;
-    if (payForm.payment_method === 'gift_card' && !payForm.gift_card_code) {
+    const totalAmt = parseFloat(payForm.amount || 0);
+    const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
+    if (totalAmt <= 0) return;
+    if (payForm.payment_method === 'gift_card' && !payForm.gift_card_code && (totalAmt - loyaltyAmt) > 0) {
       alert('Please enter a gift card code');
       return;
     }
     setSaving(true);
     try {
-      const payload = { amount: parseFloat(payForm.amount), payment_method: payForm.payment_method };
+      const payload = {
+        amount: totalAmt,
+        payment_method: payForm.payment_method,
+        loyalty_amount: loyaltyAmt > 0 ? loyaltyAmt : undefined,
+      };
       if (payForm.payment_method === 'gift_card') payload.gift_card_code = payForm.gift_card_code;
       const res = await api.post(`/invoices/${viewing.id}/pay`, payload);
       if (res.success) {
         setShowPay(false);
         setPayGcBalance(null);
+        setPayLoyalty(null);
         handleViewInvoice(viewing);
         fetchInvoices();
         fetchStats();
@@ -208,6 +232,17 @@ export default function BeautyPayments() {
       }
     } catch (e) { console.error(e); alert(e.message || 'Payment failed'); }
     finally { setSaving(false); }
+  };
+
+  // Open payment modal with auto-fetch loyalty
+  const openPayModal = (inv, balance) => {
+    setViewing(inv);
+    const bal = balance || Math.max(0, parseFloat(inv.total) - parseFloat(inv.amount_paid || 0));
+    setPayForm({ amount: bal.toFixed(2), payment_method: 'cash', gift_card_code: '', loyalty_amount: '' });
+    setPayGcBalance(null);
+    setPayLoyalty(null);
+    setShowPay(true);
+    if (inv.customer_id) checkLoyaltyBalance(inv.customer_id);
   };
 
   const handleVoid = async (id) => {
@@ -334,7 +369,12 @@ export default function BeautyPayments() {
     printWindow.document.close();
   };
 
-  const formatCurrency = (v) => `${symbol} ${parseFloat(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // String-only formatter (for CSV export, print HTML, non-JSX contexts)
+  const formatCurrencyStr = (v) => `${symbol} ${parseFloat(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // JSX formatter with proper CurrencySymbol component
+  const formatCurrency = (v) => (
+    <><CurrencySymbol currency={currency} symbol={symbol} style={{ fontSize: 'inherit', verticalAlign: 'baseline', marginRight: 2 }} />{parseFloat(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
+  );
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
   const formatDateLong = (d) => d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '-';
 
@@ -378,9 +418,9 @@ export default function BeautyPayments() {
                 inv.customer_name || (inv.customer_first_name && inv.customer_last_name ? `${inv.customer_first_name} ${inv.customer_last_name}` : '-'),
                 inv.created_at ? formatDate(inv.created_at) : '-',
                 inv.due_date ? formatDate(inv.due_date) : '-',
-                formatCurrency(inv.total || 0),
-                formatCurrency(inv.amount_paid || 0),
-                formatCurrency(Math.max(0, (inv.total || 0) - (inv.amount_paid || 0))),
+                formatCurrencyStr(inv.total || 0),
+                formatCurrencyStr(inv.amount_paid || 0),
+                formatCurrencyStr(Math.max(0, (inv.total || 0) - (inv.amount_paid || 0))),
                 STATUS_CONFIG[inv.status]?.label || inv.status || '-',
               ])
             ];
@@ -406,18 +446,24 @@ export default function BeautyPayments() {
 
       <div className="inv-stats-grid">
         {[
-          { label: 'Total Revenue', value: formatCurrency(stats.total_paid), sub: `${stats.paid_count || 0} paid`, icon: DollarSign, iconColor: '#10b981', iconBg: '#dcfce7' },
-          { label: 'Pending', value: formatCurrency(stats.total_pending), sub: `${stats.pending_count || 0} invoices`, icon: Clock, iconColor: '#f59e0b', iconBg: '#fef3c7' },
-          { label: 'Overdue', value: formatCurrency(stats.total_overdue), sub: `${stats.overdue_count || 0} invoices`, icon: AlertTriangle, iconColor: '#ef4444', iconBg: '#fee2e2' },
-          { label: 'Total Invoices', value: stats.total || 0, sub: `${stats.void_count || 0} void`, icon: TrendingUp, iconColor: '#f2421b', iconBg: '#fef0ec' },
+          { label: 'Total Revenue', value: stats.total_paid, sub: `${stats.paid_count || 0} paid`, icon: DollarSign, iconColor: '#059669', iconBg: '#ECFDF5' },
+          { label: 'Pending', value: stats.total_pending, sub: `${stats.pending_count || 0} invoices`, icon: Clock, iconColor: '#D97706', iconBg: '#FFFBEB' },
+          { label: 'Overdue', value: stats.total_overdue, sub: `${stats.overdue_count || 0} invoices`, icon: AlertTriangle, iconColor: '#DC2626', iconBg: '#FEF2F2' },
+          { label: 'Total Invoices', value: null, rawVal: stats.total || 0, sub: `${stats.void_count || 0} void`, icon: TrendingUp, iconColor: '#f2421b', iconBg: '#FFF7ED' },
         ].map((s, i) => (
           <div className="inv-stat-card" key={i}>
-            <div className="inv-stat-icon" style={{ background: s.iconBg }}>
-              <s.icon size={22} color={s.iconColor} />
-            </div>
-            <div className="inv-stat-body">
-              <span className="inv-stat-val">{s.value}</span>
-              <span className="inv-stat-lbl">{s.label}</span>
+            <div className="inv-stat-card-row">
+              <div className="inv-stat-icon" style={{ background: s.iconBg }}>
+                <s.icon size={22} color={s.iconColor} />
+              </div>
+              <div className="inv-stat-body">
+                <span className="inv-stat-val">
+                  {s.rawVal !== undefined ? s.rawVal : (
+                    <><CurrencySymbol currency={currency} symbol={symbol} style={{ fontSize: '18px', verticalAlign: 'middle', marginRight: 2 }} />{Number(s.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</>
+                  )}
+                </span>
+                <span className="inv-stat-lbl">{s.label}</span>
+              </div>
             </div>
             <span className="inv-stat-count">{s.sub}</span>
           </div>
@@ -439,11 +485,11 @@ export default function BeautyPayments() {
           <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
         </div>
         <div className="inv-view-toggle">
-          <button className={`inv-view-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')} title="Table view" data-tooltip="Table view">
-            <FileText size={15} />
+          <button className={`inv-view-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')} data-tooltip="Table view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
-          <button className={`inv-view-btn ${viewMode === 'card' ? 'active' : ''}`} onClick={() => setViewMode('card')} title="Card view" data-tooltip="Card view">
-            <Filter size={15} />
+          <button className={`inv-view-btn ${viewMode === 'card' ? 'active' : ''}`} onClick={() => setViewMode('card')} data-tooltip="Card view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
           </button>
         </div>
       </div>
@@ -499,7 +545,7 @@ export default function BeautyPayments() {
                     <div className="inv-actions">
                       <button title="View" data-tooltip="View invoice" onClick={() => handleViewInvoice(inv)}><Eye size={15} /></button>
                       {inv.status !== 'paid' && inv.status !== 'void' && (
-                        <button title="Record Payment" data-tooltip="Record payment" className="inv-act-pay" onClick={() => { setViewing(inv); setPayForm({ amount: parseFloat(inv.total) - parseFloat(inv.amount_paid || 0), payment_method: 'cash' }); setShowPay(true); }}>
+                        <button title="Record Payment" data-tooltip="Record payment" className="inv-act-pay" onClick={() => openPayModal(inv)}>
                           <CreditCard size={15} />
                         </button>
                       )}
@@ -543,7 +589,7 @@ export default function BeautyPayments() {
                     <div className="inv-card-actions" onClick={e => e.stopPropagation()}>
                       <button title="View" onClick={() => handleViewInvoice(inv)}><Eye size={14} /></button>
                       {inv.status !== 'paid' && inv.status !== 'void' && (
-                        <button title="Record Payment" className="inv-act-pay" onClick={() => { setViewing(inv); setPayForm({ amount: parseFloat(inv.total) - parseFloat(inv.amount_paid || 0), payment_method: 'cash', gift_card_code: '' }); setPayGcBalance(null); setShowPay(true); }}>
+                        <button title="Record Payment" className="inv-act-pay" onClick={() => openPayModal(inv)}>
                           <CreditCard size={14} />
                         </button>
                       )}
@@ -689,7 +735,7 @@ export default function BeautyPayments() {
                       <button className="inv-btn-icon-action inv-btn-void" onClick={() => handleVoid(viewing.id)} title="Void Invoice">
                         <Ban size={18} />
                       </button>
-                      <button className="inv-btn-primary inv-btn-sm" onClick={() => { setPayForm({ amount: balanceDue, payment_method: 'cash', gift_card_code: '' }); setPayGcBalance(null); setShowPay(true); }}>
+                      <button className="inv-btn-primary inv-btn-sm" onClick={() => openPayModal(viewing, balanceDue)}>
                         <CreditCard size={14} /> Record Payment
                       </button>
                     </>
@@ -876,7 +922,7 @@ export default function BeautyPayments() {
       </Modal>
 
       {/* ── Payment Modal ── */}
-      <Modal show={showPay} onHide={() => setShowPay(false)} centered className="inv-modal">
+      <Modal show={showPay} onHide={() => { setShowPay(false); setPayLoyalty(null); setPayGcBalance(null); }} centered className="inv-modal">
         <Modal.Header closeButton>
           <Modal.Title>
             <div className="inv-modal-title"><CreditCard size={20} /> Record Payment</div>
@@ -890,24 +936,136 @@ export default function BeautyPayments() {
             </div>
           )}
           <div className="inv-form">
+            {/* ── Loyalty Points Deduction (shown if customer has points) ── */}
+            {payLoyaltyLoading ? (
+              <div className="inv-loyalty-loading">
+                <div className="inv-loading-spinner" style={{ width: 16, height: 16 }} /> Loading loyalty info...
+              </div>
+            ) : payLoyalty && payLoyalty.enrolled && payLoyalty.points > 0 ? (
+              <div className="inv-loyalty-section">
+                <div className="inv-loyalty-balance-card">
+                  <div className="inv-loyalty-header">
+                    <div className="inv-loyalty-badge">⭐ {payLoyalty.tier?.toUpperCase() || 'BRONZE'}</div>
+                    <label className="inv-loyalty-toggle">
+                      <input
+                        type="checkbox"
+                        checked={parseFloat(payForm.loyalty_amount || 0) > 0}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            const maxByPercent = balanceDue * (payLoyalty.max_redeem_percent / 100);
+                            const maxByPoints = payLoyalty.monetary_value;
+                            const suggested = Math.min(maxByPercent, maxByPoints, balanceDue);
+                            setPayForm(p => ({ ...p, loyalty_amount: suggested.toFixed(2) }));
+                          } else {
+                            setPayForm(p => ({ ...p, loyalty_amount: '' }));
+                          }
+                        }}
+                      />
+                      <span>Use Loyalty Points</span>
+                    </label>
+                  </div>
+                  <div className="inv-loyalty-points-row">
+                    <div className="inv-loyalty-stat">
+                      <span className="inv-loyalty-stat-val">{(payLoyalty.points || 0).toLocaleString()}</span>
+                      <span className="inv-loyalty-stat-lbl">Points</span>
+                    </div>
+                    <div className="inv-loyalty-stat">
+                      <span className="inv-loyalty-stat-val">{formatCurrency(payLoyalty.monetary_value || 0)}</span>
+                      <span className="inv-loyalty-stat-lbl">Worth</span>
+                    </div>
+                    <div className="inv-loyalty-stat">
+                      <span className="inv-loyalty-stat-val">{payLoyalty.max_redeem_percent}%</span>
+                      <span className="inv-loyalty-stat-lbl">Max Redeem</span>
+                    </div>
+                  </div>
+
+                  {parseFloat(payForm.loyalty_amount || 0) > 0 && (
+                    <div className="inv-loyalty-calc">
+                      <div className="inv-field" style={{ margin: 0 }}>
+                        <label style={{ fontSize: 11, color: '#7c3aed', fontWeight: 700 }}>⭐ Deduct from Points</label>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <input
+                            type="number" min="0" step="0.01"
+                            max={Math.min(payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100)}
+                            value={payForm.loyalty_amount}
+                            onChange={e => {
+                              const val = Math.min(parseFloat(e.target.value) || 0, payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100);
+                              setPayForm(p => ({ ...p, loyalty_amount: val > 0 ? val.toFixed(2) : e.target.value }));
+                            }}
+                            style={{ flex: 1 }}
+                          />
+                          <button type="button" className="inv-loyalty-use-max" onClick={() => {
+                            const max = Math.min(payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100, parseFloat(payForm.amount || balanceDue));
+                            setPayForm(p => ({ ...p, loyalty_amount: max.toFixed(2) }));
+                          }}>Max</button>
+                        </div>
+                      </div>
+                      {(() => {
+                        const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
+                        const pointsNeeded = Math.ceil(loyaltyAmt / (payLoyalty.point_value || 0.01));
+                        const totalAmt = parseFloat(payForm.amount || 0);
+                        const remaining = Math.max(0, totalAmt - loyaltyAmt);
+                        return (
+                          <>
+                            <div className="inv-loyalty-calc-row">
+                              <span>Points to redeem:</span>
+                              <strong>{pointsNeeded.toLocaleString()} pts</strong>
+                            </div>
+                            <div className="inv-loyalty-calc-row">
+                              <span>Covered by points:</span>
+                              <strong style={{ color: '#7c3aed' }}>{formatCurrency(loyaltyAmt)}</strong>
+                            </div>
+                            {remaining > 0 && (
+                              <div className="inv-loyalty-calc-row">
+                                <span>Pay via {payForm.payment_method}:</span>
+                                <strong style={{ color: '#1e293b' }}>{formatCurrency(remaining)}</strong>
+                              </div>
+                            )}
+                            {loyaltyAmt > 0 && (
+                              <div className="inv-loyalty-success">
+                                ✅ {formatCurrency(loyaltyAmt)} from points{remaining > 0 ? <> + {formatCurrency(remaining)} via {payForm.payment_method}</> : ' (full payment)'}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {/* ── Total Amount ── */}
             <div className="inv-field">
-              <label><DollarSign size={12} /> Amount</label>
+              <label><DollarSign size={12} /> Total Amount to Pay</label>
               <input type="number" min="0" step="0.01" value={payForm.amount} onChange={e => setPayForm(p => ({ ...p, amount: e.target.value }))} />
             </div>
-            <div className="inv-field">
-              <label><Banknote size={12} /> Payment Method</label>
-              <select value={payForm.payment_method} onChange={e => {
-                setPayForm(p => ({ ...p, payment_method: e.target.value, gift_card_code: '' }));
-                setPayGcBalance(null);
-              }}>
-                <option value="cash">💵 Cash</option>
-                <option value="card">💳 Card</option>
-                <option value="bank_transfer">🏦 Bank Transfer</option>
-                <option value="gift_card">🎁 Gift Card</option>
-                <option value="other">📋 Other</option>
-              </select>
-            </div>
-            {payForm.payment_method === 'gift_card' && (
+
+            {/* ── Payment Method for remaining ── */}
+            {(() => {
+              const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
+              const totalAmt = parseFloat(payForm.amount || 0);
+              const remaining = totalAmt - loyaltyAmt;
+              if (loyaltyAmt >= totalAmt && loyaltyAmt > 0) return null; // fully covered by points
+              return (
+                <div className="inv-field">
+                  <label><Banknote size={12} /> {loyaltyAmt > 0 ? <>Pay remaining {formatCurrency(remaining)} via</> : 'Payment Method'}</label>
+                  <select value={payForm.payment_method} onChange={e => {
+                    setPayForm(p => ({ ...p, payment_method: e.target.value, gift_card_code: '' }));
+                    setPayGcBalance(null);
+                  }}>
+                    <option value="cash">💵 Cash</option>
+                    <option value="card">💳 Card</option>
+                    <option value="bank_transfer">🏦 Bank Transfer</option>
+                    <option value="gift_card">🎁 Gift Card</option>
+                    <option value="other">📋 Other</option>
+                  </select>
+                </div>
+              );
+            })()}
+
+            {/* ── Gift Card Section ── */}
+            {payForm.payment_method === 'gift_card' && parseFloat(payForm.loyalty_amount || 0) < parseFloat(payForm.amount || 0) && (
               <div className="inv-field" style={{ background: '#fffbeb', borderRadius: 8, padding: '10px 12px', border: '1px solid #fbbf24' }}>
                 <label style={{ color: '#92400e', fontWeight: 600, fontSize: 12 }}>🎁 Gift Card Code</label>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -933,23 +1091,46 @@ export default function BeautyPayments() {
                 {payGcBalance && !payGcBalance.error && (
                   <div style={{ marginTop: 6, fontSize: 12, color: parseFloat(payGcBalance.remaining_value) >= parseFloat(payForm.amount || 0) ? '#15803d' : '#dc2626', fontWeight: 600 }}>
                     ✅ Balance: {formatCurrency(parseFloat(payGcBalance.remaining_value))}
-                    {payGcBalance.status !== 'active' && <span style={{ color: '#dc2626' }}> ({payGcBalance.status})</span>}
-                    {parseFloat(payGcBalance.remaining_value) < parseFloat(payForm.amount || 0) && (
-                      <span style={{ color: '#dc2626', display: 'block' }}>⚠️ Insufficient balance for this payment</span>
-                    )}
                   </div>
                 )}
                 {payGcBalance?.error && (
-                  <div style={{ marginTop: 6, fontSize: 12, color: '#dc2626', fontWeight: 600 }}>
-                    ❌ {payGcBalance.error}
+                  <div style={{ marginTop: 6, fontSize: 12, color: '#dc2626', fontWeight: 600 }}>❌ {payGcBalance.error}</div>
+                )}
+              </div>
+            )}
+
+            {/* ── Payment Summary ── */}
+            {parseFloat(payForm.amount || 0) > 0 && (
+              <div className="inv-pay-summary">
+                <div className="inv-pay-summary-title">Payment Summary</div>
+                {parseFloat(payForm.loyalty_amount || 0) > 0 && (
+                  <div className="inv-pay-summary-row">
+                    <span>⭐ Loyalty Points</span>
+                    <strong style={{ color: '#7c3aed' }}>{formatCurrency(parseFloat(payForm.loyalty_amount))}</strong>
                   </div>
                 )}
+                {(() => {
+                  const la = parseFloat(payForm.loyalty_amount || 0);
+                  const ta = parseFloat(payForm.amount || 0);
+                  const rem = Math.max(0, ta - la);
+                  if (rem > 0) return (
+                    <div className="inv-pay-summary-row">
+                      <span>{payForm.payment_method === 'cash' ? '💵' : payForm.payment_method === 'card' ? '💳' : payForm.payment_method === 'gift_card' ? '🎁' : '📋'} {payForm.payment_method.replace('_', ' ')}</span>
+                      <strong>{formatCurrency(rem)}</strong>
+                    </div>
+                  );
+                  return null;
+                })()}
+                <div className="inv-pay-summary-total">
+                  <span>Total Payment</span>
+                  <strong>{formatCurrency(parseFloat(payForm.amount || 0))}</strong>
+                </div>
               </div>
             )}
           </div>
         </Modal.Body>
         <Modal.Footer className="inv-modal-footer">
-          <button className="inv-btn-outline" onClick={() => setShowPay(false)}>Cancel</button>
+          <button className="inv-btn-outline" onClick={() => { setShowPay(false); setPayLoyalty(null); }}>Cancel</button>
           <button className="inv-btn-primary" onClick={handlePay} disabled={saving}>
             {saving ? 'Processing...' : <><CheckCircle size={14} /> Confirm Payment</>}
           </button>

@@ -4,10 +4,12 @@ import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote, Search, X, Rec
 import Swal from 'sweetalert2';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
+import CurrencySymbol from '../components/CurrencySymbol';
 import './POS.css';
 
 export default function POS() {
-  const { symbol: currencySymbol } = useCurrency();
+  const { symbol: currencySymbol, currency } = useCurrency();
+  const CS = () => <CurrencySymbol currency={currency} symbol={currencySymbol} style={{ display: 'inline', fontSize: 'inherit', verticalAlign: 'baseline' }} />;
   const [services, setServices] = useState([]);
   const [clients, setClients] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -150,7 +152,7 @@ export default function POS() {
           <div className="pos-stat-card">
             <DollarSign size={16} />
             <div>
-              <span className="pos-stat-value">{currencySymbol}{stats?.today?.revenue?.toFixed(2) || '0.00'}</span>
+              <span className="pos-stat-value"><CS />{stats?.today?.revenue?.toFixed(2) || '0.00'}</span>
               <span className="pos-stat-label">Today's Sales</span>
             </div>
           </div>
@@ -164,7 +166,7 @@ export default function POS() {
           <div className="pos-stat-card">
             <TrendingUp size={16} />
             <div>
-              <span className="pos-stat-value">{currencySymbol}{stats?.today?.tips?.toFixed(2) || '0.00'}</span>
+              <span className="pos-stat-value"><CS />{stats?.today?.tips?.toFixed(2) || '0.00'}</span>
               <span className="pos-stat-label">Tips</span>
             </div>
           </div>
@@ -199,7 +201,7 @@ export default function POS() {
               <div className="pos-service-name">{s.name}</div>
               <div className="pos-service-meta">
                 <span className="pos-service-duration">{s.duration || 30}m</span>
-                <span className="pos-service-price">{currencySymbol}{parseFloat(s.unit_price || 0).toFixed(2)}</span>
+                <span className="pos-service-price"><CS />{parseFloat(s.unit_price || 0).toFixed(2)}</span>
               </div>
               <Plus size={16} className="pos-service-add" />
             </div>
@@ -260,7 +262,7 @@ export default function POS() {
             <div key={item.id} className="pos-cart-item">
               <div className="pos-cart-item-info">
                 <span className="pos-cart-item-name">{item.name}</span>
-                <span className="pos-cart-item-price">{currencySymbol}{(item.price * item.quantity).toFixed(2)}</span>
+                <span className="pos-cart-item-price"><CS />{(item.price * item.quantity).toFixed(2)}</span>
               </div>
               <div className="pos-cart-item-controls">
                 <button data-tooltip="Decrease qty" onClick={() => updateQuantity(item.id, -1)}><Minus size={12} /></button>
@@ -277,7 +279,7 @@ export default function POS() {
           <div className="pos-totals">
             <div className="pos-total-row">
               <span>Subtotal</span>
-              <span>{currencySymbol}{subtotal.toFixed(2)}</span>
+              <span><CS />{subtotal.toFixed(2)}</span>
             </div>
 
             <div className="pos-discount-row">
@@ -286,17 +288,17 @@ export default function POS() {
                 <div className="pos-discount-controls">
                   <input type="number" value={discount} onChange={e => setDiscount(e.target.value)} min="0" />
                   <select value={discountType} onChange={e => setDiscountType(e.target.value)}>
-                    <option value="fixed">{currencySymbol}</option>
+                    <option value="fixed"><CS /></option>
                     <option value="percentage">%</option>
                   </select>
                 </div>
               </div>
-              {discountAmount > 0 && <span className="pos-discount-value">-{currencySymbol}{discountAmount.toFixed(2)}</span>}
+              {discountAmount > 0 && <span className="pos-discount-value">-<CS />{discountAmount.toFixed(2)}</span>}
             </div>
 
             <div className="pos-total-row">
               <span>Tax ({taxRate}%)</span>
-              <span>{currencySymbol}{taxAmount.toFixed(2)}</span>
+              <span><CS />{taxAmount.toFixed(2)}</span>
             </div>
 
             <div className="pos-tip-row">
@@ -306,7 +308,7 @@ export default function POS() {
 
             <div className="pos-total-row pos-grand-total">
               <span>Total</span>
-              <span>{currencySymbol}{total.toFixed(2)}</span>
+              <span><CS />{total.toFixed(2)}</span>
             </div>
 
             {/* Payment Method */}
@@ -328,7 +330,7 @@ export default function POS() {
                 <span>Amount Tendered</span>
                 <input type="number" value={amountPaid} onChange={e => setAmountPaid(e.target.value)}
                   placeholder={total.toFixed(2)} />
-                {change > 0 && <div className="pos-change">Change: {currencySymbol}{change.toFixed(2)}</div>}
+                {change > 0 && <div className="pos-change">Change: <CS />{change.toFixed(2)}</div>}
               </div>
             )}
 
@@ -337,7 +339,7 @@ export default function POS() {
             </div>
 
             <button className="pos-checkout-btn" data-tooltip="Complete sale" onClick={handleCheckout} disabled={processing || cart.length === 0}>
-              {processing ? 'Processing...' : `Charge ${currencySymbol}${total.toFixed(2)}`}
+              {processing ? 'Processing...' : <><span>Charge </span><CS />{total.toFixed(2)}</>}
             </button>
           </div>
         )}
@@ -352,13 +354,13 @@ export default function POS() {
               <h4>Payment Successful</h4>
               <p className="pos-receipt-txn">#{showReceipt.transaction_number}</p>
               <div className="pos-receipt-details">
-                <div className="pos-receipt-row"><span>Subtotal</span><span>{currencySymbol}{showReceipt.subtotal?.toFixed(2)}</span></div>
-                {showReceipt.discount > 0 && <div className="pos-receipt-row"><span>Discount</span><span>-{currencySymbol}{showReceipt.discount?.toFixed(2)}</span></div>}
-                <div className="pos-receipt-row"><span>Tax</span><span>{currencySymbol}{showReceipt.tax?.toFixed(2)}</span></div>
-                {showReceipt.tip > 0 && <div className="pos-receipt-row"><span>Tip</span><span>{currencySymbol}{showReceipt.tip?.toFixed(2)}</span></div>}
-                <div className="pos-receipt-row total"><span>Total</span><span>{currencySymbol}{showReceipt.total?.toFixed(2)}</span></div>
-                <div className="pos-receipt-row"><span>Paid ({showReceipt.payment_method})</span><span>{currencySymbol}{showReceipt.amount_paid?.toFixed(2)}</span></div>
-                {showReceipt.change > 0 && <div className="pos-receipt-row"><span>Change</span><span>{currencySymbol}{showReceipt.change?.toFixed(2)}</span></div>}
+                <div className="pos-receipt-row"><span>Subtotal</span><span><CS />{showReceipt.subtotal?.toFixed(2)}</span></div>
+                {showReceipt.discount > 0 && <div className="pos-receipt-row"><span>Discount</span><span>-<CS />{showReceipt.discount?.toFixed(2)}</span></div>}
+                <div className="pos-receipt-row"><span>Tax</span><span><CS />{showReceipt.tax?.toFixed(2)}</span></div>
+                {showReceipt.tip > 0 && <div className="pos-receipt-row"><span>Tip</span><span><CS />{showReceipt.tip?.toFixed(2)}</span></div>}
+                <div className="pos-receipt-row total"><span>Total</span><span><CS />{showReceipt.total?.toFixed(2)}</span></div>
+                <div className="pos-receipt-row"><span>Paid ({showReceipt.payment_method})</span><span><CS />{showReceipt.amount_paid?.toFixed(2)}</span></div>
+                {showReceipt.change > 0 && <div className="pos-receipt-row"><span>Change</span><span><CS />{showReceipt.change?.toFixed(2)}</span></div>}
               </div>
               <button className="pos-receipt-close" onClick={() => setShowReceipt(null)}>Done</button>
             </div>
@@ -391,7 +393,7 @@ export default function POS() {
                   <td>{new Date(t.created_at).toLocaleDateString()}</td>
                   <td>{t.customer_first_name ? `${t.customer_first_name} ${t.customer_last_name || ''}` : '—'}</td>
                   <td>{(t.items || []).length} items</td>
-                  <td><strong>{currencySymbol}{parseFloat(t.total || 0).toFixed(2)}</strong></td>
+                  <td><strong><CS />{parseFloat(t.total || 0).toFixed(2)}</strong></td>
                   <td><span className="pos-badge-method">{t.payment_method}</span></td>
                   <td><span className={`pos-badge-status ${t.status}`}>{t.status}</span></td>
                 </tr>

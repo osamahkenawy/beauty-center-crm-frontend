@@ -5,17 +5,19 @@ import {
   Calendar, Star, Heart, Phone, Mail, Clock, Edit, Trash,
   FilterList, SortDown, NavArrowDown, NavArrowRight, Instagram,
   UserPlus, CreditCard, Gift, ArrowRight, Activity, MoreVert,
-  Notes, StarSolid, Copy, List, Download
+  Notes, StarSolid, Copy, List, Download, Sparks, Globe,
+  Group, SmartphoneDevice, MapPin, Trophy
 } from 'iconoir-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
 import SEO from '../components/SEO';
+import CurrencySymbol from '../components/CurrencySymbol';
 
 /* ═══════════════════════════════════════════════
    BeautyClients – Premium Client Management
    ═══════════════════════════════════════════════ */
 export default function BeautyClients() {
-  const { symbol, format: formatCurrency } = useCurrency();
+  const { symbol, format: formatCurrency, currency } = useCurrency();
   const [clients, setClients] = useState([]);
   const [allClients, setAllClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -204,20 +206,44 @@ export default function BeautyClients() {
   const getAvatarColor = (id) => avatarColors[(id || 0) % avatarColors.length];
 
   const tierInfo = {
-    bronze: { label: 'Bronze', color: '#CD7F32', bg: '#FFF3E0', icon: '🥉' },
-    silver: { label: 'Silver', color: '#757575', bg: '#F5F5F5', icon: '🥈' },
-    gold: { label: 'Gold', color: '#F9A825', bg: '#FFFDE7', icon: '🥇' },
-    platinum: { label: 'Platinum', color: '#5C6BC0', bg: '#E8EAF6', icon: '💎' },
+    bronze: { label: 'Bronze', color: '#CD7F32', bg: '#FFF3E0' },
+    silver: { label: 'Silver', color: '#757575', bg: '#F5F5F5' },
+    gold: { label: 'Gold', color: '#F9A825', bg: '#FFFDE7' },
+    platinum: { label: 'Platinum', color: '#5C6BC0', bg: '#E8EAF6' },
   };
-  const getTier = (t) => tierInfo[t] || { label: 'Standard', color: '#9e9e9e', bg: '#f5f5f5', icon: '⭐' };
+  const getTier = (t) => tierInfo[t] || { label: 'Standard', color: '#9e9e9e', bg: '#f5f5f5' };
+
+  const getTierIcon = (tier) => {
+    const iconProps = { width: 14, height: 14, style: { display: 'inline-block', verticalAlign: 'middle', marginRight: 4 } };
+    switch (tier) {
+      case 'bronze': return <Star {...iconProps} color="#CD7F32" />;
+      case 'silver': return <StarSolid {...iconProps} color="#757575" />;
+      case 'gold': return <Trophy {...iconProps} color="#F9A825" />;
+      case 'platinum': return <Gift {...iconProps} color="#5C6BC0" />;
+      default: return <Star {...iconProps} />;
+    }
+  };
 
   const sourceLabels = {
-    'walk-in': '🚶 Walk-in',
-    'online': '🌐 Online',
-    'referral': '👥 Referral',
-    'social': '📱 Social Media',
-    'campaign': '📧 Campaign',
-    'other': '📋 Other',
+    'walk-in': 'Walk-in',
+    'online': 'Online',
+    'referral': 'Referral',
+    'social': 'Social Media',
+    'campaign': 'Campaign',
+    'other': 'Other',
+  };
+
+  const getSourceIcon = (source) => {
+    const iconProps = { width: 14, height: 14, style: { display: 'inline-block', verticalAlign: 'middle', marginRight: 4 } };
+    switch (source) {
+      case 'walk-in': return <User {...iconProps} />;
+      case 'online': return <Globe {...iconProps} />;
+      case 'referral': return <Group {...iconProps} />;
+      case 'social': return <SmartphoneDevice {...iconProps} />;
+      case 'campaign': return <Mail {...iconProps} />;
+      case 'other': return <Notes {...iconProps} />;
+      default: return null;
+    }
   };
 
   const formatDate = (d) => {
@@ -239,12 +265,12 @@ export default function BeautyClients() {
 
   const SOURCES = [
     { id: '', label: 'All Sources' },
-    { id: 'walk-in', label: '🚶 Walk-in' },
-    { id: 'online', label: '🌐 Online' },
-    { id: 'referral', label: '👥 Referral' },
-    { id: 'social', label: '📱 Social' },
-    { id: 'campaign', label: '📧 Campaign' },
-    { id: 'other', label: '📋 Other' },
+    { id: 'walk-in', label: 'Walk-in' },
+    { id: 'online', label: 'Online' },
+    { id: 'referral', label: 'Referral' },
+    { id: 'social', label: 'Social' },
+    { id: 'campaign', label: 'Campaign' },
+    { id: 'other', label: 'Other' },
   ];
 
   const SORT_OPTIONS = [
@@ -473,11 +499,13 @@ export default function BeautyClients() {
                       </td>
                       <td>
                         <span className="cl-tier-badge" style={{ background: tier.bg, color: tier.color }}>
-                          {tier.icon} {tier.label}
+                          {getTierIcon(c.loyalty_tier)} {tier.label}
                         </span>
                       </td>
                       <td>
-                        <span className="cl-spent">{symbol} {parseFloat(c.total_spent || 0).toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                        <span className="cl-spent">
+                          <CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {parseFloat(c.total_spent || 0).toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </span>
                       </td>
                       <td>
                         <span className="cl-visit">{c.last_visit ? formatDate(c.last_visit) : '—'}</span>
@@ -513,7 +541,13 @@ export default function BeautyClients() {
           <div className="cl-modal" onClick={e => e.stopPropagation()}>
             <div className="cl-modal-header">
               <div>
-                <h2>{editingClient ? '✏️ Edit Client' : '✨ New Client'}</h2>
+                <h2>
+                  {editingClient ? (
+                    <> <Edit width={20} height={20} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8 }} /> Edit Client</>
+                  ) : (
+                    <> <Sparks width={20} height={20} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8 }} /> New Client</>
+                  )}
+                </h2>
                 <p className="cl-modal-sub">{editingClient ? 'Update client information' : 'Add a new beauty client'}</p>
               </div>
               <button className="cl-modal-close" data-tooltip="Close" onClick={() => setShowAddEdit(false)}>
@@ -568,14 +602,14 @@ export default function BeautyClients() {
               {/* Row 4: Source & Instagram */}
               <div className="cl-form-row">
                 <div className="cl-field">
-                  <label>Source</label>
+                  <label><Notes width={14} height={14} /> Source</label>
                   <select value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value }))}>
-                    <option value="walk-in">🚶 Walk-in</option>
-                    <option value="online">🌐 Online Booking</option>
-                    <option value="referral">👥 Referral</option>
-                    <option value="social">📱 Social Media</option>
-                    <option value="campaign">📧 Campaign</option>
-                    <option value="other">📋 Other</option>
+                    <option value="walk-in">Walk-in</option>
+                    <option value="online">Online Booking</option>
+                    <option value="referral">Referral</option>
+                    <option value="social">Social Media</option>
+                    <option value="campaign">Campaign</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 <div className="cl-field">
@@ -592,7 +626,7 @@ export default function BeautyClients() {
 
               {/* Row 6: Allergies */}
               <div className="cl-field cl-field-full">
-                <label>⚠️ Allergies / Sensitivities</label>
+                <label><WarningTriangle width={14} height={14} /> Allergies / Sensitivities</label>
                 <input type="text" value={form.allergies} onChange={e => setForm(p => ({ ...p, allergies: e.target.value }))} placeholder="e.g., Latex allergy, sensitive skin..." />
               </div>
 
@@ -650,7 +684,10 @@ export default function BeautyClients() {
               <div className="cl-d-stat">
                 <CreditCard width={18} height={18} />
                 <div>
-                  <strong>{symbol} {parseFloat(detailData?.total_spent || detailClient.total_spent || 0).toLocaleString('en', { minimumFractionDigits: 0 })}</strong>
+                  <strong className="cl-currency-value">
+                    <CurrencySymbol className="cl-currency-symbol" />
+                    <span className="cl-currency-amount">{parseFloat(detailData?.total_spent || detailClient.total_spent || 0).toLocaleString('en', { minimumFractionDigits: 0 })}</span>
+                  </strong>
                   <span>Total Spent</span>
                 </div>
               </div>
@@ -708,7 +745,10 @@ export default function BeautyClients() {
                     </div>
                     <div className="cl-info-item">
                       <label>Source</label>
-                      <span>{sourceLabels[detailData.source] || detailData.source || '—'}</span>
+                      <span>
+                        {getSourceIcon(detailData.source)}
+                        {sourceLabels[detailData.source] || detailData.source || '—'}
+                      </span>
                     </div>
                     <div className="cl-info-item">
                       <label>Instagram</label>
@@ -725,13 +765,13 @@ export default function BeautyClients() {
                   </div>
                   {detailData.address && (
                     <div className="cl-info-block">
-                      <label>📍 Address</label>
+                      <label><MapPin width={14} height={14} /> Address</label>
                       <p>{detailData.address}</p>
                     </div>
                   )}
                   {detailData.allergies && (
                     <div className="cl-info-block cl-warning-block">
-                      <label>⚠️ Allergies / Sensitivities</label>
+                      <label><WarningTriangle width={14} height={14} /> Allergies / Sensitivities</label>
                       <p>{detailData.allergies}</p>
                     </div>
                   )}
@@ -772,7 +812,9 @@ export default function BeautyClients() {
                       <div className="cl-inv-info">
                         <div className="cl-inv-number">{inv.invoice_number}</div>
                         <div className="cl-inv-date">{formatDate(inv.created_at)}</div>
-                        <div className="cl-inv-amount">{symbol} {parseFloat(inv.total || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</div>
+                        <div className="cl-inv-amount">
+                          <CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {parseFloat(inv.total || 0).toLocaleString('en', { minimumFractionDigits: 2 })}
+                        </div>
                         <span className={`cl-status cl-status-${inv.status}`}>{inv.status}</span>
                       </div>
                       <button 
@@ -1316,7 +1358,7 @@ const CSS = `
   overflow: hidden;
 }
 .cl-detail-panel {
-  width: 480px; max-width: 100vw;
+  width: 600px; max-width: 100vw;
   height: 100vh;
   max-height: 100vh;
   background: #fff;
@@ -1330,46 +1372,43 @@ const CSS = `
 @keyframes clSlideRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
 .cl-detail-header {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  background: #fff;
   padding: 24px 24px 28px;
-  color: #fff;
+  color: #1e293b;
   text-align: center;
   position: relative;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+  border-bottom: 1px solid #f1f5f9;
 }
 .cl-detail-close {
   position: absolute; top: 14px; right: 14px;
-  background: rgba(255,255,255,0.15); border: none; border-radius: 8px;
+  background: #f1f5f9; border: none; border-radius: 8px;
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #fff;
+  cursor: pointer; color: #64748b;
 }
-.cl-detail-close:hover { background: rgba(255,255,255,0.25); }
+.cl-detail-close:hover { background: #e2e8f0; color: #334155; }
 .cl-detail-avatar {
   width: 80px; height: 80px; border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   font-size: 28px; font-weight: 700; color: #fff;
   margin: 0 auto 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.1);
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
-.cl-detail-header h2 { font-size: 20px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.3px; }
+.cl-detail-header h2 { font-size: 20px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.3px; color: #1e293b; }
 .cl-detail-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-bottom: 14px; }
-.cl-detail-meta span { display: flex; align-items: center; gap: 6px; font-size: 13px; opacity: 0.95; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px; backdrop-filter: blur(10px); }
+.cl-detail-meta span { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #64748b; background: #f8fafc; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
 .cl-detail-badges { display: flex; justify-content: center; gap: 10px; margin-bottom: 18px; }
 .cl-detail-quick-actions { display: flex; justify-content: center; gap: 10px; }
 .cl-detail-quick-actions .cl-btn-sm { 
-  background: rgba(255,255,255,0.2); 
-  color: #fff; 
-  border: 1px solid rgba(255,255,255,0.3);
-  backdrop-filter: blur(10px);
+  background: #f8fafc; 
+  color: #475569; 
+  border: 1px solid #e2e8f0;
   transition: all 0.2s;
 }
 .cl-detail-quick-actions .cl-btn-sm:hover { 
-  background: rgba(255,255,255,0.3); 
+  background: #f1f5f9; 
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 /* Detail Stats */
@@ -1396,6 +1435,21 @@ const CSS = `
   border-radius: 10px;
 }
 .cl-d-stat strong { font-size: 18px; font-weight: 800; color: #1e293b; display: block; letter-spacing: -0.3px; }
+.cl-currency-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.cl-currency-symbol {
+  font-size: 16px;
+  font-weight: 700;
+  color: #64748b;
+}
+.cl-currency-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+}
 .cl-d-stat span { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
 
 /* Tabs */

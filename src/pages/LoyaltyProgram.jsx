@@ -7,6 +7,7 @@ import {
 import api from '../lib/api';
 import SEO from '../components/SEO';
 import useCurrency from '../hooks/useCurrency';
+import CurrencySymbol from '../components/CurrencySymbol';
 import './LoyaltyProgram.css';
 
 const TIERS = {
@@ -75,7 +76,8 @@ export default function LoyaltyProgram() {
   const [settingsForm, setSettingsForm] = useState({});
 
   // Currency
-  const { symbol: currencySymbol } = useCurrency();
+  const { symbol: currencySymbol, currency } = useCurrency();
+  const CS = () => <CurrencySymbol currency={currency} symbol={currencySymbol} style={{ display: 'inline', fontSize: 'inherit', verticalAlign: 'baseline' }} />;
 
   const showToast = useCallback((type, message) => {
     setToast({ show: true, type, message });
@@ -281,7 +283,7 @@ export default function LoyaltyProgram() {
       {/* ═══ Page Header ═══ */}
       <div className="loyalty-header">
         <div>
-          <h1><span>⭐</span> Loyalty Program</h1>
+          <h1><Star width={24} height={24} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8 }} /> Loyalty Program</h1>
           <p>Reward your clients & keep them coming back</p>
         </div>
         <div className="loyalty-header-actions">
@@ -314,7 +316,7 @@ export default function LoyaltyProgram() {
             <h3>{(stats.totalPoints || 0).toLocaleString()}</h3>
             <p>Active Points</p>
             {loyaltySettings?.point_value > 0 && (
-              <span className="loyalty-stat-sub">≈ {currencySymbol} {((stats.totalPoints || 0) * loyaltySettings.point_value).toFixed(0)} value</span>
+              <span className="loyalty-stat-sub">≈ <CS /> {((stats.totalPoints || 0) * loyaltySettings.point_value).toFixed(0)} value</span>
             )}
           </div>
         </div>
@@ -568,7 +570,7 @@ export default function LoyaltyProgram() {
                 <p>Redeemed</p>
               </div>
               <div className="loyalty-points-box">
-                <h4>{loyaltySettings?.point_value > 0 ? `${currencySymbol} ${((selectedMember.current_points || 0) * loyaltySettings.point_value).toFixed(2)}` : '—'}</h4>
+                <h4>{loyaltySettings?.point_value > 0 ? <><CS /> {((selectedMember.current_points || 0) * loyaltySettings.point_value).toFixed(2)}</> : '—'}</h4>
                 <p>Points Value</p>
               </div>
             </div>
@@ -708,7 +710,7 @@ export default function LoyaltyProgram() {
                   </div>
                   {loyaltySettings?.point_value > 0 && (
                     <div className="loyalty-balance-worth">
-                      Worth {currencySymbol} {((selectedMember.current_points || 0) * loyaltySettings.point_value).toFixed(2)}
+                      Worth <CS /> {((selectedMember.current_points || 0) * loyaltySettings.point_value).toFixed(2)}
                     </div>
                   )}
                 </div>
@@ -734,7 +736,7 @@ export default function LoyaltyProgram() {
                   )}
                   {txnType === 'redeemed' && txnForm.points && loyaltySettings?.point_value > 0 && (
                     <small className="form-hint">
-                      Redemption value: {currencySymbol} {(parseInt(txnForm.points) * loyaltySettings.point_value).toFixed(2)}
+                      Redemption value: <CS /> {(parseInt(txnForm.points) * loyaltySettings.point_value).toFixed(2)}
                     </small>
                   )}
                 </div>
@@ -777,7 +779,7 @@ export default function LoyaltyProgram() {
                   <h3>💰 Points Earning</h3>
                   <div className="loyalty-settings-grid">
                     <div className="form-group">
-                      <label>Earn Rate <small>(pts per {currencySymbol} 1)</small></label>
+                      <label>Earn Rate <small>(pts per <CS /> 1)</small></label>
                       <input
                         type="number"
                         value={settingsForm.earn_rate ?? ''}
@@ -787,7 +789,7 @@ export default function LoyaltyProgram() {
                       />
                     </div>
                     <div className="form-group">
-                      <label>Min Spend to Earn <small>({currencySymbol})</small></label>
+                      <label>Min Spend to Earn <small>(<CS />)</small></label>
                       <input
                         type="number"
                         value={settingsForm.min_spend_to_earn ?? ''}
@@ -826,7 +828,7 @@ export default function LoyaltyProgram() {
                   <h3>🎁 Redemption</h3>
                   <div className="loyalty-settings-grid">
                     <div className="form-group">
-                      <label>Point Value <small>({currencySymbol} per 1 pt)</small></label>
+                      <label>Point Value <small>(<CS /> per 1 pt)</small></label>
                       <input
                         type="number"
                         value={settingsForm.point_value ?? ''}
@@ -951,12 +953,12 @@ export default function LoyaltyProgram() {
         <div className="loyalty-modal-overlay" onClick={() => setShowCalcModal(false)}>
           <div className="loyalty-modal" onClick={(e) => e.stopPropagation()}>
             <div className="loyalty-modal-header">
-              <h2>🧮 Points Calculator</h2>
+              <h2><Calculator width={20} height={20} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8 }} /> Points Calculator</h2>
               <button onClick={() => setShowCalcModal(false)}><Xmark width={20} height={20} /></button>
             </div>
             <div className="loyalty-modal-body">
               <div className="form-group">
-                <label>Spend Amount ({currencySymbol})</label>
+                <label>Spend Amount (<CS />)</label>
                 <div className="points-input-wrapper">
                   <input
                     type="number"
@@ -967,7 +969,7 @@ export default function LoyaltyProgram() {
                     step="0.01"
                     autoFocus
                   />
-                  <span className="points-input-suffix">{currencySymbol}</span>
+                  <span className="points-input-suffix"><CS /></span>
                 </div>
               </div>
               <button
@@ -989,11 +991,11 @@ export default function LoyaltyProgram() {
                   <div className="calc-result-details">
                     <div className="calc-detail-row">
                       <span>Spend</span>
-                      <span>{currencySymbol} {parseFloat(calcResult.amount).toFixed(2)}</span>
+                      <span><CS /> {parseFloat(calcResult.amount).toFixed(2)}</span>
                     </div>
                     <div className="calc-detail-row">
                       <span>Earn Rate</span>
-                      <span>{calcResult.earn_rate} pts / {currencySymbol} 1</span>
+                      <span>{calcResult.earn_rate} pts / <CS /> 1</span>
                     </div>
                     <div className="calc-detail-row">
                       <span>Base Points</span>
@@ -1007,7 +1009,7 @@ export default function LoyaltyProgram() {
                     )}
                     <div className="calc-detail-row total">
                       <span>Redemption Value</span>
-                      <span>{currencySymbol} {calcResult.redemption_value?.toFixed(2)}</span>
+                      <span><CS /> {calcResult.redemption_value?.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

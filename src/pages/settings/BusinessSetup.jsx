@@ -434,6 +434,9 @@ export default function BusinessSetup({ businessInfo, onBusinessChange, onSave, 
                     <span>{b.address || b.city || 'No address set'}</span>
                   </div>
                   <div className="biz-branch-badges">
+                    {b.staff_count !== undefined && b.staff_count > 0 && (
+                      <span className="biz-branch-count">{b.staff_count}</span>
+                    )}
                     {b.is_headquarters && <Badge bg="" className="biz-badge-hq">HQ</Badge>}
                     <Badge bg="" className={`biz-badge-status ${b.is_active ? 'active' : ''}`}>
                       {b.is_active ? 'Open' : 'Closed'}

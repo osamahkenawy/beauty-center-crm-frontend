@@ -8,6 +8,7 @@ import {
 import Swal from 'sweetalert2';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
+import CurrencySymbol from '../components/CurrencySymbol';
 import SEO from '../components/SEO';
 import './TeamManager.css';
 
@@ -385,7 +386,7 @@ export default function TeamManager() {
             <CreditCard width={22} height={22} />
           </div>
           <div className="team-stat-info">
-            <div className="team-stat-value">{symbol} {(stats.revenue_this_month || 0).toLocaleString()}</div>
+            <div className="team-stat-value"><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {(stats.revenue_this_month || 0).toLocaleString()}</div>
             <div className="team-stat-label">Revenue This Month</div>
           </div>
         </div>
@@ -526,7 +527,7 @@ export default function TeamManager() {
                   </span>
                   {member.total_revenue > 0 && (
                     <span className="team-perf-badge revenue">
-                      {symbol} {member.total_revenue.toLocaleString()}
+                      <CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {member.total_revenue.toLocaleString()}
                     </span>
                   )}
                 </div>
@@ -975,7 +976,7 @@ export default function TeamManager() {
                 </div>
                 <div className="team-view-stat">
                   <div className="val">
-                    {symbol} {(viewingMember.performance?.total_revenue || viewingMember.total_revenue || 0).toLocaleString()}
+                    <CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {(viewingMember.performance?.total_revenue || viewingMember.total_revenue || 0).toLocaleString()}
                   </div>
                   <div className="lbl">Total Revenue</div>
                 </div>

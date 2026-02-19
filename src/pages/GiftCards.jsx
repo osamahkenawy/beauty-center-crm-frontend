@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import * as IconoirIcons from 'iconoir-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
+import CurrencySymbol from '../components/CurrencySymbol';
 import './GiftCards.css';
 
 /* ── Curated icon set for gift card designs ── */
@@ -502,7 +503,7 @@ export default function GiftCards() {
                     <button key={a}
                       className={`gc-amount-opt ${!form.custom_amount && form.initial_value === a ? 'selected' : ''}`}
                       onClick={() => setForm(p => ({ ...p, initial_value: a, custom_amount: false }))}>
-                      {symbol} {a}
+                      <CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} /> {a}
                     </button>
                   ))}
                   <button className={`gc-amount-opt ${form.custom_amount ? 'selected' : ''}`}
@@ -512,7 +513,7 @@ export default function GiftCards() {
                 </div>
                 {form.custom_amount && (
                   <div className="gc-custom-amount-row">
-                    <span className="gc-custom-currency">{symbol}</span>
+                    <span className="gc-custom-currency"><CurrencySymbol currency={currency} symbol={symbol} /></span>
                     <input type="number" min="1" placeholder="Enter amount" className="gc-input gc-custom-input"
                       value={form.initial_value}
                       onChange={e => setForm(p => ({ ...p, initial_value: parseFloat(e.target.value) || 0 }))}
@@ -731,7 +732,7 @@ export default function GiftCards() {
                     placeholder="XXXX-XXXX-XXXX-XXXX" maxLength={19} />
                 </div>
                 <div className="gc-field">
-                  <label>Amount to Redeem ({symbol})</label>
+                  <label>Amount to Redeem (<CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline' }} />)</label>
                   <input className="gc-input" type="number" min="0.01" step="0.01"
                     value={redeemForm.amount}
                     onChange={e => setRedeemForm(p => ({ ...p, amount: e.target.value }))}
