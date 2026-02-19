@@ -13,6 +13,8 @@ import WorkingHours from './settings/WorkingHours';
 import NotificationSettings from './settings/NotificationSettings';
 import BookingRules from './settings/BookingRules';
 import ResourcesManager from './settings/ResourcesManager';
+import RolesManager from './RolesManager';
+import EmailTemplatesManager from './settings/EmailTemplatesManager';
 import './settings/Settings.css';
 
 // Route → Tab mapping
@@ -27,6 +29,8 @@ const getTabFromPath = (pathname) => {
   if (pathname.includes('/resources')) return 'resources';
   if (pathname.includes('/team')) return 'team';
   if (pathname.includes('/sales')) return 'sales';
+  if (pathname.includes('/roles')) return 'roles';
+  if (pathname.includes('/email-templates')) return 'email-templates';
   return 'business'; // default to business info
 };
 
@@ -41,6 +45,8 @@ const TAB_TITLES = {
   resources: 'Resources',
   team: 'Team',
   sales: 'Sales',
+  roles: 'Roles & Permissions',
+  'email-templates': 'Email Templates',
 };
 
 export default function BeautySettings() {
@@ -224,7 +230,11 @@ export default function BeautySettings() {
             <div className="stn-empty">
               <div className="stn-empty-icon">👥</div>
               <h3>Team Management</h3>
-              <p>Staff roles, permissions and time-off management coming soon.</p>
+              <p>Manage your team members, roles, and schedules.</p>
+              <button className="btn btn-sm" style={{ background: '#f2421b', color: '#fff', borderRadius: 8, padding: '8px 24px', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+                onClick={() => navigate('/team')}>
+                Open Team Manager →
+              </button>
             </div>
           )}
 
@@ -234,6 +244,14 @@ export default function BeautySettings() {
               <h3>Sales Settings</h3>
               <p>Payment methods, taxes, receipts and gift card settings coming soon.</p>
             </div>
+          )}
+
+          {activeTab === 'roles' && (
+            <RolesManager />
+          )}
+
+          {activeTab === 'email-templates' && (
+            <EmailTemplatesManager api={api} showToast={showToast} />
           )}
         </div>
       </div>

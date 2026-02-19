@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
-import { showContactSupport } from '../utils/supportAlert';
 import './BeautyPayments.css';
 
 const STATUS_CONFIG = {
@@ -24,7 +23,7 @@ const STATUS_CONFIG = {
 
 export default function BeautyPayments() {
   const { t } = useTranslation();
-  const { currency } = useCurrency();
+  const { currency, symbol } = useCurrency();
   const printRef = useRef(null);
   const [invoices, setInvoices] = useState([]);
   const [stats, setStats] = useState({});
@@ -34,9 +33,11 @@ export default function BeautyPayments() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 0 });
+  const [viewMode, setViewMode] = useState('table');
 
   // Business info for invoice header
   const [bizInfo, setBizInfo] = useState({});
+  const [defaultTaxRate, setDefaultTaxRate] = useState(5);
 
   // Modals
   const [showCreate, setShowCreate] = useState(false);
@@ -49,11 +50,14 @@ export default function BeautyPayments() {
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
   const [staffList, setStaffList] = useState([]);
-  const [form, setForm] = useState({
+  const getEmptyForm = () => ({
     customer_id: '', staff_id: '', items: [{ name: '', item_type: 'service', item_id: '', unit_price: 0, quantity: 1, discount: 0 }],
-    discount_amount: 0, discount_type: 'fixed', tax_rate: 5, payment_method: 'cash', notes: '', due_date: ''
+    discount_amount: 0, discount_type: 'fixed', tax_rate: defaultTaxRate, payment_method: 'cash', notes: '', due_date: ''
   });
-  const [payForm, setPayForm] = useState({ amount: '', payment_method: 'cash' });
+  const [form, setForm] = useState(getEmptyForm());
+  const [payForm, setPayForm] = useState({ amount: '', payment_method: 'cash', gift_card_code: '' });
+  const [payGcBalance, setPayGcBalance] = useState(null);
+  const [payGcChecking, setPayGcChecking] = useState(false);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -109,6 +113,12 @@ export default function BeautyPayments() {
           company_name: t.name,
           logo: t.logo_url || settings.logo || '',
         });
+        // Set default tax rate from settings if available
+        if (settings.default_tax_rate !== undefined) {
+          setDefaultTaxRate(parseFloat(settings.default_tax_rate) || 0);
+        } else if (settings.tax_rate !== undefined) {
+          setDefaultTaxRate(parseFloat(settings.tax_rate) || 0);
+        }
         return;
       }
     } catch (e) { console.warn('Could not fetch tenant from API:', e); }
@@ -153,7 +163,7 @@ export default function BeautyPayments() {
         setShowCreate(false);
         fetchInvoices();
         fetchStats();
-        setForm({ customer_id: '', staff_id: '', items: [{ name: '', item_type: 'service', item_id: '', unit_price: 0, quantity: 1, discount: 0 }], discount_amount: 0, discount_type: 'fixed', tax_rate: 5, payment_method: 'cash', notes: '', due_date: '' });
+        setForm(getEmptyForm());
       }
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
@@ -166,18 +176,37 @@ export default function BeautyPayments() {
     } catch (e) { console.error(e); }
   };
 
+  const checkPayGcBalance = async (code) => {
+    if (!code || code.length < 4) { setPayGcBalance(null); return; }
+    setPayGcChecking(true);
+    try {
+      const res = await api.get(`/gift-cards/check/${encodeURIComponent(code)}`);
+      setPayGcBalance(res.success ? res.data : { error: res.message || 'Not found' });
+    } catch { setPayGcBalance({ error: 'Gift card not found' }); }
+    finally { setPayGcChecking(false); }
+  };
+
   const handlePay = async () => {
     if (!payForm.amount || parseFloat(payForm.amount) <= 0) return;
+    if (payForm.payment_method === 'gift_card' && !payForm.gift_card_code) {
+      alert('Please enter a gift card code');
+      return;
+    }
     setSaving(true);
     try {
-      const res = await api.post(`/invoices/${viewing.id}/pay`, { amount: parseFloat(payForm.amount), payment_method: payForm.payment_method });
+      const payload = { amount: parseFloat(payForm.amount), payment_method: payForm.payment_method };
+      if (payForm.payment_method === 'gift_card') payload.gift_card_code = payForm.gift_card_code;
+      const res = await api.post(`/invoices/${viewing.id}/pay`, payload);
       if (res.success) {
         setShowPay(false);
+        setPayGcBalance(null);
         handleViewInvoice(viewing);
         fetchInvoices();
         fetchStats();
+      } else {
+        alert(res.message || 'Payment failed');
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); alert(e.message || 'Payment failed'); }
     finally { setSaving(false); }
   };
 
@@ -189,8 +218,20 @@ export default function BeautyPayments() {
     if (viewing?.id === id) setShowView(false);
   };
 
-  const handleDelete = () => {
-    showContactSupport();
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this draft invoice? This cannot be undone.')) return;
+    try {
+      const res = await api.delete(`/invoices/${id}`);
+      if (res.success) {
+        fetchInvoices();
+        fetchStats();
+      } else {
+        alert(res.message || 'Failed to delete invoice');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Only draft invoices can be deleted');
+    }
   };
 
   const handlePrint = () => {
@@ -293,7 +334,7 @@ export default function BeautyPayments() {
     printWindow.document.close();
   };
 
-  const formatCurrency = (v) => `${currency} ${parseFloat(v || 0).toFixed(2)}`;
+  const formatCurrency = (v) => `${symbol} ${parseFloat(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
   const formatDateLong = (d) => d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }) : '-';
 
@@ -317,7 +358,7 @@ export default function BeautyPayments() {
           <h1>Invoices & Payments</h1>
           <p>Manage billing, track payments, and keep your finances in order.</p>
         </div>
-        <button className="inv-btn-primary inv-btn-lg" onClick={() => setShowCreate(true)}>
+        <button className="inv-btn-primary inv-btn-lg" data-tooltip="Create new invoice" onClick={() => setShowCreate(true)}>
           <Plus size={18} /> New Invoice
         </button>
       </div>
@@ -356,9 +397,17 @@ export default function BeautyPayments() {
           <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} />
           <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} />
         </div>
+        <div className="inv-view-toggle">
+          <button className={`inv-view-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')} title="Table view" data-tooltip="Table view">
+            <FileText size={15} />
+          </button>
+          <button className={`inv-view-btn ${viewMode === 'card' ? 'active' : ''}`} onClick={() => setViewMode('card')} title="Card view" data-tooltip="Card view">
+            <Filter size={15} />
+          </button>
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Table / Card View */}
       <div className="inv-table-wrap">
         {loading ? (
           <div className="inv-loading">
@@ -374,7 +423,7 @@ export default function BeautyPayments() {
               <Plus size={16} /> Create First Invoice
             </button>
           </div>
-        ) : (
+        ) : viewMode === 'table' ? (
           <table className="inv-table">
             <thead>
               <tr>
@@ -407,14 +456,14 @@ export default function BeautyPayments() {
                   <td><StatusBadge status={inv.status} /></td>
                   <td onClick={e => e.stopPropagation()}>
                     <div className="inv-actions">
-                      <button title="View" onClick={() => handleViewInvoice(inv)}><Eye size={15} /></button>
+                      <button title="View" data-tooltip="View invoice" onClick={() => handleViewInvoice(inv)}><Eye size={15} /></button>
                       {inv.status !== 'paid' && inv.status !== 'void' && (
-                        <button title="Record Payment" className="inv-act-pay" onClick={() => { setViewing(inv); setPayForm({ amount: parseFloat(inv.total) - parseFloat(inv.amount_paid || 0), payment_method: 'cash' }); setShowPay(true); }}>
+                        <button title="Record Payment" data-tooltip="Record payment" className="inv-act-pay" onClick={() => { setViewing(inv); setPayForm({ amount: parseFloat(inv.total) - parseFloat(inv.amount_paid || 0), payment_method: 'cash' }); setShowPay(true); }}>
                           <CreditCard size={15} />
                         </button>
                       )}
                       {inv.status === 'draft' && (
-                        <button title="Delete" className="inv-act-danger" onClick={() => handleDelete(inv.id)}><XCircle size={15} /></button>
+                        <button title="Delete" data-tooltip="Delete invoice" className="inv-act-danger" onClick={() => handleDelete(inv.id)}><XCircle size={15} /></button>
                       )}
                     </div>
                   </td>
@@ -422,6 +471,47 @@ export default function BeautyPayments() {
               ))}
             </tbody>
           </table>
+        ) : (
+          /* Card / Grid View */
+          <div className="inv-card-grid">
+            {invoices.map(inv => {
+              const cfg = STATUS_CONFIG[inv.status] || STATUS_CONFIG.draft;
+              const StatusIcon = cfg.icon;
+              return (
+                <div className="inv-card-item" key={inv.id} onClick={() => handleViewInvoice(inv)}>
+                  <div className="inv-card-header">
+                    <span className="inv-card-num">{inv.invoice_number}</span>
+                    <StatusBadge status={inv.status} />
+                  </div>
+                  <div className="inv-card-customer">
+                    <span className="inv-avatar inv-avatar-sm">{(inv.customer_first_name || '?')[0]}</span>
+                    <span className="inv-card-name">{inv.customer_first_name} {inv.customer_last_name}</span>
+                  </div>
+                  <div className="inv-card-amounts">
+                    <div className="inv-card-amount-row">
+                      <span className="inv-card-label">Total</span>
+                      <span className="inv-card-total">{formatCurrency(inv.total)}</span>
+                    </div>
+                    <div className="inv-card-amount-row">
+                      <span className="inv-card-label">Paid</span>
+                      <span className="inv-card-paid">{formatCurrency(inv.amount_paid)}</span>
+                    </div>
+                  </div>
+                  <div className="inv-card-footer">
+                    <span className="inv-card-date"><Calendar size={11} /> {formatDate(inv.created_at)}</span>
+                    <div className="inv-card-actions" onClick={e => e.stopPropagation()}>
+                      <button title="View" onClick={() => handleViewInvoice(inv)}><Eye size={14} /></button>
+                      {inv.status !== 'paid' && inv.status !== 'void' && (
+                        <button title="Record Payment" className="inv-act-pay" onClick={() => { setViewing(inv); setPayForm({ amount: parseFloat(inv.total) - parseFloat(inv.amount_paid || 0), payment_method: 'cash', gift_card_code: '' }); setPayGcBalance(null); setShowPay(true); }}>
+                          <CreditCard size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
@@ -558,7 +648,7 @@ export default function BeautyPayments() {
                       <button className="inv-btn-icon-action inv-btn-void" onClick={() => handleVoid(viewing.id)} title="Void Invoice">
                         <Ban size={18} />
                       </button>
-                      <button className="inv-btn-primary inv-btn-sm" onClick={() => { setPayForm({ amount: balanceDue, payment_method: 'cash' }); setShowPay(true); }}>
+                      <button className="inv-btn-primary inv-btn-sm" onClick={() => { setPayForm({ amount: balanceDue, payment_method: 'cash', gift_card_code: '' }); setPayGcBalance(null); setShowPay(true); }}>
                         <CreditCard size={14} /> Record Payment
                       </button>
                     </>
@@ -765,7 +855,10 @@ export default function BeautyPayments() {
             </div>
             <div className="inv-field">
               <label><Banknote size={12} /> Payment Method</label>
-              <select value={payForm.payment_method} onChange={e => setPayForm(p => ({ ...p, payment_method: e.target.value }))}>
+              <select value={payForm.payment_method} onChange={e => {
+                setPayForm(p => ({ ...p, payment_method: e.target.value, gift_card_code: '' }));
+                setPayGcBalance(null);
+              }}>
                 <option value="cash">💵 Cash</option>
                 <option value="card">💳 Card</option>
                 <option value="bank_transfer">🏦 Bank Transfer</option>
@@ -773,6 +866,45 @@ export default function BeautyPayments() {
                 <option value="other">📋 Other</option>
               </select>
             </div>
+            {payForm.payment_method === 'gift_card' && (
+              <div className="inv-field" style={{ background: '#fffbeb', borderRadius: 8, padding: '10px 12px', border: '1px solid #fbbf24' }}>
+                <label style={{ color: '#92400e', fontWeight: 600, fontSize: 12 }}>🎁 Gift Card Code</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    placeholder="e.g. ABCD-EFGH-JKLM-NPQR"
+                    value={payForm.gift_card_code}
+                    onChange={e => {
+                      setPayForm(p => ({ ...p, gift_card_code: e.target.value.toUpperCase() }));
+                      setPayGcBalance(null);
+                    }}
+                    style={{ flex: 1, textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'monospace', fontSize: 14 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => checkPayGcBalance(payForm.gift_card_code)}
+                    disabled={payGcChecking || !payForm.gift_card_code}
+                    style={{ padding: '6px 14px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}
+                  >
+                    {payGcChecking ? '...' : 'Check'}
+                  </button>
+                </div>
+                {payGcBalance && !payGcBalance.error && (
+                  <div style={{ marginTop: 6, fontSize: 12, color: parseFloat(payGcBalance.remaining_value) >= parseFloat(payForm.amount || 0) ? '#15803d' : '#dc2626', fontWeight: 600 }}>
+                    ✅ Balance: {formatCurrency(parseFloat(payGcBalance.remaining_value))}
+                    {payGcBalance.status !== 'active' && <span style={{ color: '#dc2626' }}> ({payGcBalance.status})</span>}
+                    {parseFloat(payGcBalance.remaining_value) < parseFloat(payForm.amount || 0) && (
+                      <span style={{ color: '#dc2626', display: 'block' }}>⚠️ Insufficient balance for this payment</span>
+                    )}
+                  </div>
+                )}
+                {payGcBalance?.error && (
+                  <div style={{ marginTop: 6, fontSize: 12, color: '#dc2626', fontWeight: 600 }}>
+                    ❌ {payGcBalance.error}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Modal.Body>
         <Modal.Footer className="inv-modal-footer">

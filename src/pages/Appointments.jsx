@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Calendar, Search, Plus, Eye, EditPencil, Trash, User, Clock,
   Check, Xmark, Phone, Mail, WarningTriangle, List, GridPlus,
-  UserPlus, RefreshDouble, Scissor
+  UserPlus, RefreshDouble, Scissor, Gift, Percentage, CreditCard
 } from 'iconoir-react';
 import { Table, Badge, Dropdown, Card, Toast, ToastContainer } from 'react-bootstrap';
+import Swal from 'sweetalert2';
 import api from '../lib/api';
 import SEO from '../components/SEO';
 import AppointmentCalendar from '../components/AppointmentCalendar';
@@ -83,10 +84,18 @@ export default function Appointments() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutAppt, setCheckoutAppt] = useState(null);
   const [checkoutForm, setCheckoutForm] = useState({
-    payment_method: 'cash', discount_amount: 0, discount_type: 'fixed', tax_rate: 5, tip: 0, pay_now: true
+    payment_method: 'cash', gift_card_code: '', discount_amount: 0, discount_type: 'fixed', tax_rate: 5, tip: 0, pay_now: true
   });
+  const [gcBalance, setGcBalance] = useState(null);
+  const [gcChecking, setGcChecking] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
+
+  // Promo code state
+  const [promoCode, setPromoCode] = useState('');
+  const [promoStatus, setPromoStatus] = useState('idle'); // idle | validating | valid | invalid
+  const [promoResult, setPromoResult] = useState(null);   // { promotion_id, discount_code_id, type, discount_value, discount_amount, message }
+  const [promoError, setPromoError] = useState('');
 
   const showToast = useCallback((type, message) => {
     setToast({ show: true, type, message });
@@ -202,9 +211,43 @@ export default function Appointments() {
     return (service.duration || 60) + (service.processing_time || 0) + (service.finishing_time || 0);
   };
 
+  // Promo validation
+  const validatePromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoStatus('validating');
+    setPromoError('');
+    try {
+      const data = await api.post('/promotions/validate', {
+        code: promoCode.trim(),
+        service_id: formData.service_id ? parseInt(formData.service_id) : undefined,
+        subtotal: parseFloat(selectedService?.unit_price || 0)
+      });
+      if (data.success && data.data?.valid) {
+        setPromoResult(data.data);
+        setPromoStatus('valid');
+      } else {
+        setPromoError(data.message || 'Invalid code');
+        setPromoStatus('invalid');
+        setPromoResult(null);
+      }
+    } catch (err) {
+      setPromoError(err.message || 'Invalid promo code');
+      setPromoStatus('invalid');
+      setPromoResult(null);
+    }
+  };
+
+  const clearPromo = () => {
+    setPromoCode('');
+    setPromoStatus('idle');
+    setPromoResult(null);
+    setPromoError('');
+  };
+
   const openCreateModal = (presetDate = null) => {
     setEditingItem(null);
     setBookingStep(1);
+    clearPromo();
     let dateStr = new Date().toISOString().split('T')[0];
     if (presetDate) {
       if (presetDate instanceof Date) {
@@ -267,6 +310,15 @@ export default function Appointments() {
         status: formData.status
       };
 
+      // Attach promo data if valid
+      if (promoStatus === 'valid' && promoResult) {
+        payload.promo_code = promoCode.trim();
+        payload.promotion_id = promoResult.promotion_id;
+        payload.discount_code_id = promoResult.discount_code_id;
+        payload.discount_amount = promoResult.discount_amount;
+        payload.discount_type = promoResult.type;
+      }
+
       if (!payload.customer_id || !payload.service_id || !payload.staff_id || !formData.booking_time) {
         showToast('error', 'Please fill in all required fields');
         setSaving(false);
@@ -278,10 +330,19 @@ export default function Appointments() {
         : await api.post('/appointments', payload);
 
       if (data.success) {
-        showToast('success', data.message || (editingItem ? 'Appointment updated' : 'Appointment booked'));
+        Swal.fire({
+          icon: 'success',
+          title: editingItem ? 'Updated!' : '🎉 Booked!',
+          html: promoStatus === 'valid'
+            ? `<p>${data.message || 'Appointment booked successfully'}</p><p style="color:#22c55e;font-weight:600">Promo applied — you saved ${currency} ${(promoResult?.discount_amount || 0).toFixed(2)}!</p>`
+            : `<p>${data.message || 'Appointment booked successfully'}</p>`,
+          timer: 2500,
+          showConfirmButton: false
+        });
         fetchAppointments(pagination.page, pagination.limit);
         fetchAllAppointments();
         setShowModal(false);
+        clearPromo();
       } else {
         showToast('error', data.message);
       }
@@ -324,8 +385,9 @@ export default function Appointments() {
   // ── Checkout Flow ──
   const openCheckout = (appt) => {
     setCheckoutAppt(appt);
-    setCheckoutForm({ payment_method: 'cash', discount_amount: 0, discount_type: 'fixed', tax_rate: 5, tip: 0, pay_now: true });
+    setCheckoutForm({ payment_method: 'cash', gift_card_code: '', discount_amount: 0, discount_type: 'fixed', tax_rate: 5, tip: 0, pay_now: true });
     setCheckoutResult(null);
+    setGcBalance(null);
     setShowCheckout(true);
     if (showViewModal) setShowViewModal(false);
   };
@@ -338,8 +400,37 @@ export default function Appointments() {
   const checkoutTax = checkoutAfterDisc * (checkoutForm.tax_rate / 100);
   const checkoutTotal = checkoutAfterDisc + checkoutTax;
 
+  // Check gift card balance
+  const checkGiftCardBalance = async (code) => {
+    if (!code || code.length < 4) { setGcBalance(null); return; }
+    setGcChecking(true);
+    try {
+      const res = await api.get(`/gift-cards/check/${encodeURIComponent(code)}`);
+      if (res.success) {
+        setGcBalance(res.data);
+      } else {
+        setGcBalance({ error: res.message || 'Not found' });
+      }
+    } catch {
+      setGcBalance({ error: 'Gift card not found' });
+    } finally {
+      setGcChecking(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!checkoutAppt) return;
+    // Validate gift card code if payment is gift card
+    if (checkoutForm.payment_method === 'gift_card' && !checkoutForm.gift_card_code) {
+      showToast('error', 'Please enter a gift card code');
+      return;
+    }
+    if (checkoutForm.payment_method === 'gift_card' && gcBalance && !gcBalance.error) {
+      if (parseFloat(gcBalance.remaining_value) < checkoutTotal) {
+        showToast('error', `Insufficient gift card balance (${parseFloat(gcBalance.remaining_value).toFixed(2)} available)`);
+        return;
+      }
+    }
     setCheckingOut(true);
     try {
       const data = await api.post(`/appointments/${checkoutAppt.id}/checkout`, checkoutForm);
@@ -416,6 +507,17 @@ export default function Appointments() {
     ? staff.filter(s => s.is_active && (String(s.branch_id) === formData.branch_id || !s.branch_id))
     : staff.filter(s => s.is_active);
 
+  // Pricing calculations for booking summary
+  const bookingPricing = useMemo(() => {
+    const subtotal = parseFloat(selectedService?.unit_price || 0);
+    const promoDiscount = promoStatus === 'valid' && promoResult ? parseFloat(promoResult.discount_amount || 0) : 0;
+    const afterDiscount = Math.max(0, subtotal - promoDiscount);
+    const taxRate = 5; // VAT %
+    const taxAmount = afterDiscount * (taxRate / 100);
+    const total = afterDiscount + taxAmount;
+    return { subtotal, promoDiscount, afterDiscount, taxRate, taxAmount, total };
+  }, [selectedService, promoStatus, promoResult]);
+
   return (
     <div className="appointments-page">
       <SEO page="appointments" />
@@ -445,6 +547,17 @@ export default function Appointments() {
         </Toast>
       </ToastContainer>
 
+      {/* ── Print-only header (hidden on screen, shown on print) ── */}
+      <div className="appt-print-header">
+        <div className="appt-print-logo">
+          <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" />
+        </div>
+        <div className="appt-print-meta">
+          <h1>Appointments Report</h1>
+          <p>Printed on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} · {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+        </div>
+      </div>
+
       {/* Page Header */}
       <div className="page-header-area">
         <div className="page-title">
@@ -452,10 +565,40 @@ export default function Appointments() {
           <p className="text-muted">Manage your bookings and schedule</p>
         </div>
         <div className="page-header-actions">
-          <button className="btn-refresh" onClick={() => { fetchAppointments(pagination.page, pagination.limit); fetchAllAppointments(); }}>
+          <button className="btn-refresh" data-tooltip="Refresh list" onClick={() => { fetchAppointments(pagination.page, pagination.limit); fetchAllAppointments(); }}>
             <RefreshDouble width={18} height={18} />
           </button>
-          <button className="btn-add-new" onClick={() => openCreateModal()}>
+          <button className="btn-export-csv" title="Download Excel" data-tooltip="Download as Excel" onClick={() => {
+            const rows = [
+              ['Invoice #', 'Client', 'Service', 'Staff', 'Date', 'Time', 'Status', 'Price'],
+              ...appointments.map(a => [
+                a.id,
+                `${a.client_first_name || ''} ${a.client_last_name || ''}`.trim() || a.client_name || '-',
+                a.service_name || '-',
+                a.staff_name || '-',
+                a.start_time ? new Date(a.start_time).toLocaleDateString() : '-',
+                a.start_time ? new Date(a.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
+                STATUS_MAP[a.status]?.label || a.status || '-',
+                a.service_price || 0,
+              ])
+            ];
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `appointments-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
+          <button className="btn-print" title="Print appointments" data-tooltip="Print appointments" onClick={() => window.print()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
+          <button className="btn-add-new" data-tooltip="Book new appointment" onClick={() => openCreateModal()}>
             <Plus width={18} height={18} /> New Appointment
           </button>
         </div>
@@ -591,7 +734,7 @@ export default function Appointments() {
                       <th>Date & Time</th>
                       <th>Status</th>
                       <th>Price</th>
-                      <th className="text-end">Action</th>
+                      <th className="text-end appt-no-print">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -634,9 +777,9 @@ export default function Appointments() {
                             <Badge bg={`${statusInfo.variant} light`}>{statusInfo.label}</Badge>
                           </td>
                           <td className="price-cell">{currency} {parseFloat(appt.service_price || 0).toFixed(0)}</td>
-                          <td className="text-end">
+                          <td className="text-end appt-no-print">
                             <Dropdown align="end">
-                              <Dropdown.Toggle variant="light" className="action-dropdown">
+                              <Dropdown.Toggle variant="light" className="action-dropdown" data-tooltip="Actions">
                                 {svgDots}
                               </Dropdown.Toggle>
                               <Dropdown.Menu renderOnMount popperConfig={{ strategy: 'fixed' }}>
@@ -648,7 +791,9 @@ export default function Appointments() {
                                     <EditPencil width={14} height={14} className="me-2" /> Edit
                                   </Dropdown.Item>
                                 )}
-                                <Dropdown.Divider />
+                                {appt.status !== 'completed' && appt.status !== 'cancelled' && (
+                                  <Dropdown.Divider />
+                                )}
                                 {appt.status !== 'confirmed' && appt.status !== 'completed' && appt.status !== 'cancelled' && (
                                   <Dropdown.Item onClick={() => openConfirmModal(appt.id, 'confirmed')}>
                                     <Check width={14} height={14} className="me-2" /> Confirm
@@ -762,57 +907,51 @@ export default function Appointments() {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-container booking-modal-new" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-new">
-              <h2>{editingItem ? 'Edit Appointment' : 'New Appointment'}</h2>
+              <h2>{editingItem ? 'Edit Appointment' : '✨ New Appointment'}</h2>
               <button className="modal-close-btn" onClick={() => setShowModal(false)}>
                 <Xmark width={20} height={20} />
               </button>
             </div>
 
-            {/* Steps */}
+            {/* Steps - 4 step flow */}
             <div className="booking-steps-new">
-              <div className={`step-item ${bookingStep >= 1 ? 'active' : ''} ${bookingStep > 1 ? 'done' : ''}`}>
-                <span className="step-number">1</span>
-                <span className="step-text">Service</span>
-              </div>
-              <div className="step-line"></div>
-              <div className={`step-item ${bookingStep >= 2 ? 'active' : ''} ${bookingStep > 2 ? 'done' : ''}`}>
-                <span className="step-number">2</span>
-                <span className="step-text">Schedule</span>
-              </div>
-              <div className="step-line"></div>
-              <div className={`step-item ${bookingStep >= 3 ? 'active' : ''}`}>
-                <span className="step-number">3</span>
-                <span className="step-text">Client</span>
-              </div>
+              {[
+                { num: 1, label: 'Service' },
+                { num: 2, label: 'Schedule' },
+                { num: 3, label: 'Client' },
+                { num: 4, label: 'Review' }
+              ].map((step, idx) => (
+                <div key={step.num} style={{ display: 'flex', alignItems: 'center' }}>
+                  {idx > 0 && <div className="step-line"></div>}
+                  <div 
+                    className={`step-item ${bookingStep >= step.num ? 'active' : ''} ${bookingStep > step.num ? 'done' : ''}`}
+                    onClick={() => { if (bookingStep > step.num) setBookingStep(step.num); }}
+                    style={{ cursor: bookingStep > step.num ? 'pointer' : 'default' }}
+                  >
+                    <span className="step-number">{bookingStep > step.num ? '✓' : step.num}</span>
+                    <span className="step-text">{step.label}</span>
+                  </div>
+                </div>
+              ))}
             </div>
 
             <form onSubmit={handleSubmit} className="booking-form-new">
-              {/* Step 1 */}
+              {/* Step 1: Service & Staff */}
               {bookingStep === 1 && (
                 <div className="step-content">
-                  {/* Branch Selection */}
-                  {branches.length > 0 && (
-                    <div className="form-section">
+                  {branches.length > 1 && (
+                    <div className="form-section" style={{ paddingBottom: 12 }}>
                       <label className="section-label">Select Branch</label>
-                      <div className="staff-selection">
-                        <div 
-                          className={`staff-option ${formData.branch_id === '' ? 'selected' : ''}`}
-                          onClick={() => setFormData(prev => ({ ...prev, branch_id: '', service_id: '', staff_id: '' }))}
-                        >
-                          <div className="staff-avatar-sm" style={{ background: '#667085' }}>A</div>
-                          <span>All Branches</span>
-                        </div>
+                      <select
+                        className="form-input"
+                        value={formData.branch_id}
+                        onChange={(e) => setFormData(prev => ({ ...prev, branch_id: e.target.value, service_id: '', staff_id: '' }))}
+                      >
+                        <option value="">All Branches</option>
                         {branches.map(b => (
-                          <div 
-                            key={b.id}
-                            className={`staff-option ${formData.branch_id === String(b.id) ? 'selected' : ''}`}
-                            onClick={() => setFormData(prev => ({ ...prev, branch_id: String(b.id), service_id: '', staff_id: '' }))}
-                          >
-                            <div className="staff-avatar-sm">{(b.name)?.charAt(0)}</div>
-                            <span>{b.name} {b.is_headquarters ? '(HQ)' : ''}</span>
-                          </div>
+                          <option key={b.id} value={String(b.id)}>{b.name} {b.is_headquarters ? '(HQ)' : ''}</option>
                         ))}
-                      </div>
+                      </select>
                     </div>
                   )}
 
@@ -858,7 +997,7 @@ export default function Appointments() {
                 </div>
               )}
 
-              {/* Step 2 */}
+              {/* Step 2: Schedule */}
               {bookingStep === 2 && (
                 <div className="step-content">
                   <div className="form-section">
@@ -887,7 +1026,7 @@ export default function Appointments() {
                 </div>
               )}
 
-              {/* Step 3 */}
+              {/* Step 3: Client */}
               {bookingStep === 3 && (
                 <div className="step-content">
                   <div className="form-section">
@@ -905,9 +1044,23 @@ export default function Appointments() {
                     >
                       <option value="">Choose a client...</option>
                       {contacts.map(c => (
-                        <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>
+                        <option key={c.id} value={c.id}>{c.first_name} {c.last_name} {c.phone ? `(${c.phone})` : ''}</option>
                       ))}
                     </select>
+
+                    {/* Selected client preview */}
+                    {selectedClient && (
+                      <div className="selected-client-preview">
+                        <div className="client-preview-avatar">
+                          {selectedClient.first_name?.charAt(0)}{selectedClient.last_name?.charAt(0)}
+                        </div>
+                        <div className="client-preview-info">
+                          <strong>{selectedClient.first_name} {selectedClient.last_name}</strong>
+                          {selectedClient.phone && <span>{selectedClient.phone}</span>}
+                          {selectedClient.email && <span>{selectedClient.email}</span>}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-section">
@@ -918,33 +1071,132 @@ export default function Appointments() {
                       onChange={handleInputChange} 
                       className="form-input"
                       rows={3}
-                      placeholder="Any special requests..."
+                      placeholder="Any special requests, allergies, preferences..."
                     />
                   </div>
+                </div>
+              )}
 
-                  {/* Summary */}
+              {/* Step 4: Review & Book (with Promo Code) */}
+              {bookingStep === 4 && (
+                <div className="step-content">
+                  {/* Booking Summary Card */}
+                  <div className="review-card">
+                    <div className="review-card-header">
+                      <span>📋 Booking Summary</span>
+                    </div>
+                    <div className="review-detail-grid">
+                      <div className="review-detail-item">
+                        <Scissor width={16} height={16} />
+                        <div>
+                          <label>Service</label>
+                          <p>{selectedService?.name || '-'}</p>
+                          <small>{getServiceDuration()} min</small>
+                        </div>
+                      </div>
+                      <div className="review-detail-item">
+                        <User width={16} height={16} />
+                        <div>
+                          <label>Staff</label>
+                          <p>{selectedStaff?.full_name || selectedStaff?.username || '-'}</p>
+                        </div>
+                      </div>
+                      <div className="review-detail-item">
+                        <Calendar width={16} height={16} />
+                        <div>
+                          <label>Date & Time</label>
+                          <p>{formData.booking_date ? new Date(formData.booking_date + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '-'}</p>
+                          <small>{formData.booking_time || '-'}</small>
+                        </div>
+                      </div>
+                      <div className="review-detail-item">
+                        <User width={16} height={16} />
+                        <div>
+                          <label>Client</label>
+                          <p>{selectedClient ? `${selectedClient.first_name} ${selectedClient.last_name}` : '-'}</p>
+                          {selectedClient?.phone && <small>{selectedClient.phone}</small>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Promo Code Section */}
+                  <div className="promo-section">
+                    <div className="promo-header">
+                      <Gift width={18} height={18} />
+                      <span>Have a promo code?</span>
+                    </div>
+                    <div className="promo-input-row">
+                      <div className={`promo-input-wrapper ${promoStatus}`}>
+                        <input
+                          type="text"
+                          className="promo-input"
+                          placeholder="Enter code e.g. BEAUTY20"
+                          value={promoCode}
+                          onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); if (promoStatus !== 'idle') { setPromoStatus('idle'); setPromoError(''); setPromoResult(null); } }}
+                          disabled={promoStatus === 'valid'}
+                        />
+                        {promoStatus === 'valid' && (
+                          <button type="button" className="promo-clear-btn" onClick={clearPromo}>
+                            <Xmark width={14} height={14} />
+                          </button>
+                        )}
+                      </div>
+                      {promoStatus !== 'valid' && (
+                        <button
+                          type="button"
+                          className="promo-apply-btn"
+                          onClick={validatePromo}
+                          disabled={!promoCode.trim() || promoStatus === 'validating'}
+                        >
+                          {promoStatus === 'validating' ? (
+                            <span className="promo-spinner"></span>
+                          ) : (
+                            'Apply'
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    {promoStatus === 'valid' && promoResult && (
+                      <div className="promo-success-msg">
+                        <Check width={14} height={14} />
+                        <span>{promoResult.message} — You save <strong>{currency} {parseFloat(promoResult.discount_amount || 0).toFixed(2)}</strong></span>
+                      </div>
+                    )}
+                    {promoStatus === 'invalid' && promoError && (
+                      <div className="promo-error-msg">
+                        <Xmark width={14} height={14} />
+                        <span>{promoError}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pricing Breakdown */}
                   <div className="booking-summary-card">
-                    <h4>Summary</h4>
+                    <h4>Price Breakdown</h4>
                     <div className="summary-item">
-                      <span>Service</span>
-                      <strong>{selectedService?.name || '-'}</strong>
+                      <span>{selectedService?.name || 'Service'}</span>
+                      <strong>{currency} {bookingPricing.subtotal.toFixed(2)}</strong>
                     </div>
+                    {bookingPricing.promoDiscount > 0 && (
+                      <div className="summary-item promo-discount">
+                        <span>🎁 Promo Discount {promoResult?.type === 'percentage' ? `(${promoResult.discount_value}%)` : ''}</span>
+                        <strong style={{ color: '#22c55e' }}>−{currency} {bookingPricing.promoDiscount.toFixed(2)}</strong>
+                      </div>
+                    )}
                     <div className="summary-item">
-                      <span>Staff</span>
-                      <strong>{selectedStaff?.full_name || selectedStaff?.username || '-'}</strong>
-                    </div>
-                    <div className="summary-item">
-                      <span>Date</span>
-                      <strong>{formData.booking_date || '-'}</strong>
-                    </div>
-                    <div className="summary-item">
-                      <span>Time</span>
-                      <strong>{formData.booking_time || '-'}</strong>
+                      <span>VAT ({bookingPricing.taxRate}%)</span>
+                      <strong>{currency} {bookingPricing.taxAmount.toFixed(2)}</strong>
                     </div>
                     <div className="summary-item total">
                       <span>Total</span>
-                      <strong>{currency} {parseFloat(selectedService?.unit_price || 0).toFixed(0)}</strong>
+                      <strong>{currency} {bookingPricing.total.toFixed(2)}</strong>
                     </div>
+                    {bookingPricing.promoDiscount > 0 && (
+                      <div className="savings-badge">
+                        🎉 You save {currency} {bookingPricing.promoDiscount.toFixed(2)}!
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -957,21 +1209,31 @@ export default function Appointments() {
                   </button>
                 )}
                 <div className="footer-spacer"></div>
-                {bookingStep < 3 ? (
+                {bookingStep < 4 ? (
                   <button 
                     type="button" 
                     className="btn-primary"
                     onClick={() => setBookingStep(prev => prev + 1)}
                     disabled={
                       (bookingStep === 1 && (!formData.service_id || !formData.staff_id)) ||
-                      (bookingStep === 2 && (!formData.booking_date || !formData.booking_time))
+                      (bookingStep === 2 && (!formData.booking_date || !formData.booking_time)) ||
+                      (bookingStep === 3 && !formData.customer_id)
                     }
                   >
                     Continue
                   </button>
                 ) : (
-                  <button type="submit" className="btn-primary" disabled={saving || !formData.customer_id}>
-                    {saving ? 'Booking...' : 'Confirm Booking'}
+                  <button type="submit" className="btn-primary btn-confirm-booking" disabled={saving}>
+                    {saving ? (
+                      <>
+                        <span className="promo-spinner" style={{ marginRight: 8 }}></span> Booking...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard width={18} height={18} style={{ marginRight: 8 }} />
+                        Confirm Booking — {currency} {bookingPricing.total.toFixed(2)}
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -1170,7 +1432,10 @@ export default function Appointments() {
                 <div className="checkout-options">
                   <div className="checkout-row">
                     <label>Payment Method</label>
-                    <select value={checkoutForm.payment_method} onChange={e => setCheckoutForm(p => ({ ...p, payment_method: e.target.value }))}>
+                    <select value={checkoutForm.payment_method} onChange={e => {
+                      setCheckoutForm(p => ({ ...p, payment_method: e.target.value, gift_card_code: '' }));
+                      setGcBalance(null);
+                    }}>
                       <option value="cash">💵 Cash</option>
                       <option value="card">💳 Card</option>
                       <option value="bank_transfer">🏦 Bank Transfer</option>
@@ -1178,6 +1443,49 @@ export default function Appointments() {
                       <option value="other">📋 Other</option>
                     </select>
                   </div>
+
+                  {/* Gift Card Code Input */}
+                  {checkoutForm.payment_method === 'gift_card' && (
+                    <div className="checkout-row" style={{ background: '#fffbeb', borderRadius: 8, padding: '10px 12px', border: '1px solid #fbbf24' }}>
+                      <label style={{ color: '#92400e', fontWeight: 600, fontSize: 12 }}>🎁 Gift Card Code</label>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="e.g. ABCD-EFGH-JKLM-NPQR"
+                          value={checkoutForm.gift_card_code}
+                          onChange={e => {
+                            const code = e.target.value.toUpperCase();
+                            setCheckoutForm(p => ({ ...p, gift_card_code: code }));
+                            setGcBalance(null);
+                          }}
+                          style={{ flex: 1, textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'monospace', fontSize: 14 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => checkGiftCardBalance(checkoutForm.gift_card_code)}
+                          disabled={gcChecking || !checkoutForm.gift_card_code}
+                          style={{ padding: '6px 14px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}
+                        >
+                          {gcChecking ? '...' : 'Check'}
+                        </button>
+                      </div>
+                      {gcBalance && !gcBalance.error && (
+                        <div style={{ marginTop: 6, fontSize: 12, color: parseFloat(gcBalance.remaining_value) >= checkoutTotal ? '#15803d' : '#dc2626', fontWeight: 600 }}>
+                          ✅ Balance: {currency} {parseFloat(gcBalance.remaining_value).toFixed(2)}
+                          {gcBalance.status !== 'active' && <span style={{ color: '#dc2626' }}> ({gcBalance.status})</span>}
+                          {parseFloat(gcBalance.remaining_value) < checkoutTotal && (
+                            <span style={{ color: '#dc2626', display: 'block' }}>⚠️ Insufficient balance for this checkout</span>
+                          )}
+                        </div>
+                      )}
+                      {gcBalance?.error && (
+                        <div style={{ marginTop: 6, fontSize: 12, color: '#dc2626', fontWeight: 600 }}>
+                          ❌ {gcBalance.error}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="checkout-row-inline">
                     <div className="checkout-field">
                       <label>Discount</label>
@@ -1245,6 +1553,11 @@ export default function Appointments() {
                 <h3>Checkout Complete!</h3>
                 <p className="checkout-inv-num">{checkoutResult.invoice_number}</p>
                 <p>Total: <strong>{currency} {parseFloat(checkoutResult.total || 0).toFixed(2)}</strong></p>
+                {checkoutResult.gift_card && checkoutResult.gift_card.success && (
+                  <p style={{ fontSize: 13, color: '#15803d', background: '#f0fdf4', padding: '6px 12px', borderRadius: 8, marginTop: 4 }}>
+                    🎁 Gift card charged — Remaining: {currency} {parseFloat(checkoutResult.gift_card.remaining_value).toFixed(2)}
+                  </p>
+                )}
                 <p className="checkout-status-label">
                   {checkoutResult.status === 'paid'
                     ? <Badge bg="success light">Paid</Badge>

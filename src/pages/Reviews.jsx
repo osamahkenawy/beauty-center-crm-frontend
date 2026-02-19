@@ -184,9 +184,9 @@ export default function Reviews() {
                 </div>
               )}
               <div className="rev-card-actions">
-                {!r.response && <button className="rev-action-btn rev-respond-btn" onClick={() => handleRespond(r)}><Reply size={14} /> Respond</button>}
-                <button className="rev-action-btn" onClick={() => toggleVisibility(r)}>{r.is_public ? <><EyeOff size={14} /> Hide</> : <><Eye size={14} /> Show</>}</button>
-                <button className="rev-action-btn rev-del-btn" onClick={() => handleDelete(r)}><Trash2 size={14} /></button>
+                {!r.response && <button className="rev-action-btn rev-respond-btn" data-tooltip="Reply to review" onClick={() => handleRespond(r)}><Reply size={14} /> Respond</button>}
+                <button className="rev-action-btn" data-tooltip={r.is_public ? 'Hide review' : 'Show review'} onClick={() => toggleVisibility(r)}>{r.is_public ? <><EyeOff size={14} /> Hide</> : <><Eye size={14} /> Show</>}</button>
+                <button className="rev-action-btn rev-del-btn" data-tooltip="Delete review" onClick={() => handleDelete(r)}><Trash2 size={14} /></button>
               </div>
             </div>
           ))}

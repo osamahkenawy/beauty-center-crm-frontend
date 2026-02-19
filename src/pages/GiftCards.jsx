@@ -1,37 +1,79 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Modal } from 'react-bootstrap';
-import {
-  Plus, Search, Gift, Eye, Ban, CreditCard, DollarSign,
-  Clock, CheckCircle, AlertTriangle, XCircle, Send, Copy,
-  Tag, ShoppingBag, RefreshCw
-} from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import * as IconoirIcons from 'iconoir-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
 import './GiftCards.css';
 
-const TEMPLATES = [
-  { id: 'classic', name: 'Classic', gradient: 'linear-gradient(135deg,#f2421b,#f79680)', icon: '🎁' },
-  { id: 'spa', name: 'Spa Day', gradient: 'linear-gradient(135deg,#ec4899,#f9a8d4)', icon: '🧖' },
-  { id: 'birthday', name: 'Birthday', gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)', icon: '🎂' },
-  { id: 'thankyou', name: 'Thank You', gradient: 'linear-gradient(135deg,#10b981,#6ee7b7)', icon: '💐' },
-  { id: 'luxury', name: 'Luxury', gradient: 'linear-gradient(135deg,#1e293b,#64748b)', icon: '✨' },
+/* ── Curated icon set for gift card designs ── */
+const ICON_CATALOG = [
+  'Gift', 'Heart', 'HeartSolid', 'Star', 'StarSolid', 'Trophy', 'Medal', 'Crown',
+  'BirthdayCake', 'Flower', 'Leaf', 'Spark', 'Sparks', 'SparkSolid',
+  'SunLight', 'HalfMoon', 'MoonSat', 'SeaAndSun', 'Diamond',
+  'CreditCard', 'Wallet', 'Dollar', 'MoneySquare', 'HandCard',
+  'ShoppingBag', 'Bag', 'Handbag', 'Cart', 'Shop',
+  'Scissor', 'Palette', 'Rings', 'BrightCrown', 'BrightStar',
+  'Peace', 'PeaceHand', 'ThreeStars', 'CircleSpark', 'BubbleStar',
+  'UserStar', 'UserLove', 'UserCrown', 'DocStar',
+  'AppleWallet', 'Label', 'Percentage',
+  'Check', 'Plus', 'Eye', 'Bell', 'Music', 'Camera', 'Film',
+  'Book', 'BookmarkBook', 'Globe', 'Airplane', 'Car',
+  'Coffee', 'Yoga', 'Running', 'Bicycle', 'Swimming',
+  'Clothes', 'TShirt', 'Perfume', 'Lipstick',
+].filter(name => !!IconoirIcons[name]);
+
+/* ── Color presets for card backgrounds ── */
+const COLOR_PRESETS = [
+  { hex: '#f2421b', name: 'Coral' },
+  { hex: '#ec4899', name: 'Pink' },
+  { hex: '#8b5cf6', name: 'Purple' },
+  { hex: '#3b82f6', name: 'Blue' },
+  { hex: '#06b6d4', name: 'Cyan' },
+  { hex: '#10b981', name: 'Emerald' },
+  { hex: '#f59e0b', name: 'Amber' },
+  { hex: '#ef4444', name: 'Red' },
+  { hex: '#1e293b', name: 'Midnight' },
+  { hex: '#64748b', name: 'Slate' },
+  { hex: '#be185d', name: 'Fuchsia' },
+  { hex: '#7c3aed', name: 'Violet' },
 ];
 
 const PRESET_AMOUNTS = [50, 100, 250, 500, 1000];
 
 const STATUS_CONFIG = {
-  active: { label: 'Active', color: '#10b981', icon: CheckCircle },
-  redeemed: { label: 'Redeemed', color: '#f2421b', icon: ShoppingBag },
-  expired: { label: 'Expired', color: '#f59e0b', icon: Clock },
-  void: { label: 'Void', color: '#9ca3af', icon: Ban },
+  active:   { label: 'Active',   color: '#10b981' },
+  redeemed: { label: 'Redeemed', color: '#8b5cf6' },
+  expired:  { label: 'Expired',  color: '#f59e0b' },
+  void:     { label: 'Void',     color: '#94a3b8' },
 };
 
+/* ── Helper: render an iconoir icon by name ── */
+function IconByName({ name, size = 20, color, strokeWidth = 1.8, ...props }) {
+  const Comp = IconoirIcons[name];
+  if (!Comp) return <IconoirIcons.Gift width={size} height={size} color={color} strokeWidth={strokeWidth} {...props} />;
+  return <Comp width={size} height={size} color={color} strokeWidth={strokeWidth} {...props} />;
+}
+
+/* ── Helper: generate gradient from a single color ── */
+function colorToGradient(hex) {
+  return `linear-gradient(135deg, ${hex} 0%, ${lighten(hex, 25)} 100%)`;
+}
+function lighten(hex, pct) {
+  let r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+  r = Math.min(255, r + Math.round((255 - r) * pct / 100));
+  g = Math.min(255, g + Math.round((255 - g) * pct / 100));
+  b = Math.min(255, b + Math.round((255 - b) * pct / 100));
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+/* ═══════════════ MAIN COMPONENT ═══════════════ */
 export default function GiftCards() {
-  const { currency } = useCurrency();
+  const { symbol, format: formatCurr, currency } = useCurrency();
   const [cards, setCards] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
 
@@ -46,12 +88,17 @@ export default function GiftCards() {
   // Create form
   const [form, setForm] = useState({
     initial_value: 100, issued_to_name: '', issued_to_email: '', issued_to_phone: '',
-    message: '', template: 'classic', validity_months: 12, notes: '', custom_amount: false
+    message: '', card_color: '#f2421b', card_icon: 'Gift', validity_months: 12, notes: '', custom_amount: false
   });
 
   // Redeem form
   const [redeemForm, setRedeemForm] = useState({ code: '', amount: '' });
 
+  // Icon picker state
+  const [iconSearch, setIconSearch] = useState('');
+  const [showIconPicker, setShowIconPicker] = useState(false);
+
+  // ── Data fetching ──
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.get('/gift-cards/stats');
@@ -64,7 +111,7 @@ export default function GiftCards() {
       setLoading(true);
       let url = `/gift-cards?page=${page}&limit=${pagination.limit}`;
       if (filterStatus) url += `&status=${filterStatus}`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
       const res = await api.get(url);
       if (res.success) {
         setCards(res.data || []);
@@ -72,21 +119,49 @@ export default function GiftCards() {
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [filterStatus, search, pagination.limit]);
+  }, [filterStatus, debouncedSearch, pagination.limit]);
 
-  useEffect(() => { fetchStats(); fetchCards(); }, []);
-  useEffect(() => { fetchCards(pagination.page); }, [pagination.page, filterStatus]);
+  // Fetch stats on mount
+  useEffect(() => { fetchStats(); }, []);
 
+  // Debounce search — wait 400ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination(p => ({ ...p, page: 1 }));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Re-fetch cards when filter, debounced search, or page changes
+  useEffect(() => {
+    fetchCards(pagination.page);
+  }, [fetchCards, pagination.page]);
+
+  // ── Escape key ──
+  useEffect(() => {
+    const h = (e) => {
+      if (e.key === 'Escape') {
+        if (showIconPicker) { setShowIconPicker(false); return; }
+        if (showCreate) setShowCreate(false);
+        if (showView) setShowView(false);
+        if (showRedeem) setShowRedeem(false);
+      }
+    };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [showCreate, showView, showRedeem, showIconPicker]);
+
+  // ── Handlers ──
   const handleCreate = async () => {
     if (!form.initial_value || form.initial_value <= 0) return alert('Enter a valid amount');
     setSaving(true);
     try {
-      const res = await api.post('/gift-cards', form);
+      const res = await api.post('/gift-cards', { ...form, template: 'custom' });
       if (res.success) {
         setShowCreate(false);
-        fetchCards();
-        fetchStats();
-        setForm({ initial_value: 100, issued_to_name: '', issued_to_email: '', issued_to_phone: '', message: '', template: 'classic', validity_months: 12, notes: '', custom_amount: false });
+        fetchCards(); fetchStats();
+        setForm({ initial_value: 100, issued_to_name: '', issued_to_email: '', issued_to_phone: '', message: '', card_color: '#f2421b', card_icon: 'Gift', validity_months: 12, notes: '', custom_amount: false });
       }
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
@@ -100,7 +175,7 @@ export default function GiftCards() {
   };
 
   const handleVoid = async (id) => {
-    if (!confirm('Void this gift card? This cannot be undone.')) return;
+    if (!confirm('Void this gift card? This action cannot be undone.')) return;
     await api.post(`/gift-cards/${id}/void`);
     fetchCards(); fetchStats();
     if (viewing?.id === id) setShowView(false);
@@ -116,123 +191,182 @@ export default function GiftCards() {
         setShowRedeem(false);
         setRedeemForm({ code: '', amount: '' });
         fetchCards(); fetchStats();
-      } else {
-        alert(res.message || 'Redemption failed');
-      }
+      } else { alert(res.message || 'Redemption failed'); }
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
   };
 
   const copyCode = (code) => {
     navigator.clipboard.writeText(code);
-    setCopiedCode(true);
+    setCopiedCode(code);
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const formatCurrency = (v) => parseFloat(v || 0).toFixed(2);
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
-  const getTemplate = (id) => TEMPLATES.find(t => t.id === id) || TEMPLATES[0];
+  // ── Formatters ──
+  const fmtCurrency = (v) => {
+    const n = parseFloat(v || 0);
+    return formatCurr ? formatCurr(n, { symbolOnly: true }) : n.toFixed(2);
+  };
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
+  // ── Card visual helpers ──
+  const getCardColor = (card) => card.card_color || '#f2421b';
+  const getCardIcon = (card) => card.card_icon || 'Gift';
+
+  // ── Filtered icons for picker ──
+  const filteredIcons = useMemo(() => {
+    if (!iconSearch) return ICON_CATALOG;
+    const q = iconSearch.toLowerCase();
+    return ICON_CATALOG.filter(name => name.toLowerCase().includes(q));
+  }, [iconSearch]);
+
+  // ── StatusBadge ──
   const StatusBadge = ({ status }) => {
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.active;
-    const Icon = cfg.icon;
     return (
       <span className="gc-status-badge" style={{ '--gc-badge': cfg.color }}>
-        <Icon size={12} /> {cfg.label}
+        <IconByName name={status === 'active' ? 'Check' : status === 'redeemed' ? 'ShoppingBag' : status === 'expired' ? 'Clock' : 'Prohibition'} size={13} strokeWidth={2.5} />
+        {cfg.label}
       </span>
     );
   };
 
+  const getProgressClass = (pct) => {
+    if (pct >= 95) return 'full';
+    if (pct <= 5) return 'empty';
+    if (pct < 40) return 'mid';
+    return '';
+  };
+
   return (
     <div className="gc-page">
-      {/* Stats */}
+      {/* ── Header ── */}
+      <div className="gc-header">
+        <div className="gc-header-left">
+          <h1 className="gc-header-title">
+            <IconoirIcons.Gift width={28} height={28} strokeWidth={2} />
+            Gift Cards
+          </h1>
+          <span className="gc-header-sub">Sell, track, and manage gift cards for your beauty center</span>
+        </div>
+        <div className="gc-header-actions">
+          <button className="gc-btn-outline" onClick={() => setShowRedeem(true)}>
+            <IconoirIcons.Label width={16} height={16} /> Redeem
+          </button>
+          <button className="gc-btn-primary" onClick={() => setShowCreate(true)}>
+            <IconoirIcons.Plus width={16} height={16} strokeWidth={2.5} /> Sell Gift Card
+          </button>
+        </div>
+      </div>
+
+      {/* ── Stats ── */}
       <div className="gc-stats-grid">
         <div className="gc-stat-card">
-          <div className="gc-stat-icon" style={{ background: '#fef0ec' }}><Gift size={20} color="#f2421b" /></div>
+          <div className="gc-stat-icon" style={{ background: '#fef0ec' }}>
+            <IconoirIcons.Gift width={22} height={22} color="#f2421b" strokeWidth={2} />
+          </div>
           <div className="gc-stat-body">
             <span className="gc-stat-val">{stats.total || 0}</span>
             <span className="gc-stat-lbl">Total Cards</span>
           </div>
-          <span className="gc-stat-tag">{stats.active_count || 0} active</span>
+          {(stats.active_count > 0) && <span className="gc-stat-tag">{stats.active_count} active</span>}
         </div>
         <div className="gc-stat-card">
-          <div className="gc-stat-icon" style={{ background: '#dcfce7' }}><DollarSign size={20} color="#10b981" /></div>
+          <div className="gc-stat-icon" style={{ background: '#dcfce7' }}>
+            <IconoirIcons.Dollar width={22} height={22} color="#10b981" strokeWidth={2} />
+          </div>
           <div className="gc-stat-body">
-            <span className="gc-stat-val">{formatCurrency(stats.total_sold)}</span>
+            <span className="gc-stat-val">{fmtCurrency(stats.total_sold)}</span>
             <span className="gc-stat-lbl">Total Sold</span>
           </div>
         </div>
         <div className="gc-stat-card">
-          <div className="gc-stat-icon" style={{ background: '#fef3c7' }}><CreditCard size={20} color="#f59e0b" /></div>
+          <div className="gc-stat-icon" style={{ background: '#fef3c7' }}>
+            <IconoirIcons.Wallet width={22} height={22} color="#f59e0b" strokeWidth={2} />
+          </div>
           <div className="gc-stat-body">
-            <span className="gc-stat-val">{formatCurrency(stats.total_outstanding)}</span>
+            <span className="gc-stat-val">{fmtCurrency(stats.total_outstanding)}</span>
             <span className="gc-stat-lbl">Outstanding</span>
           </div>
         </div>
         <div className="gc-stat-card">
-          <div className="gc-stat-icon" style={{ background: '#fef0ec' }}><ShoppingBag size={20} color="#f2421b" /></div>
+          <div className="gc-stat-icon" style={{ background: '#ede9fe' }}>
+            <IconoirIcons.ShoppingBag width={22} height={22} color="#8b5cf6" strokeWidth={2} />
+          </div>
           <div className="gc-stat-body">
-            <span className="gc-stat-val">{formatCurrency(stats.total_redeemed)}</span>
+            <span className="gc-stat-val">{fmtCurrency(stats.total_redeemed)}</span>
             <span className="gc-stat-lbl">Redeemed</span>
           </div>
         </div>
       </div>
 
-      {/* Toolbar */}
+      {/* ── Toolbar ── */}
       <div className="gc-toolbar">
         <div className="gc-search">
-          <Search size={16} />
-          <input placeholder="Search by code, name, or email..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchCards(1)} />
+          <IconoirIcons.Search width={16} height={16} />
+          <input
+            placeholder="Search by code, name, or email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
         <div className="gc-filter-tabs">
           {[{ k: '', l: 'All' }, ...Object.entries(STATUS_CONFIG).map(([k, v]) => ({ k, l: v.label }))].map(f => (
-            <button key={f.k} className={`gc-filter-tab ${filterStatus === f.k ? 'active' : ''}`} onClick={() => { setFilterStatus(f.k); setPagination(p => ({ ...p, page: 1 })); }}>
+            <button key={f.k} className={`gc-filter-tab ${filterStatus === f.k ? 'active' : ''}`}
+              onClick={() => { setFilterStatus(f.k); setPagination(p => ({ ...p, page: 1 })); }}>
               {f.l}
             </button>
           ))}
         </div>
-        <div className="gc-toolbar-actions">
-          <button className="gc-btn-outline" onClick={() => setShowRedeem(true)}><Tag size={14} /> Redeem</button>
-          <button className="gc-btn-primary" onClick={() => setShowCreate(true)}><Plus size={14} /> Sell Gift Card</button>
-        </div>
       </div>
 
-      {/* Cards Grid */}
+      {/* ── Cards Grid ── */}
       {loading ? (
-        <div className="gc-loading">Loading gift cards...</div>
+        <div className="gc-loading"><div className="gc-loading-spinner" /><span>Loading gift cards...</span></div>
       ) : cards.length === 0 ? (
         <div className="gc-empty">
-          <Gift size={48} strokeWidth={1} />
-          <p>No gift cards yet</p>
-          <button className="gc-btn-primary" onClick={() => setShowCreate(true)}>Sell Your First Gift Card</button>
+          <div className="gc-empty-icon"><IconoirIcons.Gift width={36} height={36} strokeWidth={1.5} /></div>
+          <h3>No gift cards found</h3>
+          <p>{filterStatus ? 'Try changing your filters' : 'Start by selling your first gift card'}</p>
+          {!filterStatus && (
+            <button className="gc-btn-primary" onClick={() => setShowCreate(true)}>
+              <IconoirIcons.Plus width={16} height={16} strokeWidth={2.5} /> Sell Gift Card
+            </button>
+          )}
         </div>
       ) : (
         <div className="gc-grid">
           {cards.map(card => {
-            const tmpl = getTemplate(card.template);
-            const pct = card.initial_value > 0 ? ((card.remaining_value / card.initial_value) * 100).toFixed(0) : 0;
+            const pct = card.initial_value > 0 ? ((card.remaining_value / card.initial_value) * 100) : 0;
             return (
               <div key={card.id} className="gc-card" onClick={() => handleView(card)}>
-                <div className="gc-card-visual" style={{ background: tmpl.gradient }}>
-                  <span className="gc-card-emoji">{tmpl.icon}</span>
-                  <span className="gc-card-amount">{formatCurrency(card.initial_value)}</span>
+                <div className="gc-card-visual" style={{ background: colorToGradient(getCardColor(card)) }}>
+                  <span className="gc-card-icon-wrap">
+                    <IconByName name={getCardIcon(card)} size={28} color="rgba(255,255,255,0.35)" strokeWidth={1.5} />
+                  </span>
+                  <span className="gc-card-amount">{fmtCurrency(card.initial_value)}</span>
                   <span className="gc-card-code">{card.code}</span>
                 </div>
                 <div className="gc-card-body">
                   <div className="gc-card-row">
                     <span className="gc-card-label">Balance</span>
-                    <strong>{formatCurrency(card.remaining_value)}</strong>
+                    <strong>{fmtCurrency(card.remaining_value)}</strong>
                   </div>
                   <div className="gc-card-progress">
-                    <div className="gc-card-progress-fill" style={{ width: `${pct}%` }}></div>
+                    <div className={`gc-card-progress-fill ${getProgressClass(pct)}`} style={{ width: `${pct.toFixed(0)}%` }} />
                   </div>
                   {card.issued_to_name && (
                     <div className="gc-card-row"><span className="gc-card-label">Recipient</span><span>{card.issued_to_name}</span></div>
                   )}
-                  <div className="gc-card-row"><span className="gc-card-label">Expires</span><span>{formatDate(card.expires_at)}</span></div>
+                  <div className="gc-card-row"><span className="gc-card-label">Expires</span><span>{fmtDate(card.expires_at)}</span></div>
                   <div className="gc-card-footer">
                     <StatusBadge status={card.status} />
-                    <button className="gc-btn-icon" title="Copy code" onClick={e => { e.stopPropagation(); copyCode(card.code); }}><Copy size={14} /></button>
+                    <button className="gc-btn-icon" title={copiedCode === card.code ? 'Copied!' : 'Copy code'}
+                      onClick={e => { e.stopPropagation(); copyCode(card.code); }}>
+                      {copiedCode === card.code
+                        ? <IconoirIcons.Check width={16} height={16} color="#10b981" />
+                        : <IconoirIcons.Copy width={16} height={16} />}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -241,176 +375,338 @@ export default function GiftCards() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* ── Pagination ── */}
       {pagination.totalPages > 1 && (
         <div className="gc-pagination">
-          <button disabled={pagination.page <= 1} onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}>Previous</button>
+          <button disabled={pagination.page <= 1} onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}>
+            <IconoirIcons.NavArrowLeft width={14} height={14} /> Prev
+          </button>
           <span>Page {pagination.page} of {pagination.totalPages}</span>
-          <button disabled={pagination.page >= pagination.totalPages} onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}>Next</button>
+          <button disabled={pagination.page >= pagination.totalPages} onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}>
+            Next <IconoirIcons.NavArrowRight width={14} height={14} />
+          </button>
         </div>
       )}
 
-      {/* ── Create Modal ── */}
-      <Modal show={showCreate} onHide={() => setShowCreate(false)} size="lg" centered>
-        <Modal.Header closeButton><Modal.Title>Sell Gift Card</Modal.Title></Modal.Header>
-        <Modal.Body>
-          <div className="gc-form">
-            <label className="gc-form-label">Choose Design</label>
-            <div className="gc-template-grid">
-              {TEMPLATES.map(t => (
-                <div key={t.id} className={`gc-template-opt ${form.template === t.id ? 'selected' : ''}`} onClick={() => setForm(p => ({ ...p, template: t.id }))}>
-                  <div className="gc-template-preview" style={{ background: t.gradient }}>
-                    <span>{t.icon}</span>
-                  </div>
-                  <span>{t.name}</span>
-                </div>
-              ))}
-            </div>
-
-            <label className="gc-form-label">Amount</label>
-            <div className="gc-amount-grid">
-              {PRESET_AMOUNTS.map(a => (
-                <button key={a} className={`gc-amount-opt ${!form.custom_amount && form.initial_value === a ? 'selected' : ''}`} onClick={() => setForm(p => ({ ...p, initial_value: a, custom_amount: false }))}>
-                  {a}
-                </button>
-              ))}
-              <button className={`gc-amount-opt ${form.custom_amount ? 'selected' : ''}`} onClick={() => setForm(p => ({ ...p, custom_amount: true }))}>
-                Custom
+      {/* ═══════════════════════════════════════
+          CREATE MODAL – Split layout with live preview
+         ═══════════════════════════════════════ */}
+      {showCreate && createPortal(
+        <div className="gc-modal-overlay" onClick={() => setShowCreate(false)}>
+          <div className="gc-modal gc-create-modal" onClick={e => e.stopPropagation()}>
+            <div className="gc-modal-header">
+              <span className="gc-modal-title"><IconoirIcons.Gift width={22} height={22} /> Sell Gift Card</span>
+              <button className="gc-modal-close" onClick={() => setShowCreate(false)}>
+                <IconoirIcons.Xmark width={18} height={18} />
               </button>
             </div>
-            {form.custom_amount && (
-              <input type="number" min="1" placeholder="Enter custom amount" className="gc-input" value={form.initial_value} onChange={e => setForm(p => ({ ...p, initial_value: parseFloat(e.target.value) || 0 }))} />
-            )}
 
-            <div className="gc-form-row">
-              <div className="gc-field">
-                <label>Recipient Name</label>
-                <input className="gc-input" value={form.issued_to_name} onChange={e => setForm(p => ({ ...p, issued_to_name: e.target.value }))} placeholder="Who is this for?" />
+            <div className="gc-create-layout">
+              {/* ── Left: Form ── */}
+              <div className="gc-create-form">
+                {/* Color picker */}
+                <div className="gc-form-section">Card Color</div>
+                <div className="gc-color-picker">
+                  <div className="gc-color-swatches">
+                    {COLOR_PRESETS.map(c => (
+                      <button key={c.hex} className={`gc-color-swatch ${form.card_color === c.hex ? 'selected' : ''}`}
+                        style={{ background: c.hex }}
+                        title={c.name}
+                        onClick={() => setForm(p => ({ ...p, card_color: c.hex }))}
+                      />
+                    ))}
+                  </div>
+                  <div className="gc-color-custom">
+                    <input type="color" value={form.card_color}
+                      onChange={e => setForm(p => ({ ...p, card_color: e.target.value }))} />
+                    <span className="gc-color-hex">{form.card_color}</span>
+                  </div>
+                </div>
+
+                {/* Icon picker */}
+                <div className="gc-form-section">Card Icon</div>
+                <div className="gc-icon-picker-trigger" onClick={() => setShowIconPicker(!showIconPicker)}>
+                  <div className="gc-selected-icon" style={{ background: colorToGradient(form.card_color) }}>
+                    <IconByName name={form.card_icon} size={24} color="#fff" />
+                  </div>
+                  <span className="gc-selected-icon-name">{form.card_icon}</span>
+                  <IconoirIcons.NavArrowDown width={16} height={16} style={{ marginLeft: 'auto', color: '#94a3b8' }} />
+                </div>
+                {showIconPicker && (
+                  <div className="gc-icon-picker">
+                    <div className="gc-icon-search">
+                      <IconoirIcons.Search width={14} height={14} />
+                      <input placeholder="Search icons..." value={iconSearch}
+                        onChange={e => setIconSearch(e.target.value)} autoFocus />
+                    </div>
+                    <div className="gc-icon-grid">
+                      {filteredIcons.map(name => (
+                        <button key={name}
+                          className={`gc-icon-item ${form.card_icon === name ? 'selected' : ''}`}
+                          title={name}
+                          onClick={() => { setForm(p => ({ ...p, card_icon: name })); setShowIconPicker(false); setIconSearch(''); }}>
+                          <IconByName name={name} size={20} color={form.card_icon === name ? '#fff' : '#475569'} />
+                        </button>
+                      ))}
+                      {filteredIcons.length === 0 && <p className="gc-icon-empty">No icons found</p>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Amount */}
+                <div className="gc-form-section">Amount</div>
+                <div className="gc-amount-grid">
+                  {PRESET_AMOUNTS.map(a => (
+                    <button key={a}
+                      className={`gc-amount-opt ${!form.custom_amount && form.initial_value === a ? 'selected' : ''}`}
+                      onClick={() => setForm(p => ({ ...p, initial_value: a, custom_amount: false }))}>
+                      {symbol} {a}
+                    </button>
+                  ))}
+                  <button className={`gc-amount-opt ${form.custom_amount ? 'selected' : ''}`}
+                    onClick={() => setForm(p => ({ ...p, custom_amount: true }))}>
+                    Custom
+                  </button>
+                </div>
+                {form.custom_amount && (
+                  <div className="gc-custom-amount-row">
+                    <span className="gc-custom-currency">{symbol}</span>
+                    <input type="number" min="1" placeholder="Enter amount" className="gc-input gc-custom-input"
+                      value={form.initial_value}
+                      onChange={e => setForm(p => ({ ...p, initial_value: parseFloat(e.target.value) || 0 }))}
+                      autoFocus />
+                  </div>
+                )}
+
+                {/* Recipient */}
+                <div className="gc-form-section">Recipient</div>
+                <div className="gc-form-row">
+                  <div className="gc-field">
+                    <label>Name</label>
+                    <input className="gc-input" value={form.issued_to_name}
+                      onChange={e => setForm(p => ({ ...p, issued_to_name: e.target.value }))}
+                      placeholder="Who is this for?" />
+                  </div>
+                  <div className="gc-field">
+                    <label>Validity</label>
+                    <select className="gc-input" value={form.validity_months}
+                      onChange={e => setForm(p => ({ ...p, validity_months: parseInt(e.target.value) }))}>
+                      <option value={6}>6 Months</option>
+                      <option value={12}>1 Year</option>
+                      <option value={24}>2 Years</option>
+                      <option value={36}>3 Years</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="gc-form-row">
+                  <div className="gc-field">
+                    <label>Email</label>
+                    <input className="gc-input" type="email" value={form.issued_to_email}
+                      onChange={e => setForm(p => ({ ...p, issued_to_email: e.target.value }))}
+                      placeholder="recipient@email.com" />
+                  </div>
+                  <div className="gc-field">
+                    <label>Phone</label>
+                    <input className="gc-input" value={form.issued_to_phone}
+                      onChange={e => setForm(p => ({ ...p, issued_to_phone: e.target.value }))}
+                      placeholder="+971..." />
+                  </div>
+                </div>
+                <div className="gc-field">
+                  <label>Message</label>
+                  <textarea className="gc-input" rows={2} value={form.message}
+                    onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
+                    placeholder="Add a personal touch..." />
+                </div>
               </div>
-              <div className="gc-field">
-                <label>Validity</label>
-                <select className="gc-input" value={form.validity_months} onChange={e => setForm(p => ({ ...p, validity_months: parseInt(e.target.value) }))}>
-                  <option value={6}>6 Months</option>
-                  <option value={12}>1 Year</option>
-                  <option value={24}>2 Years</option>
-                  <option value={36}>3 Years</option>
-                </select>
+
+              {/* ── Right: Live Preview ── */}
+              <div className="gc-create-preview">
+                <div className="gc-preview-label">Live Preview</div>
+                <div className="gc-preview-phone">
+                  <div className="gc-preview-notch" />
+                  <div className="gc-preview-screen">
+                    <div className="gc-preview-card-wrap" style={{ background: colorToGradient(form.card_color) }}>
+                      <div className="gc-preview-bg-circle c1" />
+                      <div className="gc-preview-bg-circle c2" />
+                      <div className="gc-preview-icon-wrap">
+                        <IconByName name={form.card_icon} size={40} color="rgba(255,255,255,0.9)" strokeWidth={1.5} />
+                      </div>
+                      <div className="gc-preview-value">
+                        {fmtCurrency(form.initial_value || 0)}
+                      </div>
+                      <div className="gc-preview-divider" />
+                      <div className="gc-preview-recipient">
+                        {form.issued_to_name || 'Recipient Name'}
+                      </div>
+                      {form.message && (
+                        <div className="gc-preview-message">"{form.message}"</div>
+                      )}
+                      <div className="gc-preview-code-area">
+                        <span className="gc-preview-code-label">GIFT CARD</span>
+                        <span className="gc-preview-code-value">XXXX-XXXX-XXXX-XXXX</span>
+                      </div>
+                      <div className="gc-preview-validity">
+                        Valid for {form.validity_months} months
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="gc-form-row">
-              <div className="gc-field">
-                <label>Email</label>
-                <input className="gc-input" type="email" value={form.issued_to_email} onChange={e => setForm(p => ({ ...p, issued_to_email: e.target.value }))} placeholder="recipient@email.com" />
-              </div>
-              <div className="gc-field">
-                <label>Phone</label>
-                <input className="gc-input" value={form.issued_to_phone} onChange={e => setForm(p => ({ ...p, issued_to_phone: e.target.value }))} placeholder="+971..." />
-              </div>
-            </div>
-
-            <div className="gc-field">
-              <label>Personal Message</label>
-              <textarea className="gc-input" rows={2} value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} placeholder="Add a personal touch..." />
-            </div>
-
-            {/* Preview */}
-            <label className="gc-form-label">Preview</label>
-            <div className="gc-preview-card" style={{ background: getTemplate(form.template).gradient }}>
-              <span className="gc-preview-emoji">{getTemplate(form.template).icon}</span>
-              <span className="gc-preview-amount">{form.initial_value || 0}</span>
-              <span className="gc-preview-name">{form.issued_to_name || 'Recipient'}</span>
-              {form.message && <span className="gc-preview-msg">"{form.message}"</span>}
+            <div className="gc-modal-footer">
+              <button className="gc-btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
+              <button className="gc-btn-primary" onClick={handleCreate} disabled={saving}>
+                {saving ? 'Creating...' : <><IconoirIcons.CreditCard width={16} height={16} /> Create & Sell</>}
+              </button>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="gc-btn-outline" onClick={() => setShowCreate(false)}>Cancel</button>
-          <button className="gc-btn-primary" onClick={handleCreate} disabled={saving}>{saving ? 'Creating...' : 'Create & Sell'}</button>
-        </Modal.Footer>
-      </Modal>
+        </div>,
+        document.body
+      )}
 
-      {/* ── View Modal ── */}
-      <Modal show={showView} onHide={() => setShowView(false)} size="lg" centered>
-        {viewing && (
-          <>
-            <Modal.Header closeButton><Modal.Title><Gift size={18} /> Gift Card Details</Modal.Title></Modal.Header>
-            <Modal.Body>
+      {/* ═══════════════════════════════════════
+          VIEW DETAIL MODAL
+         ═══════════════════════════════════════ */}
+      {showView && viewing && createPortal(
+        <div className="gc-modal-overlay" onClick={() => setShowView(false)}>
+          <div className="gc-modal lg" onClick={e => e.stopPropagation()}>
+            <div className="gc-modal-header">
+              <span className="gc-modal-title"><IconoirIcons.Eye width={22} height={22} /> Gift Card Details</span>
+              <button className="gc-modal-close" onClick={() => setShowView(false)}>
+                <IconoirIcons.Xmark width={18} height={18} />
+              </button>
+            </div>
+            <div className="gc-modal-body">
               <div className="gc-detail">
-                <div className="gc-detail-visual" style={{ background: getTemplate(viewing.template).gradient }}>
-                  <span className="gc-detail-emoji">{getTemplate(viewing.template).icon}</span>
-                  <span className="gc-detail-amount">{formatCurrency(viewing.initial_value)}</span>
+                <div className="gc-detail-visual" style={{ background: colorToGradient(getCardColor(viewing)) }}>
+                  <span className="gc-detail-icon">
+                    <IconByName name={getCardIcon(viewing)} size={36} color="rgba(255,255,255,0.85)" strokeWidth={1.5} />
+                  </span>
+                  <span className="gc-detail-amount">{fmtCurrency(viewing.initial_value)}</span>
                   <span className="gc-detail-code">{viewing.code}</span>
                   <button className="gc-copy-btn" onClick={() => copyCode(viewing.code)}>
-                    <Copy size={14} /> {copiedCode ? 'Copied!' : 'Copy Code'}
+                    <IconoirIcons.Copy width={14} height={14} />
+                    {copiedCode === viewing.code ? 'Copied!' : 'Copy Code'}
                   </button>
                 </div>
 
-                <div className="gc-detail-grid">
-                  <div><label>Status</label><StatusBadge status={viewing.status} /></div>
-                  <div><label>Balance</label><p><strong>{formatCurrency(viewing.remaining_value)}</strong> / {formatCurrency(viewing.initial_value)}</p></div>
-                  <div><label>Recipient</label><p>{viewing.issued_to_name || '-'}</p></div>
-                  <div><label>Email</label><p>{viewing.issued_to_email || '-'}</p></div>
-                  <div><label>Phone</label><p>{viewing.issued_to_phone || '-'}</p></div>
-                  <div><label>Expires</label><p>{formatDate(viewing.expires_at)}</p></div>
-                  <div><label>Created</label><p>{formatDate(viewing.created_at)}</p></div>
-                  <div><label>Currency</label><p>{viewing.currency || currency}</p></div>
+                <div className="gc-detail-info">
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Status</span>
+                    <span className="gc-detail-info-value"><StatusBadge status={viewing.status} /></span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Balance</span>
+                    <span className="gc-detail-info-value">{fmtCurrency(viewing.remaining_value)} / {fmtCurrency(viewing.initial_value)}</span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Recipient</span>
+                    <span className="gc-detail-info-value">{viewing.issued_to_name || '—'}</span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Email</span>
+                    <span className="gc-detail-info-value">{viewing.issued_to_email || '—'}</span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Phone</span>
+                    <span className="gc-detail-info-value">{viewing.issued_to_phone || '—'}</span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Expires</span>
+                    <span className="gc-detail-info-value">{fmtDate(viewing.expires_at)}</span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Created</span>
+                    <span className="gc-detail-info-value">{fmtDate(viewing.created_at)}</span>
+                  </div>
+                  <div className="gc-detail-info-item">
+                    <span className="gc-detail-info-label">Currency</span>
+                    <span className="gc-detail-info-value">{viewing.currency || currency}</span>
+                  </div>
                 </div>
 
                 {viewing.message && <div className="gc-detail-msg">"{viewing.message}"</div>}
 
                 {viewing.transactions && viewing.transactions.length > 0 && (
                   <div className="gc-txn-section">
-                    <h6>Transaction History</h6>
+                    <div className="gc-txn-title">
+                      <IconoirIcons.RefreshDouble width={16} height={16} /> Transaction History
+                    </div>
                     <div className="gc-txn-list">
                       {viewing.transactions.map(tx => (
                         <div key={tx.id} className="gc-txn-row">
-                          <div className="gc-txn-type">
-                            {tx.type === 'purchase' ? <DollarSign size={14} /> : tx.type === 'redeem' ? <ShoppingBag size={14} /> : <RefreshCw size={14} />}
-                            <span>{tx.type}</span>
+                          <div className={`gc-txn-icon ${tx.type}`}>
+                            <IconByName name={tx.type === 'purchase' ? 'Dollar' : tx.type === 'redeem' ? 'ShoppingBag' : tx.type === 'void' ? 'Prohibition' : 'RefreshDouble'} size={16} />
                           </div>
-                          <span className={`gc-txn-amount ${tx.type === 'redeem' ? 'negative' : ''}`}>
-                            {tx.type === 'redeem' ? '-' : '+'}{formatCurrency(tx.amount)}
+                          <div className="gc-txn-type">
+                            <span className="gc-txn-type-name">{tx.type}</span>
+                            <span className="gc-txn-type-date">{fmtDate(tx.created_at)}</span>
+                          </div>
+                          <span className={`gc-txn-amount ${tx.type === 'redeem' || tx.type === 'void' ? 'negative' : 'positive'}`}>
+                            {tx.type === 'redeem' || tx.type === 'void' ? '−' : '+'}{fmtCurrency(tx.amount)}
                           </span>
-                          <span className="gc-txn-bal">Bal: {formatCurrency(tx.balance_after)}</span>
-                          <span className="gc-txn-date">{formatDate(tx.created_at)}</span>
+                          <span className="gc-txn-bal">Bal: {fmtCurrency(tx.balance_after)}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-            </Modal.Body>
-            <Modal.Footer>
+            </div>
+            <div className="gc-modal-footer">
               {viewing.status === 'active' && (
-                <button className="gc-btn-outline" onClick={() => handleVoid(viewing.id)}><Ban size={14} /> Void</button>
+                <button className="gc-btn-outline" style={{ color: '#ef4444', borderColor: '#fecaca' }} onClick={() => handleVoid(viewing.id)}>
+                  <IconoirIcons.Prohibition width={16} height={16} /> Void Card
+                </button>
               )}
               <button className="gc-btn-outline" onClick={() => setShowView(false)}>Close</button>
-            </Modal.Footer>
-          </>
-        )}
-      </Modal>
-
-      {/* ── Redeem Modal ── */}
-      <Modal show={showRedeem} onHide={() => setShowRedeem(false)} centered>
-        <Modal.Header closeButton><Modal.Title><Tag size={18} /> Redeem Gift Card</Modal.Title></Modal.Header>
-        <Modal.Body>
-          <div className="gc-form">
-            <div className="gc-field">
-              <label>Gift Card Code</label>
-              <input className="gc-input" value={redeemForm.code} onChange={e => setRedeemForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="XXXX-XXXX-XXXX-XXXX" />
-            </div>
-            <div className="gc-field">
-              <label>Amount to Redeem</label>
-              <input className="gc-input" type="number" min="0.01" step="0.01" value={redeemForm.amount} onChange={e => setRedeemForm(p => ({ ...p, amount: e.target.value }))} placeholder="0.00" />
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <button className="gc-btn-outline" onClick={() => setShowRedeem(false)}>Cancel</button>
-          <button className="gc-btn-primary" onClick={handleRedeem} disabled={saving}>{saving ? 'Processing...' : 'Redeem'}</button>
-        </Modal.Footer>
-      </Modal>
+        </div>,
+        document.body
+      )}
+
+      {/* ═══════════════════════════════════════
+          REDEEM MODAL
+         ═══════════════════════════════════════ */}
+      {showRedeem && createPortal(
+        <div className="gc-modal-overlay" onClick={() => setShowRedeem(false)}>
+          <div className="gc-modal" onClick={e => e.stopPropagation()}>
+            <div className="gc-modal-header">
+              <span className="gc-modal-title"><IconoirIcons.Label width={22} height={22} /> Redeem Gift Card</span>
+              <button className="gc-modal-close" onClick={() => setShowRedeem(false)}>
+                <IconoirIcons.Xmark width={18} height={18} />
+              </button>
+            </div>
+            <div className="gc-modal-body">
+              <div className="gc-form">
+                <div className="gc-field">
+                  <label>Gift Card Code</label>
+                  <input className="gc-code-input" value={redeemForm.code}
+                    onChange={e => setRedeemForm(p => ({ ...p, code: e.target.value.toUpperCase() }))}
+                    placeholder="XXXX-XXXX-XXXX-XXXX" maxLength={19} />
+                </div>
+                <div className="gc-field">
+                  <label>Amount to Redeem ({symbol})</label>
+                  <input className="gc-input" type="number" min="0.01" step="0.01"
+                    value={redeemForm.amount}
+                    onChange={e => setRedeemForm(p => ({ ...p, amount: e.target.value }))}
+                    placeholder="0.00" />
+                </div>
+              </div>
+            </div>
+            <div className="gc-modal-footer">
+              <button className="gc-btn-outline" onClick={() => setShowRedeem(false)}>Cancel</button>
+              <button className="gc-btn-primary" onClick={handleRedeem} disabled={saving || !redeemForm.code || !redeemForm.amount}>
+                {saving ? 'Processing...' : <><IconoirIcons.ShoppingBag width={16} height={16} /> Redeem</>}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

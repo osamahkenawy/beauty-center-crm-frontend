@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Collapse } from 'react-bootstrap';
 import { Menu, X } from 'lucide-react';
+import { Bell, Group, Notes } from 'iconoir-react';
 import { AuthContext } from '../App';
 import api from '../lib/api';
 import AIChatbot from './AIChatbot';
@@ -19,81 +20,138 @@ const initialState = {
   activeSubmenu: "",
 };
 
-// Beauty Center Navigation Menu - Simple structure like CRM
+// Beauty Center Navigation Menu - with module permission keys for filtering
 const beautyMenuList = [
   { title: 'MAIN', classsChange: 'menu-title' },
   {
     title: 'Dashboard',
     to: '/beauty-dashboard',
     iconStyle: <i className="flaticon-home" />,
+    module: 'dashboard',
   },
   {
     title: 'Appointments',
     to: '/appointments',
     iconStyle: <i className="flaticon-calendar-2" />,
+    module: 'appointments',
   },
   {
     title: 'Clients',
     to: '/beauty-clients',
     iconStyle: <i className="flaticon-user" />,
+    module: 'clients',
   },
   { title: 'SERVICES', classsChange: 'menu-title' },
   {
-    title: 'Staff',
-    to: '/staff-schedule',
-    iconStyle: <i className="flaticon-user-1" />,
+    title: 'Team',
+    to: '/team',
+    iconStyle: <Group width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'team',
   },
   { title: 'BUSINESS', classsChange: 'menu-title' },
   {
     title: 'Payments',
     to: '/beauty-payments',
     iconStyle: <i className="flaticon-shopping-cart" />,
+    module: 'payments',
   },
   {
     title: 'Loyalty',
     to: '/loyalty',
     iconStyle: <i className="flaticon-heart-1" />,
+    module: 'loyalty',
   },
   {
     title: 'Gift Cards',
     to: '/gift-cards',
     iconStyle: <i className="flaticon-price-tag" />,
+    module: 'gift_cards',
   },
   {
     title: 'Packages',
     to: '/packages',
     iconStyle: <i className="flaticon-app" />,
+    module: 'packages',
   },
   {
     title: 'Memberships',
     to: '/memberships',
     iconStyle: <i className="flaticon-user-1" />,
+    module: 'memberships',
   },
   {
     title: 'Promotions',
     to: '/promotions',
     iconStyle: <i className="flaticon-price-tag" />,
+    module: 'promotions',
   },
   {
     title: 'Reviews',
     to: '/reviews',
     iconStyle: <i className="flaticon-heart-1" />,
+    module: 'reviews',
   },
   {
     title: 'Waitlist',
     to: '/waitlists',
     iconStyle: <i className="flaticon-calendar-2" />,
+    module: 'waitlist',
   },
   {
     title: 'Reports',
     to: '/beauty-reports',
     iconStyle: <i className="flaticon-bar-chart" />,
+    module: 'reports',
   },
-  { title: 'SETTINGS', classsChange: 'menu-title' },
+  {
+    title: 'Notifications',
+    to: '/notifications',
+    iconStyle: <Bell width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'notifications',
+  },
+  {
+    title: 'Marketing',
+    to: '/marketing',
+    iconStyle: <i className="flaticon-rocket" />,
+    module: 'marketing',
+  },
+  { title: 'OPERATIONS', classsChange: 'menu-title' },
+  {
+    title: 'Point of Sale',
+    to: '/pos',
+    iconStyle: <i className="flaticon-shopping-cart" />,
+    module: 'pos',
+  },
+  {
+    title: 'Group Bookings',
+    to: '/group-bookings',
+    iconStyle: <i className="flaticon-calendar-2" />,
+    module: 'group_bookings',
+  },
+  {
+    title: 'Consultation Forms',
+    to: '/consultation-forms',
+    iconStyle: <Notes width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'consultation_forms',
+  },
+  {
+    title: 'Patch Tests',
+    to: '/patch-tests',
+    iconStyle: <i className="flaticon-app" />,
+    module: 'patch_tests',
+  },
+  {
+    title: 'Inventory',
+    to: '/inventory',
+    iconStyle: <i className="flaticon-app" />,
+    module: 'inventory',
+  },
+  { title: 'SETTINGS', classsChange: 'menu-title', adminOnly: true },
   {
     title: 'Settings',
     classsChange: 'mm-collapse',
     iconStyle: <i className="flaticon-app" />,
+    module: 'settings',
     content: [
       { title: 'Business Info', to: '/beauty-settings/business' },
       { title: 'Locations', to: '/beauty-settings/branches' },
@@ -104,10 +162,26 @@ const beautyMenuList = [
       { title: 'Notifications', to: '/beauty-settings/notifications' },
       { title: 'Online Booking', to: '/beauty-settings/booking' },
       { title: 'Team', to: '/beauty-settings/team' },
+      { title: 'Roles & Permissions', to: '/beauty-settings/roles' },
+      { title: 'Email Templates', to: '/beauty-settings/email-templates' },
       { title: 'Sales', to: '/beauty-settings/sales' },
     ],
   },
 ];
+
+// Check if user's role has permission for a module
+function canUserAccess(user, rolePerms, module) {
+  if (!user) return false;
+  // Admin, super_admin, owner always have access
+  const role = user.role;
+  const perms = user.permissions || {};
+  if (role === 'admin' || role === 'super_admin' || user.is_owner || perms.all || perms.platform_owner) return true;
+  // Check role-based permissions
+  if (rolePerms && rolePerms[module]) {
+    return rolePerms[module].view === true;
+  }
+  return false;
+}
 
 export default function BeautyLayout({ children }) {
   const [state, setState] = useReducer(reducer, initialState);
@@ -116,6 +190,10 @@ export default function BeautyLayout({ children }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [iconHover, setIconHover] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifPopup, setShowNotifPopup] = useState(false);
+  const [recentNotifs, setRecentNotifs] = useState([]);
+  const [rolePerms, setRolePerms] = useState(null);
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
@@ -184,6 +262,48 @@ export default function BeautyLayout({ children }) {
     navigate('/');
   };
 
+  // Fetch unread notification count periodically
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get('/notifications/unread-count');
+        if (res.success) setUnreadCount(res.count || 0);
+      } catch (e) { /* ignore */ }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000); // Poll every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch user's role permissions for menu filtering
+  useEffect(() => {
+    const fetchRolePerms = async () => {
+      try {
+        const res = await api.get('/roles');
+        if (res.success && res.data) {
+          const myRole = res.data.find(r => r.name === user?.role);
+          if (myRole) {
+            setRolePerms(myRole.permissions || {});
+          }
+        }
+      } catch (e) { /* roles table might not exist yet */ }
+    };
+    if (user?.role) fetchRolePerms();
+  }, [user?.role]);
+
+  const toggleNotifPopup = async () => {
+    const newState = !showNotifPopup;
+    setShowNotifPopup(newState);
+    setShowUserMenu(false);
+    setShowLangMenu(false);
+    if (newState) {
+      try {
+        const res = await api.get('/notifications?limit=5&is_read=0');
+        if (res.success) setRecentNotifs(res.data || []);
+      } catch (e) { /* ignore */ }
+    }
+  };
+
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setShowLangMenu(false);
@@ -204,6 +324,8 @@ export default function BeautyLayout({ children }) {
         </Link>
         <div 
           className="nav-control"
+          data-tooltip="Toggle sidebar"
+          data-tooltip-pos="bottom"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           <Menu size={24} color="#fff" strokeWidth={2.2} />
@@ -223,9 +345,16 @@ export default function BeautyLayout({ children }) {
               
               // Menu Title
               if (menuClass === "menu-title") {
+                // Hide admin-only section titles for non-admin
+                if (data.adminOnly && !canUserAccess(user, rolePerms, 'settings')) return null;
                 return (
                   <li className={menuClass} key={index}>{data.title}</li>
                 );
+              }
+              
+              // Filter by module permission
+              if (data.module && !canUserAccess(user, rolePerms, data.module)) {
+                return null;
               }
               
               // Menu Item with Submenu
@@ -349,6 +478,8 @@ export default function BeautyLayout({ children }) {
                   <div className="lang-switcher">
                     <button 
                       className="nav-link"
+                      data-tooltip="Switch language"
+                      data-tooltip-pos="bottom"
                       onClick={() => setShowLangMenu(!showLangMenu)}
                     >
                       <i className="flaticon-web"></i>
@@ -373,10 +504,56 @@ export default function BeautyLayout({ children }) {
                   </div>
                 </li>
 
+                {/* Notification Bell */}
+                <li className="nav-item dropdown notification_dropdown">
+                  <button 
+                    className="nav-link notif-bell-btn"
+                    data-tooltip="Notifications"
+                    data-tooltip-pos="bottom"
+                    onClick={toggleNotifPopup}
+                    style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
+                  >
+                    <Bell width={20} height={20} />
+                    {unreadCount > 0 && (
+                      <span className="notif-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                    )}
+                  </button>
+                  {showNotifPopup && (
+                    <div className="notif-popup-dropdown">
+                      <div className="notif-popup-header">
+                        <strong>Notifications</strong>
+                        <Link to="/notifications" onClick={() => setShowNotifPopup(false)} style={{ fontSize: '0.78rem', color: '#f2421b', textDecoration: 'none' }}>View All</Link>
+                      </div>
+                      {recentNotifs.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#adb5bd', fontSize: '0.82rem' }}>
+                          No new notifications
+                        </div>
+                      ) : (
+                        recentNotifs.slice(0, 5).map(n => (
+                          <div key={n.id} className="notif-popup-item">
+                            <div className="notif-popup-dot" />
+                            <div>
+                              <p className="notif-popup-title">{n.title}</p>
+                              <p className="notif-popup-time">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div className="notif-popup-footer">
+                        <Link to="/notifications" onClick={() => setShowNotifPopup(false)}>
+                          See all notifications →
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </li>
+
                 {/* User Profile */}
                 <li className="nav-item dropdown header-profile">
                   <button 
                     className="nav-link"
+                    data-tooltip="Account menu"
+                    data-tooltip-pos="bottom"
                     onClick={() => setShowUserMenu(!showUserMenu)}
                   >
                     <div className="header-user">
@@ -405,7 +582,7 @@ export default function BeautyLayout({ children }) {
                           <i className="flaticon-app"></i>
                           <span>Settings</span>
                         </Link>
-                        <button onClick={handleLogout} className="profile-item logout">
+                        <button onClick={handleLogout} className="profile-item logout" data-tooltip="Sign out">
                           <i className="flaticon-x-mark"></i>
                           <span>Logout</span>
                         </button>

@@ -33,6 +33,7 @@ import BeautyDashboard from './pages/BeautyDashboard';
 import Appointments from './pages/Appointments';
 import BeautyServices from './pages/BeautyServices';
 import StaffSchedule from './pages/StaffSchedule';
+import TeamManager from './pages/TeamManager';
 import LoyaltyProgram from './pages/LoyaltyProgram';
 import BeautyClients from './pages/BeautyClients';
 import BeautyPayments from './pages/BeautyPayments';
@@ -44,6 +45,15 @@ import PackagesPage from './pages/Packages';
 import MembershipsPage from './pages/Memberships';
 import PromotionsPage from './pages/Promotions';
 import ReviewsPage from './pages/Reviews';
+import POSPage from './pages/POS';
+import InventoryPage from './pages/Inventory';
+import ConsultationFormsPage from './pages/ConsultationForms';
+import GroupBookingsPage from './pages/GroupBookings';
+import PatchTestsPage from './pages/PatchTests';
+import NotificationCenterPage from './pages/NotificationCenter';
+import MarketingHubPage from './pages/MarketingHub';
+import OnlineBooking from './pages/OnlineBooking';
+import OnlineStore from './pages/OnlineStore';
 
 // Super Admin Pages
 import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
@@ -210,6 +220,8 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/book/:slug" element={<OnlineBooking />} />
+        <Route path="/store/:slug" element={<OnlineStore />} />
         <Route path="/login" element={
           user 
             ? (showBusinessSelector 
@@ -266,6 +278,8 @@ function App() {
         <Route path="/beauty-services/*" element={user ? <Navigate to="/beauty-settings/services" /> : <Navigate to="/login" />} />
         <Route path="/staff-schedule" element={user ? <BeautyLayout><StaffSchedule /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/staff-schedule/*" element={user ? <BeautyLayout><StaffSchedule /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/team" element={user ? <BeautyLayout><TeamManager /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/team/*" element={user ? <BeautyLayout><TeamManager /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/loyalty" element={user ? <BeautyLayout><LoyaltyProgram /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-clients" element={user ? <BeautyLayout><BeautyClients /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-clients/*" element={user ? <BeautyLayout><BeautyClients /></BeautyLayout> : <Navigate to="/login" />} />
@@ -282,6 +296,13 @@ function App() {
         <Route path="/memberships" element={user ? <BeautyLayout><MembershipsPage /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/promotions" element={user ? <BeautyLayout><PromotionsPage /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/reviews" element={user ? <BeautyLayout><ReviewsPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/pos" element={user ? <BeautyLayout><POSPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/consultation-forms" element={user ? <BeautyLayout><ConsultationFormsPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/group-bookings" element={user ? <BeautyLayout><GroupBookingsPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/patch-tests" element={user ? <BeautyLayout><PatchTestsPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/inventory" element={user ? <BeautyLayout><InventoryPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/notifications" element={user ? <BeautyLayout><NotificationCenterPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/marketing" element={user ? <BeautyLayout><MarketingHubPage /></BeautyLayout> : <Navigate to="/login" />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />

@@ -1,0 +1,806 @@
+/* ─── Online Booking — Public Customer Page ──────────────────── */
+:root {
+  --ob-primary: #f2421b;
+  --ob-primary-light: #fff0ed;
+  --ob-dark: #1a1a2e;
+  --ob-gray: #6b7280;
+  --ob-border: #e5e7eb;
+  --ob-bg: #f8fafc;
+  --ob-card: #ffffff;
+  --ob-radius: 16px;
+  --ob-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+.ob-page {
+  min-height: 100vh;
+  background: var(--ob-bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ─── Header ─────────────────────────────────────── */
+.ob-header {
+  background: var(--ob-dark);
+  color: #fff;
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+}
+
+.ob-header-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ob-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.ob-logo-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--ob-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ob-header-text h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.ob-header-text p {
+  font-size: 0.8rem;
+  margin: 0;
+  opacity: 0.7;
+}
+
+/* ─── Progress Steps ─────────────────────────────── */
+.ob-progress {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+}
+
+.ob-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.ob-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+}
+
+.ob-step::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--ob-border);
+  margin: 0 8px;
+  transition: background 0.3s;
+}
+
+.ob-step:last-child::after { display: none; }
+
+.ob-step.active::after,
+.ob-step.completed::after {
+  background: var(--ob-primary);
+}
+
+.ob-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--ob-border);
+  color: var(--ob-gray);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.ob-step.active .ob-step-dot {
+  background: var(--ob-primary);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(242, 66, 27, 0.2);
+}
+
+.ob-step.completed .ob-step-dot {
+  background: #22c55e;
+  color: #fff;
+}
+
+.ob-step-label {
+  font-size: 0.7rem;
+  color: var(--ob-gray);
+  white-space: nowrap;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .ob-step-label { display: block; }
+}
+
+.ob-step.active .ob-step-label { color: var(--ob-primary); font-weight: 600; }
+.ob-step.completed .ob-step-label { color: #22c55e; }
+
+/* ─── Content ────────────────────────────────────── */
+.ob-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.ob-card {
+  background: var(--ob-card);
+  border-radius: var(--ob-radius);
+  box-shadow: var(--ob-shadow);
+  padding: 32px;
+  animation: obSlideUp 0.4s ease;
+}
+
+@keyframes obSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ob-card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ob-dark);
+  margin: 0 0 6px;
+}
+
+.ob-card-subtitle {
+  font-size: 0.9rem;
+  color: var(--ob-gray);
+  margin: 0 0 24px;
+}
+
+/* ─── Branch Cards ───────────────────────────────── */
+.ob-branch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.ob-branch-card {
+  border: 2px solid var(--ob-border);
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+
+.ob-branch-card:hover {
+  border-color: var(--ob-primary);
+  box-shadow: 0 4px 16px rgba(242,66,27,0.1);
+}
+
+.ob-branch-card.selected {
+  border-color: var(--ob-primary);
+  background: var(--ob-primary-light);
+}
+
+.ob-branch-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: var(--ob-primary);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ob-branch-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ob-dark);
+  margin-bottom: 4px;
+}
+
+.ob-branch-address {
+  font-size: 0.82rem;
+  color: var(--ob-gray);
+  margin-bottom: 8px;
+}
+
+.ob-branch-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--ob-gray);
+}
+
+.ob-branch-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── Category Tabs ──────────────────────────────── */
+.ob-categories {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ob-cat-btn {
+  padding: 8px 18px;
+  border: 2px solid var(--ob-border);
+  border-radius: 100px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--ob-dark);
+}
+
+.ob-cat-btn:hover { border-color: var(--ob-primary); color: var(--ob-primary); }
+.ob-cat-btn.active {
+  background: var(--ob-primary);
+  border-color: var(--ob-primary);
+  color: #fff;
+}
+
+/* ─── Service Cards ──────────────────────────────── */
+.ob-service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ob-service-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 2px solid var(--ob-border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.ob-service-card:hover {
+  border-color: var(--ob-primary);
+  background: #fefefe;
+}
+
+.ob-service-card.selected {
+  border-color: var(--ob-primary);
+  background: var(--ob-primary-light);
+}
+
+.ob-service-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.ob-service-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ob-service-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ob-dark);
+}
+
+.ob-service-desc {
+  font-size: 0.78rem;
+  color: var(--ob-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ob-service-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.ob-service-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ob-primary);
+}
+
+.ob-service-duration {
+  font-size: 0.78rem;
+  color: var(--ob-gray);
+  background: #f3f4f6;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+/* ─── Staff Cards ────────────────────────────────── */
+.ob-staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.ob-staff-card {
+  border: 2px solid var(--ob-border);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.ob-staff-card:hover {
+  border-color: var(--ob-primary);
+  transform: translateY(-2px);
+}
+
+.ob-staff-card.selected {
+  border-color: var(--ob-primary);
+  background: var(--ob-primary-light);
+}
+
+.ob-staff-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  background: linear-gradient(135deg, var(--ob-primary), #ff8c6b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #fff;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.ob-staff-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ob-staff-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ob-dark);
+  margin-bottom: 2px;
+}
+
+.ob-staff-skill {
+  font-size: 0.75rem;
+  color: var(--ob-gray);
+  text-transform: capitalize;
+}
+
+/* ─── Date & Time Picker ─────────────────────────── */
+.ob-datetime-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .ob-datetime-grid { grid-template-columns: 1fr; }
+}
+
+.ob-date-section h3,
+.ob-time-section h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ob-dark);
+  margin-bottom: 12px;
+}
+
+.ob-date-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.ob-date-card {
+  min-width: 70px;
+  padding: 14px 12px;
+  border: 2px solid var(--ob-border);
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ob-date-card:hover { border-color: var(--ob-primary); }
+.ob-date-card.selected {
+  background: var(--ob-primary);
+  border-color: var(--ob-primary);
+  color: #fff;
+}
+
+.ob-date-day {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.ob-date-num {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+.ob-date-month {
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.ob-time-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ob-time-slot {
+  padding: 10px;
+  border: 2px solid var(--ob-border);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: var(--ob-dark);
+}
+
+.ob-time-slot:hover { border-color: var(--ob-primary); color: var(--ob-primary); }
+.ob-time-slot.selected {
+  background: var(--ob-primary);
+  border-color: var(--ob-primary);
+  color: #fff;
+}
+
+.ob-no-slots {
+  text-align: center;
+  padding: 32px;
+  color: var(--ob-gray);
+  font-size: 0.88rem;
+}
+
+.ob-no-slots svg {
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+
+/* ─── Contact Form ───────────────────────────────── */
+.ob-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .ob-form-grid { grid-template-columns: 1fr; }
+}
+
+.ob-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ob-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.ob-form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ob-dark);
+}
+
+.ob-form-input {
+  padding: 12px 16px;
+  border: 2px solid var(--ob-border);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+  outline: none;
+  font-family: inherit;
+}
+
+.ob-form-input:focus {
+  border-color: var(--ob-primary);
+}
+
+.ob-form-input::placeholder {
+  color: #c0c0c0;
+}
+
+textarea.ob-form-input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ─── Confirmation Card ──────────────────────────── */
+.ob-confirm-card {
+  background: linear-gradient(135deg, #fef3f0 0%, #fff 50%);
+  border: 2px solid var(--ob-primary);
+  border-radius: var(--ob-radius);
+  padding: 28px;
+}
+
+.ob-confirm-icon {
+  width: 64px;
+  height: 64px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+}
+
+.ob-confirm-title {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ob-dark);
+  margin-bottom: 4px;
+}
+
+.ob-confirm-subtitle {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ob-gray);
+  margin-bottom: 24px;
+}
+
+.ob-confirm-details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ob-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ob-border);
+}
+
+.ob-confirm-row:last-child { border-bottom: none; }
+
+.ob-confirm-label {
+  font-size: 0.85rem;
+  color: var(--ob-gray);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ob-confirm-value {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ob-dark);
+  text-align: right;
+}
+
+/* ─── Success Page ───────────────────────────────── */
+.ob-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.ob-success-check {
+  width: 80px;
+  height: 80px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  animation: obPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes obPop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.ob-success h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ob-dark);
+  margin-bottom: 8px;
+}
+
+.ob-success p {
+  font-size: 0.95rem;
+  color: var(--ob-gray);
+  margin-bottom: 24px;
+}
+
+.ob-success-details {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 24px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+/* ─── Navigation Buttons ─────────────────────────── */
+.ob-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+  gap: 12px;
+}
+
+.ob-btn {
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ob-btn-back {
+  background: #f3f4f6;
+  color: var(--ob-dark);
+}
+
+.ob-btn-back:hover {
+  background: #e5e7eb;
+}
+
+.ob-btn-next {
+  background: var(--ob-primary);
+  color: #fff;
+  margin-left: auto;
+}
+
+.ob-btn-next:hover {
+  background: #d93a16;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(242,66,27,0.3);
+}
+
+.ob-btn-next:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ─── Loading ────────────────────────────────────── */
+.ob-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--ob-gray);
+  gap: 16px;
+}
+
+.ob-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--ob-border);
+  border-top-color: var(--ob-primary);
+  border-radius: 50%;
+  animation: obSpin 0.8s linear infinite;
+}
+
+@keyframes obSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 404 / Error ────────────────────────────────── */
+.ob-error {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.ob-error h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--ob-dark);
+  margin-bottom: 8px;
+}
+
+.ob-error p {
+  color: var(--ob-gray);
+  font-size: 1rem;
+}
+
+/* ─── Footer ─────────────────────────────────────── */
+.ob-footer {
+  text-align: center;
+  padding: 24px;
+  color: #aaa;
+  font-size: 0.75rem;
+}
+
+.ob-footer a {
+  color: var(--ob-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .ob-card { padding: 20px; border-radius: 14px; }
+  .ob-card-title { font-size: 1.15rem; }
+  .ob-branch-grid { grid-template-columns: 1fr; }
+  .ob-staff-grid { grid-template-columns: repeat(2, 1fr); }
+  .ob-time-grid { grid-template-columns: repeat(2, 1fr); }
+  .ob-confirm-card { padding: 20px; }
+  .ob-nav { flex-direction: column; }
+  .ob-btn { justify-content: center; }
+  .ob-btn-next { margin-left: 0; }
+}
+
+@media (max-width: 380px) {
+  .ob-staff-grid { grid-template-columns: 1fr; }
+  .ob-header-inner { padding: 0 16px; }
+  .ob-content { padding: 16px; }
+}

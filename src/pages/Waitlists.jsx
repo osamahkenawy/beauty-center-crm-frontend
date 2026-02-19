@@ -246,18 +246,18 @@ export default function Waitlists() {
                 <div className="wl-card-actions">
                   {item.status === 'waiting' && (
                     <>
-                      <button className="wl-action-btn" onClick={() => handleNotify(item)} title="Notify"><Bell size={16} /></button>
-                      <button className="wl-action-btn wl-action-book" onClick={() => handleBook(item)} title="Book"><ArrowRight size={16} /></button>
+                      <button className="wl-action-btn" onClick={() => handleNotify(item)} title="Notify" data-tooltip="Notify client"><Bell size={16} /></button>
+                      <button className="wl-action-btn wl-action-book" onClick={() => handleBook(item)} title="Book" data-tooltip="Book appointment"><ArrowRight size={16} /></button>
                     </>
                   )}
                   {item.status === 'notified' && (
                     <button className="wl-action-btn wl-action-book" onClick={() => handleBook(item)} title="Book"><CheckCircle2 size={16} /></button>
                   )}
-                  <button className="wl-action-btn" onClick={() => openEdit(item)} title="Edit"><Edit3 size={16} /></button>
+                  <button className="wl-action-btn" onClick={() => openEdit(item)} title="Edit" data-tooltip="Edit entry"><Edit3 size={16} /></button>
                   {(item.status === 'waiting' || item.status === 'notified') && (
-                    <button className="wl-action-btn wl-action-cancel" onClick={() => handleCancel(item)} title="Cancel"><XCircle size={16} /></button>
+                    <button className="wl-action-btn wl-action-cancel" onClick={() => handleCancel(item)} title="Cancel" data-tooltip="Cancel entry"><XCircle size={16} /></button>
                   )}
-                  <button className="wl-action-btn wl-action-delete" onClick={() => handleDelete(item)} title="Delete"><Trash2 size={16} /></button>
+                  <button className="wl-action-btn wl-action-delete" onClick={() => handleDelete(item)} title="Delete" data-tooltip="Delete entry"><Trash2 size={16} /></button>
                 </div>
               </div>
             </div>
