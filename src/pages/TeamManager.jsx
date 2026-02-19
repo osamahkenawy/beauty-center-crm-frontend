@@ -393,15 +393,20 @@ export default function TeamManager() {
       </div>
 
       {/* Header */}
-      <div className="team-header">
-        <div className="team-header-left">
-          <h2><Group width={22} height={22} /> Team</h2>
-          <div className="team-search">
-            <Search width={16} height={16} />
-            <input placeholder="Search members..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Group width={26} height={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Team Management</h1>
+            <p className="module-hero-sub">Manage staff, roles & performance</p>
           </div>
         </div>
-        <div className="team-filters">
+        <div className="module-hero-actions">
+          <div className="team-search" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <Search width={16} height={16} style={{ color: 'rgba(255,255,255,0.6)' }} />
+            <input placeholder="Search members..." value={search} onChange={e => setSearch(e.target.value)} style={{ background: 'transparent', color: '#fff' }} />
+          </div>
+          <div className="team-filters" style={{ margin: 0 }}>
           <select className="team-filter-select" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
             <option value="">All Roles</option>
             {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
@@ -420,7 +425,7 @@ export default function TeamManager() {
               </button>
             ))}
           </div>
-          <button className="team-add-btn btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
             const rows = [
               ['ID', 'Name', 'Email', 'Phone', 'Role', 'Job Title', 'Branch', 'Status', 'Hire Date'],
               ...filtered.map(m => [
@@ -447,13 +452,14 @@ export default function TeamManager() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          <button className="team-add-btn btn-print" data-tooltip="Print team" onClick={() => window.print()}>
+          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print team" onClick={() => window.print()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>
-          <button className="team-add-btn" data-tooltip="Add team member" onClick={openCreate}>
+          <button className="module-btn module-btn-primary" data-tooltip="Add team member" onClick={openCreate}>
             <Plus width={16} height={16} /> Add Member
           </button>
+          </div>
         </div>
       </div>
 

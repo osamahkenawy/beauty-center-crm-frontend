@@ -178,12 +178,19 @@ export default function Waitlists() {
   return (
     <div className="wl-page">
       {/* Header */}
-      <div className="wl-header">
-        <div>
-          <h1 className="wl-title">Waitlist</h1>
-          <p className="wl-subtitle">Manage clients waiting for available slots</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </div>
+          <div>
+            <h1 className="module-hero-title">Waitlist</h1>
+            <p className="module-hero-sub">Manage clients waiting for available slots</p>
+          </div>
         </div>
-        <button className="wl-btn-primary" onClick={openCreate}><Plus size={18} /> Add to Waitlist</button>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-primary" onClick={openCreate}><Plus size={16} /> Add to Waitlist</button>
+        </div>
       </div>
 
       {/* Stats */}

@@ -6,7 +6,8 @@ import {
   Clock, CheckCircle, AlertTriangle, XCircle, Filter, Download,
   Receipt, ArrowUpRight, ArrowDownRight, TrendingUp, Ban, Hash,
   User, Calendar, Banknote, MoreVertical, ChevronDown, Send,
-  Sparkles
+  Sparkles, X, Star, Tag, Wallet, Building2, Gift, ClipboardList,
+  BadgeCheck, ShieldCheck, Coins, PercentCircle, ArrowRight
 } from 'lucide-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
@@ -63,8 +64,20 @@ export default function BeautyPayments() {
   const [payForm, setPayForm] = useState({ amount: '', payment_method: 'cash', gift_card_code: '' });
   const [payGcBalance, setPayGcBalance] = useState(null);
   const [payGcChecking, setPayGcChecking] = useState(false);
-  const [payLoyalty, setPayLoyalty] = useState(null); // { enrolled, points, monetary_value, point_value, max_redeem_percent }
+  const [payLoyalty, setPayLoyalty] = useState(null);
   const [payLoyaltyLoading, setPayLoyaltyLoading] = useState(false);
+  const [payDiscount, setPayDiscount] = useState(null); // { valid, discount_amount, message, ... }
+  const [payDiscountLoading, setPayDiscountLoading] = useState(false);
+  const [payDiscountCode, setPayDiscountCode] = useState('');
+
+  // Toast notification state
+  const [toast, setToast] = useState(null); // { type: 'success'|'error'|'warning', title, message }
+  const toastTimer = useRef(null);
+  const showToast = useCallback((type, title, message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ type, title, message });
+    toastTimer.current = setTimeout(() => setToast(null), 4500);
+  }, []);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -161,8 +174,8 @@ export default function BeautyPayments() {
   const removeItem = (idx) => setForm(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== idx) }));
 
   const handleCreate = async (status = 'draft') => {
-    if (!form.customer_id) return alert('Please select a customer');
-    if (!form.items.length || !form.items[0].name) return alert('Please add at least one item');
+    if (!form.customer_id) { showToast('warning', 'Missing Customer', 'Please select a customer.'); return; }
+    if (!form.items.length || !form.items[0].name) { showToast('warning', 'Missing Items', 'Please add at least one item.'); return; }
     setSaving(true);
     try {
       const res = await api.post('/invoices', { ...form, status });
@@ -193,6 +206,20 @@ export default function BeautyPayments() {
     finally { setPayGcChecking(false); }
   };
 
+  const validateDiscountCode = async (code) => {
+    if (!code || code.length < 3) { setPayDiscount(null); return; }
+    setPayDiscountLoading(true);
+    try {
+      const res = await api.post('/promotions/validate', {
+        code,
+        subtotal: viewing ? parseFloat(viewing.total) : 0,
+        customer_id: viewing?.customer_id
+      });
+      setPayDiscount(res.success ? res.data : { error: res.message || 'Invalid code' });
+    } catch (e) { setPayDiscount({ error: e.message || 'Invalid code' }); }
+    finally { setPayDiscountLoading(false); }
+  };
+
   const checkLoyaltyBalance = async (customerId) => {
     if (!customerId) { setPayLoyalty(null); return; }
     setPayLoyaltyLoading(true);
@@ -204,11 +231,15 @@ export default function BeautyPayments() {
   };
 
   const handlePay = async () => {
-    const totalAmt = parseFloat(payForm.amount || 0);
+    if (!viewing) return;
+    const bal = Math.max(0, parseFloat(viewing.total || 0) - parseFloat(viewing.amount_paid || 0));
     const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
-    if (totalAmt <= 0) return;
-    if (payForm.payment_method === 'gift_card' && !payForm.gift_card_code && (totalAmt - loyaltyAmt) > 0) {
-      alert('Please enter a gift card code');
+    const totalAmt = bal;
+    if (totalAmt <= 0) { showToast('warning', 'Nothing to pay', 'This invoice has no outstanding balance.'); return; }
+
+    const cashRemaining = Math.max(0, totalAmt - loyaltyAmt);
+    if (payForm.payment_method === 'gift_card' && !payForm.gift_card_code && cashRemaining > 0) {
+      showToast('warning', 'Gift Card Required', 'Please enter a gift card code to proceed.');
       return;
     }
     setSaving(true);
@@ -217,32 +248,66 @@ export default function BeautyPayments() {
         amount: totalAmt,
         payment_method: payForm.payment_method,
         loyalty_amount: loyaltyAmt > 0 ? loyaltyAmt : undefined,
+        discount_code: payDiscount?.valid ? payDiscountCode : undefined,
       };
       if (payForm.payment_method === 'gift_card') payload.gift_card_code = payForm.gift_card_code;
-      const res = await api.post(`/invoices/${viewing.id}/pay`, payload);
+      const viewingId = viewing.id;
+      const res = await api.post(`/invoices/${viewingId}/pay`, payload);
       if (res.success) {
+        // Close pay modal & reset pay-specific state
         setShowPay(false);
         setPayGcBalance(null);
         setPayLoyalty(null);
-        handleViewInvoice(viewing);
+        setPayDiscount(null);
+        setPayDiscountCode('');
+        // Refresh lists
         fetchInvoices();
         fetchStats();
+        // If view modal is open, refresh the viewed invoice
+        if (showView) {
+          try {
+            const updated = await api.get(`/invoices/${viewingId}`);
+            if (updated.success) setViewing(updated.data);
+          } catch(e) { /* ignore */ }
+        }
+        // Build clean message
+        const paidAmt = parseFloat(totalAmt).toFixed(2);
+        const method = loyaltyAmt > 0 && cashRemaining > 0
+          ? `${loyaltyAmt.toFixed(2)} pts + ${cashRemaining.toFixed(2)} ${payForm.payment_method.replace(/_/g, ' ')}`
+          : loyaltyAmt >= totalAmt ? 'Loyalty Points' : payForm.payment_method.replace(/_/g, ' ');
+        showToast('success', 'Payment Recorded', `${formatCurrencyStr(paidAmt)} paid via ${method}`);
       } else {
-        alert(res.message || 'Payment failed');
+        showToast('error', 'Payment Failed', res.message || 'Could not process the payment.');
       }
-    } catch (e) { console.error(e); alert(e.message || 'Payment failed'); }
+    } catch (e) {
+      console.error(e);
+      showToast('error', 'Payment Error', e.message || 'An unexpected error occurred.');
+    }
     finally { setSaving(false); }
   };
 
   // Open payment modal with auto-fetch loyalty
-  const openPayModal = (inv, balance) => {
-    setViewing(inv);
-    const bal = balance || Math.max(0, parseFloat(inv.total) - parseFloat(inv.amount_paid || 0));
+  const openPayModal = async (inv, balance) => {
+    // If we only have partial data, fetch the full invoice first
+    let fullInv = inv;
+    if (!inv.items) {
+      try {
+        const res = await api.get(`/invoices/${inv.id}`);
+        if (res.success) fullInv = res.data;
+      } catch (e) { console.error(e); }
+    }
+    setViewing(fullInv);
+    const bal = balance || Math.max(0, parseFloat(fullInv.total) - parseFloat(fullInv.amount_paid || 0));
     setPayForm({ amount: bal.toFixed(2), payment_method: 'cash', gift_card_code: '', loyalty_amount: '' });
     setPayGcBalance(null);
     setPayLoyalty(null);
+    setPayDiscount(null);
+    setPayDiscountCode('');
     setShowPay(true);
-    if (inv.customer_id) checkLoyaltyBalance(inv.customer_id);
+    // Auto-fetch loyalty if customer exists
+    if (fullInv.customer_id) {
+      checkLoyaltyBalance(fullInv.customer_id);
+    }
   };
 
   const handleVoid = async (id) => {
@@ -261,11 +326,11 @@ export default function BeautyPayments() {
         fetchInvoices();
         fetchStats();
       } else {
-        alert(res.message || 'Failed to delete invoice');
+        showToast('error', 'Delete Failed', res.message || 'Failed to delete invoice.');
       }
     } catch (e) {
       console.error(e);
-      alert('Only draft invoices can be deleted');
+      showToast('warning', 'Cannot Delete', 'Only draft invoices can be deleted.');
     }
   };
 
@@ -404,13 +469,16 @@ export default function BeautyPayments() {
       </div>
 
       {/* Hero Stats */}
-      <div className="inv-hero">
-        <div className="inv-hero-content">
-          <h1>Invoices & Payments</h1>
-          <p>Manage billing, track payments, and keep your finances in order.</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Receipt size={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Invoices & Payments</h1>
+            <p className="module-hero-sub">Manage billing, track payments, and keep your finances in order.</p>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="inv-btn-primary btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
             const rows = [
               ['Invoice #', 'Customer', 'Date', 'Due Date', 'Amount', 'Paid', 'Balance', 'Status'],
               ...invoices.map(inv => [
@@ -435,11 +503,11 @@ export default function BeautyPayments() {
           }}>
             <Download size={16} /> Excel
           </button>
-          <button className="inv-btn-primary btn-print" data-tooltip="Print invoices" onClick={() => window.print()}>
+          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print invoices" onClick={() => window.print()}>
             <Printer size={16} /> Print
           </button>
-          <button className="inv-btn-primary inv-btn-lg" data-tooltip="Create new invoice" onClick={() => setShowCreate(true)}>
-            <Plus size={18} /> New Invoice
+          <button className="module-btn module-btn-primary" data-tooltip="Create new invoice" onClick={() => setShowCreate(true)}>
+            <Plus size={16} /> New Invoice
           </button>
         </div>
       </div>
@@ -921,221 +989,284 @@ export default function BeautyPayments() {
         )}
       </Modal>
 
-      {/* ── Payment Modal ── */}
-      <Modal show={showPay} onHide={() => { setShowPay(false); setPayLoyalty(null); setPayGcBalance(null); }} centered className="inv-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <div className="inv-modal-title"><CreditCard size={20} /> Record Payment</div>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {viewing && (
-            <div className="inv-pay-context">
-              <span className="inv-pay-inv-num">{viewing.invoice_number}</span>
-              <span className="inv-pay-balance">Balance: <strong>{formatCurrency(balanceDue)}</strong></span>
-            </div>
-          )}
-          <div className="inv-form">
-            {/* ── Loyalty Points Deduction (shown if customer has points) ── */}
-            {payLoyaltyLoading ? (
-              <div className="inv-loyalty-loading">
-                <div className="inv-loading-spinner" style={{ width: 16, height: 16 }} /> Loading loyalty info...
+      {/* ── Payment Modal (fullscreen-style, scrollable) ── */}
+      <Modal show={showPay} onHide={() => { setShowPay(false); setPayLoyalty(null); setPayGcBalance(null); setPayDiscount(null); setPayDiscountCode(''); setPayForm(p => ({ ...p, loyalty_amount: '' })); }} className="inv-pay-modal" dialogClassName="inv-pay-dialog" contentClassName="inv-pay-content">
+        <div className="inv-pay-layout">
+          {/* ── Left: Hero / Summary sidebar ── */}
+          <div className="inv-pay-sidebar">
+            <button className="inv-pay-close-btn" onClick={() => { setShowPay(false); setPayLoyalty(null); setPayDiscount(null); setPayDiscountCode(''); }}>
+              <X size={18} />
+            </button>
+            <div className="inv-pay-sidebar-inner">
+              <div className="inv-pay-sidebar-icon"><Wallet size={32} /></div>
+              <h3 className="inv-pay-sidebar-title">Record Payment</h3>
+              {viewing && (
+                <>
+                  <div className="inv-pay-sidebar-meta">
+                    <Hash size={14} /> {viewing.invoice_number}
+                  </div>
+                  <div className="inv-pay-sidebar-meta">
+                    <User size={14} /> {viewing.customer_name || 'Walk-in'}
+                  </div>
+                </>
+              )}
+              <div className="inv-pay-sidebar-amount-card">
+                <span className="inv-pay-sidebar-amount-label">Balance Due</span>
+                <span className="inv-pay-sidebar-amount-value">{formatCurrency(balanceDue)}</span>
               </div>
-            ) : payLoyalty && payLoyalty.enrolled && payLoyalty.points > 0 ? (
-              <div className="inv-loyalty-section">
-                <div className="inv-loyalty-balance-card">
-                  <div className="inv-loyalty-header">
-                    <div className="inv-loyalty-badge">⭐ {payLoyalty.tier?.toUpperCase() || 'BRONZE'}</div>
-                    <label className="inv-loyalty-toggle">
-                      <input
-                        type="checkbox"
-                        checked={parseFloat(payForm.loyalty_amount || 0) > 0}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            const maxByPercent = balanceDue * (payLoyalty.max_redeem_percent / 100);
-                            const maxByPoints = payLoyalty.monetary_value;
-                            const suggested = Math.min(maxByPercent, maxByPoints, balanceDue);
-                            setPayForm(p => ({ ...p, loyalty_amount: suggested.toFixed(2) }));
-                          } else {
-                            setPayForm(p => ({ ...p, loyalty_amount: '' }));
-                          }
-                        }}
-                      />
-                      <span>Use Loyalty Points</span>
-                    </label>
-                  </div>
-                  <div className="inv-loyalty-points-row">
-                    <div className="inv-loyalty-stat">
-                      <span className="inv-loyalty-stat-val">{(payLoyalty.points || 0).toLocaleString()}</span>
-                      <span className="inv-loyalty-stat-lbl">Points</span>
-                    </div>
-                    <div className="inv-loyalty-stat">
-                      <span className="inv-loyalty-stat-val">{formatCurrency(payLoyalty.monetary_value || 0)}</span>
-                      <span className="inv-loyalty-stat-lbl">Worth</span>
-                    </div>
-                    <div className="inv-loyalty-stat">
-                      <span className="inv-loyalty-stat-val">{payLoyalty.max_redeem_percent}%</span>
-                      <span className="inv-loyalty-stat-lbl">Max Redeem</span>
-                    </div>
-                  </div>
 
+              {/* ── Live Receipt ── */}
+              {balanceDue > 0 && (
+                <div className="inv-pay-live-receipt">
+                  <div className="inv-pay-lr-title"><Receipt size={14} /> Summary</div>
+                  <div className="inv-pay-lr-row">
+                    <span>Invoice</span>
+                    <strong>{formatCurrency(balanceDue)}</strong>
+                  </div>
                   {parseFloat(payForm.loyalty_amount || 0) > 0 && (
-                    <div className="inv-loyalty-calc">
-                      <div className="inv-field" style={{ margin: 0 }}>
-                        <label style={{ fontSize: 11, color: '#7c3aed', fontWeight: 700 }}>⭐ Deduct from Points</label>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <input
-                            type="number" min="0" step="0.01"
-                            max={Math.min(payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100)}
-                            value={payForm.loyalty_amount}
-                            onChange={e => {
-                              const val = Math.min(parseFloat(e.target.value) || 0, payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100);
-                              setPayForm(p => ({ ...p, loyalty_amount: val > 0 ? val.toFixed(2) : e.target.value }));
-                            }}
-                            style={{ flex: 1 }}
-                          />
-                          <button type="button" className="inv-loyalty-use-max" onClick={() => {
-                            const max = Math.min(payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100, parseFloat(payForm.amount || balanceDue));
-                            setPayForm(p => ({ ...p, loyalty_amount: max.toFixed(2) }));
-                          }}>Max</button>
-                        </div>
-                      </div>
-                      {(() => {
-                        const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
-                        const pointsNeeded = Math.ceil(loyaltyAmt / (payLoyalty.point_value || 0.01));
-                        const totalAmt = parseFloat(payForm.amount || 0);
-                        const remaining = Math.max(0, totalAmt - loyaltyAmt);
-                        return (
-                          <>
-                            <div className="inv-loyalty-calc-row">
-                              <span>Points to redeem:</span>
-                              <strong>{pointsNeeded.toLocaleString()} pts</strong>
-                            </div>
-                            <div className="inv-loyalty-calc-row">
-                              <span>Covered by points:</span>
-                              <strong style={{ color: '#7c3aed' }}>{formatCurrency(loyaltyAmt)}</strong>
-                            </div>
-                            {remaining > 0 && (
-                              <div className="inv-loyalty-calc-row">
-                                <span>Pay via {payForm.payment_method}:</span>
-                                <strong style={{ color: '#1e293b' }}>{formatCurrency(remaining)}</strong>
-                              </div>
-                            )}
-                            {loyaltyAmt > 0 && (
-                              <div className="inv-loyalty-success">
-                                ✅ {formatCurrency(loyaltyAmt)} from points{remaining > 0 ? <> + {formatCurrency(remaining)} via {payForm.payment_method}</> : ' (full payment)'}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
+                    <div className="inv-pay-lr-row purple">
+                      <span><Star size={12} /> Loyalty</span>
+                      <strong>− {formatCurrency(parseFloat(payForm.loyalty_amount))}</strong>
                     </div>
                   )}
+                  {payDiscount?.valid && (
+                    <div className="inv-pay-lr-row green">
+                      <span><Tag size={12} /> Discount</span>
+                      <strong>− {formatCurrency(payDiscount.discount_amount)}</strong>
+                    </div>
+                  )}
+                  {(() => {
+                    const la = parseFloat(payForm.loyalty_amount || 0);
+                    const rem = Math.max(0, balanceDue - la);
+                    if (rem > 0 && la > 0) {
+                      const PMIcon = payForm.payment_method === 'cash' ? Banknote : payForm.payment_method === 'card' ? CreditCard : payForm.payment_method === 'gift_card' ? Gift : payForm.payment_method === 'bank_transfer' ? Building2 : ClipboardList;
+                      return (
+                        <div className="inv-pay-lr-row">
+                          <span><PMIcon size={12} /> {payForm.payment_method.replace(/_/g, ' ')}</span>
+                          <strong>{formatCurrency(rem)}</strong>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  <div className="inv-pay-lr-total">
+                    <span>Total</span>
+                    <strong>{formatCurrency(balanceDue)}</strong>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-
-            {/* ── Total Amount ── */}
-            <div className="inv-field">
-              <label><DollarSign size={12} /> Total Amount to Pay</label>
-              <input type="number" min="0" step="0.01" value={payForm.amount} onChange={e => setPayForm(p => ({ ...p, amount: e.target.value }))} />
+              )}
             </div>
+          </div>
 
-            {/* ── Payment Method for remaining ── */}
-            {(() => {
-              const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
-              const totalAmt = parseFloat(payForm.amount || 0);
-              const remaining = totalAmt - loyaltyAmt;
-              if (loyaltyAmt >= totalAmt && loyaltyAmt > 0) return null; // fully covered by points
-              return (
-                <div className="inv-field">
-                  <label><Banknote size={12} /> {loyaltyAmt > 0 ? <>Pay remaining {formatCurrency(remaining)} via</> : 'Payment Method'}</label>
-                  <select value={payForm.payment_method} onChange={e => {
-                    setPayForm(p => ({ ...p, payment_method: e.target.value, gift_card_code: '' }));
-                    setPayGcBalance(null);
-                  }}>
-                    <option value="cash">💵 Cash</option>
-                    <option value="card">💳 Card</option>
-                    <option value="bank_transfer">🏦 Bank Transfer</option>
-                    <option value="gift_card">🎁 Gift Card</option>
-                    <option value="other">📋 Other</option>
-                  </select>
-                </div>
-              );
-            })()}
+          {/* ── Right: Form area ── */}
+          <div className="inv-pay-main">
+            <div className="inv-pay-main-scroll">
+              <div className="inv-pay-sections">
 
-            {/* ── Gift Card Section ── */}
-            {payForm.payment_method === 'gift_card' && parseFloat(payForm.loyalty_amount || 0) < parseFloat(payForm.amount || 0) && (
-              <div className="inv-field" style={{ background: '#fffbeb', borderRadius: 8, padding: '10px 12px', border: '1px solid #fbbf24' }}>
-                <label style={{ color: '#92400e', fontWeight: 600, fontSize: 12 }}>🎁 Gift Card Code</label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    placeholder="e.g. ABCD-EFGH-JKLM-NPQR"
-                    value={payForm.gift_card_code}
-                    onChange={e => {
-                      setPayForm(p => ({ ...p, gift_card_code: e.target.value.toUpperCase() }));
-                      setPayGcBalance(null);
-                    }}
-                    style={{ flex: 1, textTransform: 'uppercase', letterSpacing: '1.5px', fontFamily: 'monospace', fontSize: 14 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => checkPayGcBalance(payForm.gift_card_code)}
-                    disabled={payGcChecking || !payForm.gift_card_code}
-                    style={{ padding: '6px 14px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}
-                  >
-                    {payGcChecking ? '...' : 'Check'}
-                  </button>
-                </div>
-                {payGcBalance && !payGcBalance.error && (
-                  <div style={{ marginTop: 6, fontSize: 12, color: parseFloat(payGcBalance.remaining_value) >= parseFloat(payForm.amount || 0) ? '#15803d' : '#dc2626', fontWeight: 600 }}>
-                    ✅ Balance: {formatCurrency(parseFloat(payGcBalance.remaining_value))}
+                {/* ── Step 1: Loyalty Points ── */}
+                {payLoyaltyLoading ? (
+                  <div className="inv-pay-card inv-pay-card-loading">
+                    <div className="inv-loading-spinner" style={{ width: 18, height: 18 }} />
+                    <span>Checking loyalty balance...</span>
                   </div>
-                )}
-                {payGcBalance?.error && (
-                  <div style={{ marginTop: 6, fontSize: 12, color: '#dc2626', fontWeight: 600 }}>❌ {payGcBalance.error}</div>
-                )}
-              </div>
-            )}
+                ) : payLoyalty && payLoyalty.enrolled && payLoyalty.points > 0 ? (
+                  <div className="inv-pay-card inv-pay-loyalty-card">
+                    <div className="inv-pay-card-head">
+                      <div className="inv-pay-card-head-left">
+                        <span className="inv-pay-card-icon inv-pay-card-icon-purple"><Star size={18} /></span>
+                        <div>
+                          <div className="inv-pay-card-label">Loyalty Points</div>
+                          <div className="inv-pay-card-sub">{payLoyalty.tier?.toUpperCase() || 'BRONZE'} · {(payLoyalty.points || 0).toLocaleString()} pts · Worth {formatCurrency(payLoyalty.monetary_value || 0)}</div>
+                        </div>
+                      </div>
+                      <label className="inv-pay-switch">
+                        <input
+                          type="checkbox"
+                          checked={parseFloat(payForm.loyalty_amount || 0) > 0}
+                          onChange={e => {
+                            if (e.target.checked) {
+                              const maxByPercent = balanceDue * (payLoyalty.max_redeem_percent / 100);
+                              const maxByPoints = payLoyalty.monetary_value;
+                              const suggested = Math.min(maxByPercent, maxByPoints, balanceDue);
+                              setPayForm(p => ({ ...p, loyalty_amount: suggested.toFixed(2), amount: balanceDue.toFixed(2) }));
+                            } else {
+                              setPayForm(p => ({ ...p, loyalty_amount: '', amount: balanceDue.toFixed(2) }));
+                            }
+                          }}
+                        />
+                        <span className="inv-pay-switch-slider" />
+                      </label>
+                    </div>
 
-            {/* ── Payment Summary ── */}
-            {parseFloat(payForm.amount || 0) > 0 && (
-              <div className="inv-pay-summary">
-                <div className="inv-pay-summary-title">Payment Summary</div>
-                {parseFloat(payForm.loyalty_amount || 0) > 0 && (
-                  <div className="inv-pay-summary-row">
-                    <span>⭐ Loyalty Points</span>
-                    <strong style={{ color: '#7c3aed' }}>{formatCurrency(parseFloat(payForm.loyalty_amount))}</strong>
+                    {parseFloat(payForm.loyalty_amount || 0) > 0 && (
+                      <div className="inv-pay-loyalty-detail">
+                        <div className="inv-pay-loyalty-input-row">
+                          <label><Coins size={13} /> Deduct Amount</label>
+                          <div className="inv-pay-loyalty-input-wrap">
+                            <input
+                              type="number" min="0" step="0.01"
+                              max={Math.min(payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100)}
+                              value={payForm.loyalty_amount}
+                              onChange={e => {
+                                const val = Math.min(parseFloat(e.target.value) || 0, payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100);
+                                const loyaltyVal = val > 0 ? val.toFixed(2) : e.target.value;
+                                setPayForm(p => ({ ...p, loyalty_amount: loyaltyVal, amount: balanceDue.toFixed(2) }));
+                              }}
+                            />
+                            <button type="button" className="inv-pay-max-btn" onClick={() => {
+                              const max = Math.min(payLoyalty.monetary_value, balanceDue * payLoyalty.max_redeem_percent / 100, balanceDue);
+                              setPayForm(p => ({ ...p, loyalty_amount: max.toFixed(2), amount: balanceDue.toFixed(2) }));
+                            }}>MAX</button>
+                          </div>
+                        </div>
+                        <div className="inv-pay-loyalty-info">
+                          <span><ArrowRight size={11} /> Redeems <strong>{Math.ceil(parseFloat(payForm.loyalty_amount || 0) / (payLoyalty.point_value || 0.01)).toLocaleString()} pts</strong></span>
+                          <span><PercentCircle size={11} /> Max {payLoyalty.max_redeem_percent}%</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                ) : null}
+
+                {/* ── Step 2: Discount Code ── */}
+                <div className="inv-pay-card inv-pay-discount-card">
+                  <div className="inv-pay-card-head">
+                    <div className="inv-pay-card-head-left">
+                      <span className="inv-pay-card-icon inv-pay-card-icon-green"><Tag size={18} /></span>
+                      <div className="inv-pay-card-label">Promo Code</div>
+                    </div>
+                  </div>
+                  <div className="inv-pay-promo-input">
+                    <input
+                      type="text"
+                      placeholder="ENTER CODE"
+                      value={payDiscountCode}
+                      onChange={e => { setPayDiscountCode(e.target.value.toUpperCase()); setPayDiscount(null); }}
+                      className="inv-pay-promo-field"
+                    />
+                    <button
+                      type="button"
+                      className={`inv-pay-promo-btn ${payDiscount?.valid ? 'applied' : ''}`}
+                      onClick={() => validateDiscountCode(payDiscountCode)}
+                      disabled={payDiscountLoading || !payDiscountCode}
+                    >
+                      {payDiscountLoading ? <div className="inv-loading-spinner" style={{ width: 14, height: 14 }} /> : payDiscount?.valid ? <BadgeCheck size={16} /> : <ArrowRight size={14} />}
+                    </button>
+                  </div>
+                  {payDiscount?.valid && (
+                    <div className="inv-pay-promo-result inv-pay-promo-success">
+                      <span><CheckCircle size={14} /> {payDiscount.message}</span>
+                      <div className="inv-pay-promo-result-right">
+                        <span className="inv-pay-promo-amount">−{formatCurrency(payDiscount.discount_amount)}</span>
+                        <button type="button" className="inv-pay-promo-remove" onClick={() => { setPayDiscount(null); setPayDiscountCode(''); }}><X size={12} /></button>
+                      </div>
+                    </div>
+                  )}
+                  {payDiscount?.error && (
+                    <div className="inv-pay-promo-result inv-pay-promo-error"><XCircle size={14} /> {payDiscount.error}</div>
+                  )}
+                </div>
+
+                {/* ── Step 3: Payment Method ── */}
                 {(() => {
-                  const la = parseFloat(payForm.loyalty_amount || 0);
-                  const ta = parseFloat(payForm.amount || 0);
-                  const rem = Math.max(0, ta - la);
-                  if (rem > 0) return (
-                    <div className="inv-pay-summary-row">
-                      <span>{payForm.payment_method === 'cash' ? '💵' : payForm.payment_method === 'card' ? '💳' : payForm.payment_method === 'gift_card' ? '🎁' : '📋'} {payForm.payment_method.replace('_', ' ')}</span>
-                      <strong>{formatCurrency(rem)}</strong>
+                  const loyaltyAmt = parseFloat(payForm.loyalty_amount || 0);
+                  const remaining = Math.max(0, balanceDue - loyaltyAmt);
+                  if (loyaltyAmt >= balanceDue && loyaltyAmt > 0) return null;
+                  return (
+                    <div className="inv-pay-card inv-pay-method-card">
+                      <div className="inv-pay-card-head">
+                        <div className="inv-pay-card-head-left">
+                          <span className="inv-pay-card-icon inv-pay-card-icon-blue"><CreditCard size={18} /></span>
+                          <div>
+                            <div className="inv-pay-card-label">Payment Method</div>
+                            {loyaltyAmt > 0 && <div className="inv-pay-card-sub">Remaining {formatCurrency(remaining)}</div>}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="inv-pay-methods-grid">
+                        {[
+                          { val: 'cash', Icon: Banknote, label: 'Cash' },
+                          { val: 'card', Icon: CreditCard, label: 'Card' },
+                          { val: 'bank_transfer', Icon: Building2, label: 'Transfer' },
+                          { val: 'gift_card', Icon: Gift, label: 'Gift Card' },
+                          { val: 'other', Icon: ClipboardList, label: 'Other' },
+                        ].map(m => (
+                          <button
+                            key={m.val}
+                            type="button"
+                            className={`inv-pay-method-pill ${payForm.payment_method === m.val ? 'active' : ''}`}
+                            onClick={() => { setPayForm(p => ({ ...p, payment_method: m.val, gift_card_code: '' })); setPayGcBalance(null); }}
+                          >
+                            <m.Icon size={20} className="inv-pay-method-icon" />
+                            <span>{m.label}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* ── Gift Card Sub-section ── */}
+                      {payForm.payment_method === 'gift_card' && (
+                        <div className="inv-pay-gc-section">
+                          <div className="inv-pay-gc-input-row">
+                            <input
+                              type="text"
+                              placeholder="XXXX-XXXX-XXXX-XXXX"
+                              value={payForm.gift_card_code}
+                              onChange={e => { setPayForm(p => ({ ...p, gift_card_code: e.target.value.toUpperCase() })); setPayGcBalance(null); }}
+                              className="inv-pay-gc-field"
+                            />
+                            <button
+                              type="button"
+                              className="inv-pay-gc-check-btn"
+                              onClick={() => checkPayGcBalance(payForm.gift_card_code)}
+                              disabled={payGcChecking || !payForm.gift_card_code}
+                            >
+                              {payGcChecking ? <div className="inv-loading-spinner" style={{ width: 14, height: 14 }} /> : <><ShieldCheck size={14} /> Verify</>}
+                            </button>
+                          </div>
+                          {payGcBalance && !payGcBalance.error && (
+                            <div className="inv-pay-gc-result inv-pay-gc-ok"><CheckCircle size={14} /> Balance: {formatCurrency(parseFloat(payGcBalance.remaining_value))}</div>
+                          )}
+                          {payGcBalance?.error && (
+                            <div className="inv-pay-gc-result inv-pay-gc-err"><XCircle size={14} /> {payGcBalance.error}</div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
-                  return null;
                 })()}
-                <div className="inv-pay-summary-total">
-                  <span>Total Payment</span>
-                  <strong>{formatCurrency(parseFloat(payForm.amount || 0))}</strong>
-                </div>
               </div>
-            )}
+            </div>
+
+            {/* ── Sticky Footer ── */}
+            <div className="inv-pay-footer">
+              <button className="inv-pay-cancel-btn" onClick={() => { setShowPay(false); setPayLoyalty(null); setPayDiscount(null); setPayDiscountCode(''); }}>
+                <X size={15} /> Cancel
+              </button>
+              <button className="inv-pay-confirm-btn" onClick={handlePay} disabled={saving}>
+                {saving ? (
+                  <><div className="inv-loading-spinner" style={{ width: 16, height: 16, borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Processing...</>
+                ) : (
+                  <><CheckCircle size={16} /> Confirm Payment</>
+                )}
+              </button>
+            </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer className="inv-modal-footer">
-          <button className="inv-btn-outline" onClick={() => { setShowPay(false); setPayLoyalty(null); }}>Cancel</button>
-          <button className="inv-btn-primary" onClick={handlePay} disabled={saving}>
-            {saving ? 'Processing...' : <><CheckCircle size={14} /> Confirm Payment</>}
-          </button>
-        </Modal.Footer>
+        </div>
       </Modal>
+
+      {/* ── Toast Notification ── */}
+      {toast && (
+        <div className={`inv-toast inv-toast-${toast.type} inv-toast-show`}>
+          <div className="inv-toast-icon">
+            {toast.type === 'success' ? <CheckCircle size={22} /> : toast.type === 'error' ? <XCircle size={22} /> : <AlertTriangle size={22} />}
+          </div>
+          <div className="inv-toast-body">
+            <div className="inv-toast-title">{toast.title}</div>
+            <div className="inv-toast-msg">{toast.message}</div>
+          </div>
+          <button className="inv-toast-close" onClick={() => setToast(null)}><X size={16} /></button>
+        </div>
+      )}
     </div>
   );
 }

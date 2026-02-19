@@ -219,21 +219,22 @@ export default function Inventory() {
   return (
     <div className="inv-page">
       {/* Header */}
-      <div className="inv-header">
-        <div className="inv-header-left">
-          <Package size={28} className="inv-header-icon" />
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Package size={26} /></div>
           <div>
-            <h2 className="inv-title">Inventory & Stock</h2>
-            <p className="inv-subtitle">Manage retail products, stock levels, and movements</p>
+            <h1 className="module-hero-title">Inventory & Stock</h1>
+            <p className="module-hero-sub">Manage retail products, stock levels, and movements</p>
           </div>
         </div>
-        <div className="inv-header-actions">
-          <button className="inv-alert-btn" data-tooltip="Low stock alerts" onClick={handleViewAlerts}>
-            <Bell size={18} />
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-outline" data-tooltip="Low stock alerts" onClick={handleViewAlerts} style={{ position: 'relative' }}>
+            <Bell size={16} />
             {stats.unread_alerts > 0 && <span className="inv-alert-count">{stats.unread_alerts}</span>}
+            Alerts
           </button>
-          <button className="inv-btn-primary" onClick={handleCreate}>
-            <Plus size={18} /> Add Product
+          <button className="module-btn module-btn-primary" onClick={handleCreate}>
+            <Plus size={16} /> Add Product
           </button>
         </div>
       </div>
@@ -281,7 +282,7 @@ export default function Inventory() {
             <DollarSign size={20} color="#6366f1" />
           </div>
           <div>
-            <div className="inv-stat-value">{format(stats.total_retail_value || 0, { symbolOnly: true })}</div>
+            <div className="inv-stat-value"><CurrencySymbol currency={currency} symbol={symbol} style={{ display: 'inline', fontSize: 'inherit', verticalAlign: 'baseline' }} /> {parseFloat(stats.total_retail_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div className="inv-stat-label">Retail Value</div>
           </div>
         </div>

@@ -253,16 +253,16 @@ export default function GiftCards() {
       </div>
 
       {/* ── Header ── */}
-      <div className="gc-header">
-        <div className="gc-header-left">
-          <h1 className="gc-header-title">
-            <IconoirIcons.Gift width={28} height={28} strokeWidth={2} />
-            Gift Cards
-          </h1>
-          <span className="gc-header-sub">Sell, track, and manage gift cards for your beauty center</span>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><IconoirIcons.Gift width={26} height={26} strokeWidth={2} /></div>
+          <div>
+            <h1 className="module-hero-title">Gift Cards</h1>
+            <p className="module-hero-sub">Sell, track, and manage gift cards for your beauty center</p>
+          </div>
         </div>
-        <div className="gc-header-actions">
-          <button className="gc-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
             const rows = [
               ['Code', 'Issued To', 'Email', 'Phone', 'Initial Value', 'Current Balance', 'Status', 'Issued Date', 'Expiry Date'],
               ...cards.map(c => [
@@ -289,14 +289,14 @@ export default function GiftCards() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          <button className="gc-btn-outline btn-print" data-tooltip="Print gift cards" onClick={() => window.print()}>
+          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print gift cards" onClick={() => window.print()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>
-          <button className="gc-btn-outline" onClick={() => setShowRedeem(true)}>
+          <button className="module-btn module-btn-outline" onClick={() => setShowRedeem(true)}>
             <IconoirIcons.Label width={16} height={16} /> Redeem
           </button>
-          <button className="gc-btn-primary" onClick={() => setShowCreate(true)}>
+          <button className="module-btn module-btn-primary" onClick={() => setShowCreate(true)}>
             <IconoirIcons.Plus width={16} height={16} strokeWidth={2.5} /> Sell Gift Card
           </button>
         </div>

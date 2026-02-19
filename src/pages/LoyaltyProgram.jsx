@@ -281,16 +281,19 @@ export default function LoyaltyProgram() {
       )}
 
       {/* ═══ Page Header ═══ */}
-      <div className="loyalty-header">
-        <div>
-          <h1><Star width={24} height={24} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8 }} /> Loyalty Program</h1>
-          <p>Reward your clients & keep them coming back</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Star width={26} height={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Loyalty Program</h1>
+            <p className="module-hero-sub">Reward your clients & keep them coming back</p>
+          </div>
         </div>
-        <div className="loyalty-header-actions">
-          <button className="loyalty-header-btn calc" data-tooltip="Calculate points" onClick={() => { setCalcAmount(''); setCalcResult(null); setShowCalcModal(true); }}>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-outline" data-tooltip="Calculate points" onClick={() => { setCalcAmount(''); setCalcResult(null); setShowCalcModal(true); }}>
             <Calculator width={16} height={16} /> Points Calculator
           </button>
-          <button className="loyalty-header-btn settings" data-tooltip="Program settings" onClick={openSettingsModal}>
+          <button className="module-btn module-btn-outline" data-tooltip="Program settings" onClick={openSettingsModal}>
             <Settings width={16} height={16} /> Settings
           </button>
         </div>

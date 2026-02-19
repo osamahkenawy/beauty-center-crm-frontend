@@ -559,16 +559,19 @@ export default function Appointments() {
       </div>
 
       {/* Page Header */}
-      <div className="page-header-area">
-        <div className="page-title">
-          <h2><Calendar width={24} height={24} /> Appointments</h2>
-          <p className="text-muted">Manage your bookings and schedule</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Calendar width={26} height={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Appointments</h1>
+            <p className="module-hero-sub">Manage your bookings and schedule</p>
+          </div>
         </div>
-        <div className="page-header-actions">
-          <button className="btn-refresh" data-tooltip="Refresh list" onClick={() => { fetchAppointments(pagination.page, pagination.limit); fetchAllAppointments(); }}>
-            <RefreshDouble width={18} height={18} />
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-outline btn-refresh" data-tooltip="Refresh list" onClick={() => { fetchAppointments(pagination.page, pagination.limit); fetchAllAppointments(); }}>
+            <RefreshDouble width={22} height={22} />
           </button>
-          <button className="btn-export-csv" title="Download Excel" data-tooltip="Download as Excel" onClick={() => {
+          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download as Excel" onClick={() => {
             const rows = [
               ['Invoice #', 'Client', 'Service', 'Staff', 'Date', 'Time', 'Status', 'Price'],
               ...appointments.map(a => [
@@ -594,12 +597,12 @@ export default function Appointments() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          <button className="btn-print" title="Print appointments" data-tooltip="Print appointments" onClick={() => window.print()}>
+          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print appointments" onClick={() => window.print()}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>
-          <button className="btn-add-new" data-tooltip="Book new appointment" onClick={() => openCreateModal()}>
-            <Plus width={18} height={18} /> New Appointment
+          <button className="module-btn module-btn-primary" data-tooltip="Book new appointment" onClick={() => openCreateModal()}>
+            <Plus width={16} height={16} /> New Appointment
           </button>
         </div>
       </div>

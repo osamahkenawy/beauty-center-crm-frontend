@@ -265,7 +265,7 @@ input, textarea, select {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.16s ease, transform 0.16s ease;
-  z-index: 99999;
+  z-index: 999999;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
   letter-spacing: 0.01em;
   line-height: 1.3;
@@ -281,7 +281,7 @@ input, textarea, select {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.16s ease, transform 0.16s ease;
-  z-index: 99999;
+  z-index: 999999;
 }
 [data-tooltip]:hover::after,
 [data-tooltip]:hover::before {
@@ -330,6 +330,107 @@ input, textarea, select {
 }
 [data-tooltip-pos="bottom"]:hover::before {
   transform: translateX(-50%) translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SHARED MODULE HERO — used by all beauty module headers
+   ═══════════════════════════════════════════════════════ */
+.module-hero {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+  border-radius: 18px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  color: #fff;
+  position: relative;
+  overflow: visible;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.module-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; right: -10%;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.module-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1;
+}
+.module-hero-icon {
+  width: 50px; height: 50px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+.module-hero-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+.module-hero-sub {
+  font-size: 12.5px;
+  opacity: 0.7;
+  margin: 3px 0 0;
+}
+.module-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1;
+  flex-wrap: wrap;
+  overflow: visible;
+  position: relative;
+}
+
+/* Shared hero button styles */
+.module-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.module-btn-primary {
+  background: linear-gradient(135deg, #f97316 0%, #f2421b 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+}
+.module-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(249,115,22,0.4);
+}
+.module-btn-outline {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  backdrop-filter: blur(4px);
+}
+.module-btn-outline:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.45);
+  transform: translateY(-1px);
+}
+@media (max-width: 768px) {
+  .module-hero { flex-direction: column; align-items: flex-start; gap: 14px; border-radius: 14px; padding: 18px 20px; }
+  .module-hero-actions { width: 100%; justify-content: flex-end; }
 }
 
 /* Responsive */

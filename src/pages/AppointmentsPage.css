@@ -77,22 +77,26 @@
 }
 
 .btn-refresh {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e9ecef;
+  border: 2px solid #e9ecef;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  color: #6c757d;
+  color: #1c2430;
   transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .btn-refresh:hover {
   background: #f8f9fa;
-  color: #1c2430;
+  color: #f2421b;
+  border-color: #f2421b;
+  box-shadow: 0 4px 12px rgba(242, 66, 27, 0.15);
+  transform: translateY(-1px);
 }
 
 .btn-add-new {
@@ -132,7 +136,7 @@
   white-space: nowrap;
 }
 .btn-print:hover {
-  background: #f8fafc;
+  background: #ffffff;
   border-color: #cbd5e1;
   color: #1c2430;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);

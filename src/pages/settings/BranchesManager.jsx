@@ -313,7 +313,9 @@ export default function BranchesManager({
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered className="stn-modal">
         <Modal.Header>
           <Modal.Title className='text-light'>{editingBranch ? 'Edit location' : 'New location'}</Modal.Title>
-          <button className="stn-btn-icon text-light" onClick={() => setShowModal(false)}><X size={18} /></button>
+          <button type="button" className="stn-btn-icon text-light" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowModal(false); }} aria-label="Close">
+            <X size={18} />
+          </button>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <div className="stn-form-grid">

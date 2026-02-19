@@ -125,19 +125,19 @@ export default function PatchTests() {
   return (
     <div className="pt-page">
       {/* Header */}
-      <div className="pt-header">
-        <div className="pt-header-left">
-          <div className="pt-header-icon-wrap">
-            <ShieldCheck size={24} />
-          </div>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><ShieldCheck size={26} /></div>
           <div>
-            <h2 className="pt-title">Patch Tests</h2>
-            <p className="pt-subtitle">Track allergy & sensitivity tests before treatments</p>
+            <h1 className="module-hero-title">Patch Tests</h1>
+            <p className="module-hero-sub">Track allergy & sensitivity tests before treatments</p>
           </div>
         </div>
-        <button className="pt-add-btn" data-tooltip="Schedule patch test" onClick={() => setShowModal(true)}>
-          <Plus size={16} /> New Patch Test
-        </button>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-primary" data-tooltip="Schedule patch test" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> New Patch Test
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

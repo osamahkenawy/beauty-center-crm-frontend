@@ -176,19 +176,19 @@ export default function ConsultationForms() {
   return (
     <div className="cf-page">
       {/* Header */}
-      <div className="cf-header">
-        <div className="cf-header-left">
-          <div className="cf-header-icon-wrap">
-            <ClipboardList size={24} />
-          </div>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><ClipboardList size={26} /></div>
           <div>
-            <h2 className="cf-title">Consultation Forms</h2>
-            <p className="cf-subtitle">Create & manage intake forms, consent forms, and medical questionnaires</p>
+            <h1 className="module-hero-title">Consultation Forms</h1>
+            <p className="module-hero-sub">Create & manage intake forms, consent forms, and medical questionnaires</p>
           </div>
         </div>
-        <button className="cf-add-btn" onClick={() => openBuilder()}>
-          <Plus size={16} /> New Form
-        </button>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-primary" onClick={() => openBuilder()}>
+            <Plus size={16} /> New Form
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
