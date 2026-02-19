@@ -1203,3 +1203,60 @@
   .team-modal-steps { overflow-x: auto; justify-content: flex-start; padding: 16px 20px 0; }
   .team-review-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── Print Styles ─── */
+@media print {
+  .btn-print, .btn-export-csv, .team-header, .team-stats, .team-filters,
+  .team-no-print, [data-tooltip]::after, [data-tooltip]::before,
+  .custom-sidebar, .nav-header, .header, .ic-sidenav { display: none !important; }
+  
+  @page {
+    size: A4 landscape;
+    margin: 16mm 14mm;
+  }
+  
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body, html { background: #fff !important; }
+  
+  .team-print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 14px;
+    margin-bottom: 18px;
+    border-bottom: 2.5px solid #1c2430;
+    gap: 16px;
+  }
+  .team-print-logo img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+  }
+  .team-print-meta {
+    text-align: right;
+  }
+  .team-print-meta h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1c2430;
+    margin: 0 0 3px;
+    letter-spacing: -0.3px;
+  }
+  .team-print-meta p {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+  }
+  
+  .team-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+  }
+  .team-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .team-card-top { display: none !important; }
+  .team-avatar { display: none !important; }
+}

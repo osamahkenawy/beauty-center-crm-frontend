@@ -393,6 +393,249 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   NEW LOGIN + FORGOT PASSWORD COMPONENTS
+   ═══════════════════════════════════════════════════════════ */
+
+/* View transitions */
+.lp-view { animation: lpFadeUp 0.3s ease both; }
+@keyframes lpFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.lp-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin: 4px 0 24px;
+  line-height: 1.6;
+}
+
+/* Error banner */
+.lp-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: #dc2626;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+/* Field */
+.lp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.lp-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+.lp-field input {
+  padding: 11px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.lp-field input:focus {
+  outline: none;
+  border-color: #1c2430;
+  box-shadow: 0 0 0 3px rgba(28,36,48,0.07);
+}
+.lp-field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Password field */
+.lp-pw-wrap {
+  position: relative;
+}
+.lp-pw-wrap input {
+  padding-right: 42px;
+}
+.lp-pw-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.lp-pw-eye:hover { color: #475569; }
+
+/* Forgot link */
+.lp-forgot-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #f2421b;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+.lp-forgot-link:hover { opacity: 0.75; }
+
+/* Buttons */
+.lp-btn-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #1c2430, #2d3f55);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  box-shadow: 0 4px 14px rgba(28,36,48,0.25);
+  margin-top: 4px;
+}
+.lp-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(28,36,48,0.3);
+}
+.lp-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+.lp-btn-outline {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #fff;
+  color: #374151;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-top: 8px;
+}
+.lp-btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+/* Spinner */
+.lp-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: lpSpin 0.7s linear infinite;
+}
+@keyframes lpSpin { to { transform: rotate(360deg); } }
+
+/* Divider */
+.lp-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+.lp-divider::before, .lp-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #f1f5f9;
+}
+
+/* Demo section */
+.lp-demo-section { text-align: center; }
+.lp-demo-section > p { font-size: 13px; color: #94a3b8; margin: 0 0 8px; }
+.lp-demo-hint { margin-top: 10px; font-size: 12px; color: #94a3b8; }
+.lp-demo-hint code {
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+/* Back arrow inside the form */
+.lp-back-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: color 0.15s;
+}
+.lp-back-view:hover { color: #1c2430; }
+
+/* Forgot password icon */
+.lp-fp-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1c2430, #2d3f55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin: 0 0 18px;
+}
+
+/* Sent state */
+.lp-sent-view { text-align: center; }
+.lp-sent-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin: 0 auto 18px;
+  box-shadow: 0 6px 20px rgba(16,185,129,0.35);
+}
+.lp-sent-tips {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 16px 0 20px;
+  text-align: left;
+}
+.lp-sent-tips p { font-size: 12.5px; font-weight: 600; color: #475569; margin: 0 0 8px; }
+.lp-sent-tips ul { margin: 0; padding-left: 16px; }
+.lp-sent-tips ul li { font-size: 12.5px; color: #64748b; margin-bottom: 4px; }
+
 /* RTL Support */
 [dir="rtl"] .back-link {
   flex-direction: row-reverse;

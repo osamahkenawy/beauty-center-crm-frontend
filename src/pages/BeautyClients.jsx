@@ -5,7 +5,7 @@ import {
   Calendar, Star, Heart, Phone, Mail, Clock, Edit, Trash,
   FilterList, SortDown, NavArrowDown, NavArrowRight, Instagram,
   UserPlus, CreditCard, Gift, ArrowRight, Activity, MoreVert,
-  Notes, StarSolid, Copy, List
+  Notes, StarSolid, Copy, List, Download
 } from 'iconoir-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
@@ -262,6 +262,17 @@ export default function BeautyClients() {
       <SEO page="beauty-clients" />
       <style>{CSS}</style>
 
+      {/* Print Header */}
+      <div className="cl-print-header" style={{ display: 'none' }}>
+        <div className="cl-print-logo">
+          <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" onError={(e) => { e.target.style.display = 'none'; }} />
+        </div>
+        <div className="cl-print-meta">
+          <h1>Clients Report</h1>
+          <p>Generated on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        </div>
+      </div>
+
       {/* Toast */}
       {toast.show && (
         <div className={`cl-toast cl-toast-${toast.type}`}>
@@ -282,6 +293,38 @@ export default function BeautyClients() {
           </div>
         </div>
         <div className="cl-hero-actions">
+          <button className="cl-btn cl-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+            const rows = [
+              ['ID', 'Name', 'Email', 'Phone', 'Gender', 'Source', 'Total Spent', 'Visits', 'Last Visit', 'Status'],
+              ...clients.map(c => [
+                c.id,
+                `${c.first_name || ''} ${c.last_name || ''}`.trim() || '-',
+                c.email || '-',
+                c.phone || c.mobile || '-',
+                c.gender || '-',
+                sourceLabels[c.source]?.replace(/[^\w\s]/g, '').trim() || c.source || '-',
+                formatCurrency(c.total_spent || 0),
+                c.total_visits || 0,
+                c.last_visit ? formatDate(c.last_visit) : '-',
+                c.status || 'active',
+              ])
+            ];
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `clients-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
+          <button className="cl-btn cl-btn-outline btn-print" data-tooltip="Print clients" onClick={() => window.print()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
           <button className="cl-btn cl-btn-outline" data-tooltip="Filter clients" onClick={() => setShowFilters(!showFilters)}>
             <FilterList width={16} height={16} /> Filters
           </button>
@@ -402,7 +445,7 @@ export default function BeautyClients() {
                   <th>Total Spent</th>
                   <th>Last Visit</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th className="cl-no-print">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -442,7 +485,7 @@ export default function BeautyClients() {
                       <td>
                         <span className={`cl-status cl-status-${c.status || 'active'}`}>{c.status || 'Active'}</span>
                       </td>
-                      <td onClick={e => e.stopPropagation()}>
+                      <td className="cl-no-print" onClick={e => e.stopPropagation()}>
                         <div className="cl-actions">
                           <button className="cl-act-btn" title="View" data-tooltip="View client" onClick={() => openDetail(c)}>
                             <Eye width={16} height={16} />
@@ -584,7 +627,7 @@ export default function BeautyClients() {
               <h2>{detailClient.first_name} {detailClient.last_name}</h2>
               <div className="cl-detail-meta">
                 {detailClient.email && <span><Mail width={14} height={14} /> {detailClient.email}</span>}
-                {detailClient.phone && <span><Phone width={14} height={14} /> {detailClient.phone}</span>}
+                {(detailClient.phone || detailClient.mobile) && <span><Phone width={14} height={14} /> {detailClient.mobile || detailClient.phone}</span>}
               </div>
               <div className="cl-detail-badges">
                 {(() => { const t = getTier(detailClient.loyalty_tier); return (
@@ -596,7 +639,7 @@ export default function BeautyClients() {
                 <button className="cl-btn cl-btn-sm" data-tooltip="Edit client info" onClick={() => { setShowDetail(false); openAddEdit(detailClient); }}>
                   <Edit width={14} height={14} /> Edit
                 </button>
-                <button className="cl-btn cl-btn-sm cl-btn-danger-outline" data-tooltip="Delete client" onClick={() => setShowDeleteConfirm(detailClient)}>
+                <button className="cl-btn cl-btn-sm cl-btn-danger-white" data-tooltip="Delete client" onClick={() => setShowDeleteConfirm(detailClient)}>
                   <Trash width={14} height={14} /> Delete
                 </button>
               </div>
@@ -673,7 +716,7 @@ export default function BeautyClients() {
                     </div>
                     <div className="cl-info-item">
                       <label>Mobile</label>
-                      <span>{detailData.mobile || '—'}</span>
+                      <span>{detailData.mobile || detailData.phone || '—'}</span>
                     </div>
                     <div className="cl-info-item">
                       <label>Member Since</label>
@@ -726,10 +769,132 @@ export default function BeautyClients() {
                     <div className="cl-empty-tab">No invoices yet.</div>
                   ) : detailData.invoices.map(inv => (
                     <div key={inv.id} className="cl-invoice-item">
-                      <div className="cl-inv-number">{inv.invoice_number}</div>
-                      <div className="cl-inv-date">{formatDate(inv.created_at)}</div>
-                      <div className="cl-inv-amount">{symbol} {parseFloat(inv.total || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</div>
-                      <span className={`cl-status cl-status-${inv.status}`}>{inv.status}</span>
+                      <div className="cl-inv-info">
+                        <div className="cl-inv-number">{inv.invoice_number}</div>
+                        <div className="cl-inv-date">{formatDate(inv.created_at)}</div>
+                        <div className="cl-inv-amount">{symbol} {parseFloat(inv.total || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</div>
+                        <span className={`cl-status cl-status-${inv.status}`}>{inv.status}</span>
+                      </div>
+                      <button 
+                        className="cl-inv-download-btn" 
+                        data-tooltip="Download invoice"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const res = await api.get(`/invoices/${inv.id}`);
+                            if (res.success) {
+                              const invoice = res.data;
+                              const invDate = invoice.created_at ? formatDate(invoice.created_at) : '-';
+                              const dueDate = invoice.due_date ? formatDate(invoice.due_date) : '-';
+                              const printWindow = window.open('', '_blank', 'width=800,height=900');
+                              printWindow.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <title>Invoice ${invoice.invoice_number || ''}</title>
+                                  <style>
+                                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                                    body { font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; color: #666; padding: 40px; background: #fff; font-size: 14px; line-height: 1.6; }
+                                    .tm-invoice { max-width: 760px; margin: 0 auto; }
+                                    .tm-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+                                    .tm-head-left { flex: 0 0 35%; }
+                                    .tm-logo-img { max-height: 90px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
+                                    .tm-head-right { text-align: right; flex: 0 0 65%; }
+                                    .tm-title { font-size: 30px; font-weight: 600; color: #111; display: block; line-height: 1; margin-bottom: 4px; }
+                                    .tm-inv-number { font-size: 14px; color: #666; margin: 0; }
+                                    .tm-divider { height: 1px; background: #dbdfea; margin-bottom: 25px; }
+                                    .tm-info-row { display: flex; margin-bottom: 25px; }
+                                    .tm-info-left { width: 30%; flex: none; }
+                                    .tm-biz-name { font-size: 18px; font-weight: 600; color: #111; margin: 0 0 6px; display: block; }
+                                    .tm-info-left span { display: block; font-size: 14px; line-height: 1.7; color: #666; }
+                                    .tm-info-right { width: 70%; flex: none; }
+                                    .tm-detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-gap: 10px 20px; background: #f5f6fa; border: 1px solid #dbdfea; border-radius: 6px; padding: 15px 20px; }
+                                    .tm-detail-grid > div { display: flex; flex-direction: column; gap: 2px; }
+                                    .tm-detail-label { font-size: 13px; color: #888; }
+                                    .tm-detail-grid strong { font-size: 14px; font-weight: 600; color: #111; }
+                                    .tm-items-table { width: 100%; border-collapse: collapse; border: 1px solid #dbdfea; border-radius: 6px; overflow: hidden; }
+                                    .tm-items-table th { padding: 12px 20px; font-size: 14px; font-weight: 600; color: #111; border-bottom: 1px solid #dbdfea; text-align: left; background: #f5f6fa; }
+                                    .tm-items-table td { padding: 14px 20px; font-size: 14px; color: #666; border-bottom: 1px solid #eff2f7; }
+                                    .tm-items-table tbody tr:last-child td { border-bottom: none; }
+                                    .tm-text-right { text-align: right; }
+                                    .tm-footer-right { min-width: 260px; margin-top: 15px; }
+                                    .tm-totals-table { width: 100%; border-collapse: collapse; }
+                                    .tm-totals-table td { padding: 7px 0; font-size: 14px; border: none; }
+                                    .tm-totals-label { font-weight: 600; color: #111; padding-right: 30px; }
+                                    .tm-totals-val { text-align: right; font-weight: 600; color: #111; }
+                                    .tm-grand-total-row td { font-size: 18px; font-weight: 700; color: #111; background: #f5f6fa; padding: 10px 15px; }
+                                    @media print { body { padding: 20px; } @page { margin: 0.5in; } }
+                                  </style>
+                                </head>
+                                <body>
+                                  <div class="tm-invoice">
+                                    <div class="tm-head">
+                                      <div class="tm-head-left">
+                                        <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Logo" class="tm-logo-img" onerror="this.style.display='none'">
+                                      </div>
+                                      <div class="tm-head-right">
+                                        <span class="tm-title">INVOICE</span>
+                                        <p class="tm-inv-number">${invoice.invoice_number || ''}</p>
+                                      </div>
+                                    </div>
+                                    <div class="tm-divider"></div>
+                                    <div class="tm-info-row">
+                                      <div class="tm-info-left">
+                                        <strong class="tm-biz-name">${invoice.business_name || 'Business Name'}</strong>
+                                        <span>${invoice.business_address || ''}</span>
+                                      </div>
+                                      <div class="tm-info-right">
+                                        <div class="tm-detail-grid">
+                                          <div><span class="tm-detail-label">Date</span><strong>${invDate}</strong></div>
+                                          <div><span class="tm-detail-label">Due Date</span><strong>${dueDate}</strong></div>
+                                          <div><span class="tm-detail-label">Status</span><strong>${invoice.status || 'draft'}</strong></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <table class="tm-items-table">
+                                      <thead>
+                                        <tr><th style="width: 60%;">Item</th><th style="width: 15%;">Qty</th><th style="width: 25%;" class="tm-text-right">Amount</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        ${(invoice.items || []).map(item => `
+                                          <tr>
+                                            <td>${item.name || ''}</td>
+                                            <td>${item.quantity || 0}</td>
+                                            <td class="tm-text-right">${symbol} ${parseFloat(item.total || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</td>
+                                          </tr>
+                                        `).join('')}
+                                      </tbody>
+                                    </table>
+                                    <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
+                                      <div class="tm-footer-right">
+                                        <table class="tm-totals-table">
+                                          <tr><td class="tm-totals-label">Subtotal</td><td class="tm-totals-val">${symbol} ${parseFloat(invoice.subtotal || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</td></tr>
+                                          ${invoice.discount_amount > 0 ? `<tr><td class="tm-totals-label">Discount</td><td class="tm-totals-val" style="color: #ef4444;">-${symbol} ${parseFloat(invoice.discount_amount || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</td></tr>` : ''}
+                                          ${invoice.tax_amount > 0 ? `<tr><td class="tm-totals-label">Tax</td><td class="tm-totals-val">${symbol} ${parseFloat(invoice.tax_amount || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</td></tr>` : ''}
+                                          <tr class="tm-grand-total-row"><td class="tm-totals-label">Total</td><td class="tm-totals-val">${symbol} ${parseFloat(invoice.total || 0).toLocaleString('en', { minimumFractionDigits: 2 })}</td></tr>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <script>
+                                    window.onload = function() {
+                                      window.print();
+                                      window.onafterprint = function() { window.close(); };
+                                    };
+                                  </script>
+                                </body>
+                                </html>
+                              `);
+                              printWindow.document.close();
+                            }
+                          } catch (error) {
+                            console.error('Failed to download invoice:', error);
+                            alert('Failed to download invoice');
+                          }
+                        }}
+                      >
+                        <Download width={16} height={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -865,6 +1030,8 @@ const CSS = `
 .cl-btn-danger:hover { background: #b91c1c; }
 .cl-btn-danger-outline { background: transparent; color: #dc2626; border: 1px solid #fecaca; }
 .cl-btn-danger-outline:hover { background: #fef2f2; }
+.cl-btn-danger-white { background: #fff; color: #dc2626; border: 1px solid #fecaca; font-weight: 600; }
+.cl-btn-danger-white:hover { background: #fef2f2; border-color: #fca5a5; }
 
 /* ─── Stats ─── */
 .cl-stats {
@@ -1146,24 +1313,29 @@ const CSS = `
   backdrop-filter: blur(3px);
   z-index: 50000;
   display: flex; justify-content: flex-end;
+  overflow: hidden;
 }
 .cl-detail-panel {
   width: 480px; max-width: 100vw;
   height: 100vh;
+  max-height: 100vh;
   background: #fff;
   box-shadow: -8px 0 40px rgba(0,0,0,0.12);
   display: flex; flex-direction: column;
   animation: clSlideRight 0.3s ease;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 @keyframes clSlideRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
 .cl-detail-header {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  padding: 20px 24px 24px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  padding: 24px 24px 28px;
   color: #fff;
   text-align: center;
   position: relative;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
 }
 .cl-detail-close {
   position: absolute; top: 14px; right: 14px;
@@ -1174,32 +1346,57 @@ const CSS = `
 }
 .cl-detail-close:hover { background: rgba(255,255,255,0.25); }
 .cl-detail-avatar {
-  width: 64px; height: 64px; border-radius: 18px;
+  width: 80px; height: 80px; border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 22px; font-weight: 700; color: #fff;
-  margin: 0 auto 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  font-size: 28px; font-weight: 700; color: #fff;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+  backdrop-filter: blur(10px);
 }
-.cl-detail-header h2 { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
-.cl-detail-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-bottom: 10px; }
-.cl-detail-meta span { display: flex; align-items: center; gap: 5px; font-size: 12px; opacity: 0.8; }
-.cl-detail-badges { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; }
-.cl-detail-quick-actions { display: flex; justify-content: center; gap: 8px; }
+.cl-detail-header h2 { font-size: 20px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.3px; }
+.cl-detail-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-bottom: 14px; }
+.cl-detail-meta span { display: flex; align-items: center; gap: 6px; font-size: 13px; opacity: 0.95; background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px; backdrop-filter: blur(10px); }
+.cl-detail-badges { display: flex; justify-content: center; gap: 10px; margin-bottom: 18px; }
+.cl-detail-quick-actions { display: flex; justify-content: center; gap: 10px; }
+.cl-detail-quick-actions .cl-btn-sm { 
+  background: rgba(255,255,255,0.2); 
+  color: #fff; 
+  border: 1px solid rgba(255,255,255,0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s;
+}
+.cl-detail-quick-actions .cl-btn-sm:hover { 
+  background: rgba(255,255,255,0.3); 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 
 /* Detail Stats */
 .cl-detail-stats {
   display: grid; grid-template-columns: repeat(4, 1fr);
   border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(to bottom, #fafbfc 0%, #fff 100%);
 }
 .cl-d-stat {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 16px;
   border-right: 1px solid #f1f5f9;
+  transition: all 0.2s;
 }
+.cl-d-stat:hover { background: #f8fafc; }
 .cl-d-stat:last-child { border-right: none; }
-.cl-d-stat svg { color: #6366f1; flex-shrink: 0; }
-.cl-d-stat strong { font-size: 15px; font-weight: 700; color: #1e293b; display: block; }
-.cl-d-stat span { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+.cl-d-stat svg { 
+  color: #6366f1; 
+  flex-shrink: 0; 
+  width: 20px; 
+  height: 20px;
+  padding: 8px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 10px;
+}
+.cl-d-stat strong { font-size: 18px; font-weight: 800; color: #1e293b; display: block; letter-spacing: -0.3px; }
+.cl-d-stat span { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
 
 /* Tabs */
 .cl-detail-tabs {
@@ -1257,13 +1454,49 @@ const CSS = `
 
 /* Invoices tab */
 .cl-invoice-item {
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 0; border-bottom: 1px solid #f8fafc;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 16px; 
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+  transition: all 0.2s;
 }
-.cl-invoice-item:last-child { border-bottom: none; }
-.cl-inv-number { font-weight: 600; color: #1e293b; font-size: 13px; min-width: 80px; }
-.cl-inv-date { font-size: 12px; color: #94a3b8; flex: 1; }
-.cl-inv-amount { font-weight: 700; color: #1e293b; font-variant-numeric: tabular-nums; }
+.cl-invoice-item:hover { 
+  border-color: #e2e8f0; 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
+}
+.cl-invoice-item:last-child { margin-bottom: 0; }
+.cl-inv-info { 
+  display: flex; 
+  align-items: center; 
+  gap: 16px; 
+  flex: 1;
+}
+.cl-inv-number { font-weight: 700; color: #1e293b; font-size: 14px; min-width: 100px; letter-spacing: -0.2px; }
+.cl-inv-date { font-size: 12px; color: #64748b; min-width: 100px; }
+.cl-inv-amount { font-weight: 700; color: #1e293b; font-variant-numeric: tabular-nums; font-size: 15px; min-width: 100px; }
+.cl-inv-download-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.cl-inv-download-btn:hover {
+  background: #f1f5f9;
+  color: #6366f1;
+  border-color: #c7d2fe;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.15);
+}
 
 /* Loyalty tab */
 .cl-loyalty-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
@@ -1314,15 +1547,248 @@ const CSS = `
   .cl-stats { grid-template-columns: repeat(2, 1fr); }
   .cl-detail-stats { grid-template-columns: repeat(2, 1fr); }
   .cl-d-stat:nth-child(2) { border-right: none; }
+  .cl-d-stat:nth-child(4) { border-right: none; }
 }
 @media (max-width: 768px) {
   .cl-hero { flex-direction: column; gap: 16px; text-align: center; }
   .cl-hero-content { flex-direction: column; }
   .cl-stats { grid-template-columns: 1fr 1fr; }
   .cl-form-row { grid-template-columns: 1fr; }
-  .cl-detail-panel { width: 100%; }
+  .cl-detail-panel { 
+    width: 100%; 
+    max-width: 100vw;
+    box-shadow: none;
+  }
+  .cl-detail-overlay {
+    background: rgba(0,0,0,0.5);
+  }
   .cl-filters-bar { flex-wrap: wrap; }
   .cl-table th:nth-child(4), .cl-table td:nth-child(4),
   .cl-table th:nth-child(5), .cl-table td:nth-child(5) { display: none; }
+  
+  /* Detail Panel Mobile Enhancements */
+  .cl-detail-header {
+    padding: 20px 16px 24px;
+  }
+  .cl-detail-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .cl-detail-header h2 {
+    font-size: 18px;
+  }
+  .cl-detail-meta {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .cl-detail-meta span {
+    font-size: 12px;
+    padding: 5px 10px;
+    width: 100%;
+    justify-content: center;
+  }
+  .cl-detail-badges {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .cl-detail-quick-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cl-detail-quick-actions .cl-btn-sm {
+    flex: 1;
+    min-width: calc(50% - 4px);
+  }
+  
+  /* Stats Grid Mobile */
+  .cl-detail-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cl-d-stat {
+    padding: 14px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    text-align: left;
+  }
+  .cl-d-stat:nth-child(2),
+  .cl-d-stat:nth-child(4) {
+    border-right: none;
+  }
+  .cl-d-stat:nth-child(3),
+  .cl-d-stat:nth-child(4) {
+    border-top: 1px solid #f1f5f9;
+  }
+  .cl-d-stat svg {
+    width: 18px;
+    height: 18px;
+    padding: 6px;
+  }
+  .cl-d-stat strong {
+    font-size: 16px;
+  }
+  .cl-d-stat span {
+    font-size: 10px;
+  }
+  
+  /* Tabs Mobile */
+  .cl-detail-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 12px;
+  }
+  .cl-detail-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .cl-tab {
+    padding: 10px 12px;
+    font-size: 11px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cl-tab svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Content Mobile */
+  .cl-detail-content {
+    padding: 16px;
+  }
+  
+  /* Info Grid Mobile */
+  .cl-info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  /* Invoice Items Mobile */
+  .cl-invoice-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+  }
+  .cl-inv-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+  .cl-inv-number,
+  .cl-inv-date,
+  .cl-inv-amount {
+    min-width: auto;
+    width: 100%;
+  }
+  .cl-inv-download-btn {
+    align-self: flex-end;
+  }
+  
+  /* Appointments Mobile */
+  .cl-appt-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+  }
+  .cl-appt-date {
+    align-self: flex-start;
+  }
+  
+  /* Loyalty Cards Mobile */
+  .cl-loyalty-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* ─── Print Styles ─── */
+@media print {
+  .btn-print, .btn-export-csv, .cl-hero-actions, .cl-stats, .cl-filters,
+  .cl-hero, .cl-no-print, [data-tooltip]::after, [data-tooltip]::before,
+  .custom-sidebar, .nav-header, .header, .ic-sidenav { display: none !important; }
+  
+  @page {
+    size: A4 landscape;
+    margin: 16mm 14mm;
+  }
+  
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body, html { background: #fff !important; }
+  
+  .cl-print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 14px;
+    margin-bottom: 18px;
+    border-bottom: 2.5px solid #1c2430;
+    gap: 16px;
+  }
+  .cl-print-logo img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+  }
+  .cl-print-meta {
+    text-align: right;
+  }
+  .cl-print-meta h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1c2430;
+    margin: 0 0 3px;
+    letter-spacing: -0.3px;
+  }
+  .cl-print-meta p {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+  }
+  
+  .cl-table-wrap {
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .cl-table {
+    width: 100% !important;
+    font-size: 11.5px !important;
+    border-collapse: collapse !important;
+  }
+  .cl-table thead tr {
+    background: #1c2430 !important;
+  }
+  .cl-table thead th {
+    background: #1c2430 !important;
+    color: #fff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    padding: 8px 10px !important;
+    border: none !important;
+  }
+  .cl-table tbody tr {
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+  .cl-table tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+  }
+  .cl-table tbody td {
+    padding: 8px 10px !important;
+    vertical-align: middle !important;
+    color: #1e293b !important;
+    border: none !important;
+  }
+  .cl-avatar { display: none !important; }
+  .cl-client-cell { display: flex; align-items: center; gap: 8px; }
+  .cl-name { font-weight: 600; }
+  .cl-since { font-size: 10px; color: #94a3b8; }
 }
 `;

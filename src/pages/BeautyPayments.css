@@ -1290,3 +1290,80 @@
     padding: 20px;
   }
 }
+
+/* ─── Print Styles ─── */
+@media print {
+  .btn-print, .btn-export-csv, .inv-hero, .inv-stats-grid, .inv-toolbar,
+  .inv-no-print, [data-tooltip]::after, [data-tooltip]::before,
+  .custom-sidebar, .nav-header, .header, .ic-sidenav { display: none !important; }
+  
+  @page {
+    size: A4 landscape;
+    margin: 16mm 14mm;
+  }
+  
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body, html { background: #fff !important; }
+  
+  .inv-print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 14px;
+    margin-bottom: 18px;
+    border-bottom: 2.5px solid #1c2430;
+    gap: 16px;
+  }
+  .inv-print-logo img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+  }
+  .inv-print-meta {
+    text-align: right;
+  }
+  .inv-print-meta h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1c2430;
+    margin: 0 0 3px;
+    letter-spacing: -0.3px;
+  }
+  .inv-print-meta p {
+    font-size: 11px;
+    color: #64748b;
+    margin: 0;
+  }
+  
+  .inv-table {
+    width: 100% !important;
+    font-size: 11.5px !important;
+    border-collapse: collapse !important;
+  }
+  .inv-table thead tr {
+    background: #1c2430 !important;
+  }
+  .inv-table thead th {
+    background: #1c2430 !important;
+    color: #fff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    padding: 8px 10px !important;
+    border: none !important;
+  }
+  .inv-table tbody tr {
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+  .inv-table tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+  }
+  .inv-table tbody td {
+    padding: 8px 10px !important;
+    vertical-align: middle !important;
+    color: #1e293b !important;
+    border: none !important;
+  }
+  .inv-avatar { display: none !important; }
+}

@@ -390,6 +390,32 @@
   display: none !important;
 }
 
+/* ── App Connect highlight nav item ── */
+.nav-highlight-item { margin: 4px 8px !important; }
+.nav-highlight-link {
+  background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.08)) !important;
+  border: 1px solid rgba(16,185,129,0.25) !important;
+  border-radius: 10px !important;
+  color: #10b981 !important;
+  position: relative;
+}
+.nav-highlight-link:hover {
+  background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.15)) !important;
+}
+.nav-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  margin-left: auto;
+  flex-shrink: 0;
+  animation: navPulse 2s ease-in-out infinite;
+}
+@keyframes navPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+}
+
 /* Sidebar Switch Button */
 .sidebar-switch {
   padding: 15px;

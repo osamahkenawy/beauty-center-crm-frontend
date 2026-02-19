@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Collapse } from 'react-bootstrap';
 import { Menu, X } from 'lucide-react';
-import { Bell, Group, Notes } from 'iconoir-react';
+import { Bell, Group, Notes, Wifi } from 'iconoir-react';
 import { AuthContext } from '../App';
 import api from '../lib/api';
 import AIChatbot from './AIChatbot';
@@ -145,6 +145,13 @@ const beautyMenuList = [
     to: '/inventory',
     iconStyle: <i className="flaticon-app" />,
     module: 'inventory',
+  },
+  {
+    title: 'App Connect',
+    to: '/app-connect',
+    iconStyle: <Wifi width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'settings',
+    isHighlight: true,
   },
   { title: 'SETTINGS', classsChange: 'menu-title', adminOnly: true },
   {
@@ -436,11 +443,12 @@ export default function BeautyLayout({ children }) {
               return (
                 <li 
                   key={index}
-                  className={`${location.pathname === data.to ? 'mm-active' : ''}`}
+                  className={`${location.pathname === data.to ? 'mm-active' : ''} ${data.isHighlight ? 'nav-highlight-item' : ''}`}
                 >
-                  <Link to={data.to}>
+                  <Link to={data.to} className={data.isHighlight ? 'nav-highlight-link' : ''}>
                     {data.iconStyle}
                     <span className="nav-text">{data.title}</span>
+                    {data.isHighlight && <span className="nav-live-dot" />}
                   </Link>
                 </li>
               );

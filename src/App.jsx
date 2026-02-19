@@ -54,6 +54,8 @@ import NotificationCenterPage from './pages/NotificationCenter';
 import MarketingHubPage from './pages/MarketingHub';
 import OnlineBooking from './pages/OnlineBooking';
 import OnlineStore from './pages/OnlineStore';
+import AppConnect from './pages/AppConnect';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Super Admin Pages
 import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
@@ -231,6 +233,7 @@ function App() {
             : <LoginPage />
         } />
         <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         
         {/* Protected routes - Core CRM */}
         <Route path="/dashboard" element={user ? <Layout><Dashboard /></Layout> : <Navigate to="/login" />} />
@@ -303,6 +306,7 @@ function App() {
         <Route path="/inventory" element={user ? <BeautyLayout><InventoryPage /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/notifications" element={user ? <BeautyLayout><NotificationCenterPage /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/marketing" element={user ? <BeautyLayout><MarketingHubPage /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/app-connect" element={user ? <BeautyLayout><AppConnect /></BeautyLayout> : <Navigate to="/login" />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />

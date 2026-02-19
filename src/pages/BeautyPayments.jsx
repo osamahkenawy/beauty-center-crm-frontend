@@ -352,15 +352,56 @@ export default function BeautyPayments() {
 
   return (
     <div className="inv-page">
+      {/* Print Header */}
+      <div className="inv-print-header" style={{ display: 'none' }}>
+        <div className="inv-print-logo">
+          <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" onError={(e) => { e.target.style.display = 'none'; }} />
+        </div>
+        <div className="inv-print-meta">
+          <h1>Invoices Report</h1>
+          <p>Generated on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        </div>
+      </div>
+
       {/* Hero Stats */}
       <div className="inv-hero">
         <div className="inv-hero-content">
           <h1>Invoices & Payments</h1>
           <p>Manage billing, track payments, and keep your finances in order.</p>
         </div>
-        <button className="inv-btn-primary inv-btn-lg" data-tooltip="Create new invoice" onClick={() => setShowCreate(true)}>
-          <Plus size={18} /> New Invoice
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="inv-btn-primary btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+            const rows = [
+              ['Invoice #', 'Customer', 'Date', 'Due Date', 'Amount', 'Paid', 'Balance', 'Status'],
+              ...invoices.map(inv => [
+                inv.invoice_number || inv.id,
+                inv.customer_name || (inv.customer_first_name && inv.customer_last_name ? `${inv.customer_first_name} ${inv.customer_last_name}` : '-'),
+                inv.created_at ? formatDate(inv.created_at) : '-',
+                inv.due_date ? formatDate(inv.due_date) : '-',
+                formatCurrency(inv.total || 0),
+                formatCurrency(inv.amount_paid || 0),
+                formatCurrency(Math.max(0, (inv.total || 0) - (inv.amount_paid || 0))),
+                STATUS_CONFIG[inv.status]?.label || inv.status || '-',
+              ])
+            ];
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `invoices-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>
+            <Download size={16} /> Excel
+          </button>
+          <button className="inv-btn-primary btn-print" data-tooltip="Print invoices" onClick={() => window.print()}>
+            <Printer size={16} /> Print
+          </button>
+          <button className="inv-btn-primary inv-btn-lg" data-tooltip="Create new invoice" onClick={() => setShowCreate(true)}>
+            <Plus size={18} /> New Invoice
+          </button>
+        </div>
       </div>
 
       <div className="inv-stats-grid">
@@ -434,7 +475,7 @@ export default function BeautyPayments() {
                 <th><DollarSign size={12} /> Total</th>
                 <th><Banknote size={12} /> Paid</th>
                 <th>Status</th>
-                <th></th>
+                <th className="inv-no-print"></th>
               </tr>
             </thead>
             <tbody>
@@ -454,7 +495,7 @@ export default function BeautyPayments() {
                   <td className="inv-amount">{formatCurrency(inv.total)}</td>
                   <td className="inv-amount inv-paid">{formatCurrency(inv.amount_paid)}</td>
                   <td><StatusBadge status={inv.status} /></td>
-                  <td onClick={e => e.stopPropagation()}>
+                  <td className="inv-no-print" onClick={e => e.stopPropagation()}>
                     <div className="inv-actions">
                       <button title="View" data-tooltip="View invoice" onClick={() => handleViewInvoice(inv)}><Eye size={15} /></button>
                       {inv.status !== 'paid' && inv.status !== 'void' && (

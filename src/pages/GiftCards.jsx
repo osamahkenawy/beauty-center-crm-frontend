@@ -240,6 +240,17 @@ export default function GiftCards() {
 
   return (
     <div className="gc-page">
+      {/* Print Header */}
+      <div className="gc-print-header" style={{ display: 'none' }}>
+        <div className="gc-print-logo">
+          <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" onError={(e) => { e.target.style.display = 'none'; }} />
+        </div>
+        <div className="gc-print-meta">
+          <h1>Gift Cards Report</h1>
+          <p>Generated on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        </div>
+      </div>
+
       {/* ── Header ── */}
       <div className="gc-header">
         <div className="gc-header-left">
@@ -250,6 +261,37 @@ export default function GiftCards() {
           <span className="gc-header-sub">Sell, track, and manage gift cards for your beauty center</span>
         </div>
         <div className="gc-header-actions">
+          <button className="gc-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+            const rows = [
+              ['Code', 'Issued To', 'Email', 'Phone', 'Initial Value', 'Current Balance', 'Status', 'Issued Date', 'Expiry Date'],
+              ...cards.map(c => [
+                c.code || '-',
+                c.issued_to_name || '-',
+                c.issued_to_email || '-',
+                c.issued_to_phone || '-',
+                formatCurr(c.initial_value || 0),
+                formatCurr(c.current_balance || 0),
+                STATUS_CONFIG[c.status]?.label || c.status || '-',
+                fmtDate(c.created_at),
+                c.expiry_date ? fmtDate(c.expiry_date) : '-',
+              ])
+            ];
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `gift-cards-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
+          <button className="gc-btn-outline btn-print" data-tooltip="Print gift cards" onClick={() => window.print()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
           <button className="gc-btn-outline" onClick={() => setShowRedeem(true)}>
             <IconoirIcons.Label width={16} height={16} /> Redeem
           </button>
@@ -361,7 +403,7 @@ export default function GiftCards() {
                   <div className="gc-card-row"><span className="gc-card-label">Expires</span><span>{fmtDate(card.expires_at)}</span></div>
                   <div className="gc-card-footer">
                     <StatusBadge status={card.status} />
-                    <button className="gc-btn-icon" title={copiedCode === card.code ? 'Copied!' : 'Copy code'}
+                    <button className="gc-btn-icon gc-no-print" title={copiedCode === card.code ? 'Copied!' : 'Copy code'}
                       onClick={e => { e.stopPropagation(); copyCode(card.code); }}>
                       {copiedCode === card.code
                         ? <IconoirIcons.Check width={16} height={16} color="#10b981" />

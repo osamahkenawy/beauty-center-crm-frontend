@@ -340,6 +340,17 @@ export default function TeamManager() {
     <div className="team-page">
       <SEO page="team" />
 
+      {/* Print Header */}
+      <div className="team-print-header" style={{ display: 'none' }}>
+        <div className="team-print-logo">
+          <img src="/assets/images/logos/trasealla-solutions-logo.png" alt="Trasealla" onError={(e) => { e.target.style.display = 'none'; }} />
+        </div>
+        <div className="team-print-meta">
+          <h1>Team Report</h1>
+          <p>Generated on {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="team-stats">
         <div className="team-stat-card primary">
@@ -408,6 +419,37 @@ export default function TeamManager() {
               </button>
             ))}
           </div>
+          <button className="team-add-btn btn-export-csv" data-tooltip="Download Excel" onClick={() => {
+            const rows = [
+              ['ID', 'Name', 'Email', 'Phone', 'Role', 'Job Title', 'Branch', 'Status', 'Hire Date'],
+              ...filtered.map(m => [
+                m.id,
+                m.full_name || m.username || '-',
+                m.email || '-',
+                m.phone || '-',
+                m.role || '-',
+                m.job_title || '-',
+                branches.find(b => b.id === m.branch_id)?.name || '-',
+                m.is_active ? 'Active' : 'Inactive',
+                m.hire_date ? new Date(m.hire_date).toLocaleDateString() : '-',
+              ])
+            ];
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `team-${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
+          <button className="team-add-btn btn-print" data-tooltip="Print team" onClick={() => window.print()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+          </button>
           <button className="team-add-btn" data-tooltip="Add team member" onClick={openCreate}>
             <Plus width={16} height={16} /> Add Member
           </button>
@@ -489,7 +531,7 @@ export default function TeamManager() {
                   )}
                 </div>
 
-                <div className="team-card-actions">
+                <div className="team-card-actions team-no-print">
                   <button className="team-action-btn view" data-tooltip="View member" onClick={() => openView(member)}>
                     <Eye width={14} height={14} /> View
                   </button>
