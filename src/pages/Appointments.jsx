@@ -108,8 +108,15 @@ export default function Appointments() {
       const params = new URLSearchParams();
       if (filterStatus) params.append('status', filterStatus);
       if (filterStaff) params.append('staff_id', filterStaff);
-      if (fromDate) params.append('from_date', fromDate);
-      if (toDate) params.append('to_date', toDate);
+      // Ensure dates are in YYYY-MM-DD format (remove time if present)
+      if (fromDate) {
+        const fromDateFormatted = fromDate.split('T')[0];
+        params.append('from_date', fromDateFormatted);
+      }
+      if (toDate) {
+        const toDateFormatted = toDate.split('T')[0];
+        params.append('to_date', toDateFormatted);
+      }
       params.append('page', pageNum);
       params.append('limit', limitNum);
       
@@ -152,7 +159,7 @@ export default function Appointments() {
 
   const fetchAllAppointments = useCallback(async () => {
     try {
-      const data = await api.get('/appointments?limit=500');
+      const data = await api.get('/appointments?all=true&limit=10000');
       if (data.success) {
         setAllAppointments(data.data || []);
       }
@@ -178,7 +185,14 @@ export default function Appointments() {
     }
   }, []);
 
-  useEffect(() => { fetchAppointments(pagination.page, pagination.limit); }, [pagination.page, pagination.limit, filterStatus, filterStaff, fromDate, toDate]);
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }));
+  }, [filterStatus, filterStaff, fromDate, toDate, search]);
+
+  useEffect(() => { 
+    fetchAppointments(pagination.page, pagination.limit); 
+  }, [pagination.page, pagination.limit, filterStatus, filterStaff, fromDate, toDate, search, fetchAppointments]);
   useEffect(() => { fetchAllAppointments(); }, [fetchAllAppointments]);
   useEffect(() => { fetchDropdownData(); }, [fetchDropdownData]);
 
@@ -290,6 +304,16 @@ export default function Appointments() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Only allow submission on step 4 (Review)
+    if (bookingStep !== 4) {
+      // If not on review step, advance to next step instead
+      if (bookingStep < 4) {
+        setBookingStep(prev => prev + 1);
+      }
+      return;
+    }
+    
     setSaving(true);
     try {
       const [hours, minutes] = formData.booking_time.split(':').map(Number);
@@ -342,6 +366,7 @@ export default function Appointments() {
         fetchAppointments(pagination.page, pagination.limit);
         fetchAllAppointments();
         setShowModal(false);
+        setBookingStep(1); // Reset to step 1 when modal closes
         clearPromo();
       } else {
         showToast('error', data.message);
@@ -569,35 +594,117 @@ export default function Appointments() {
         </div>
         <div className="module-hero-actions">
           <button className="module-btn module-btn-outline btn-refresh" data-tooltip="Refresh list" onClick={() => { fetchAppointments(pagination.page, pagination.limit); fetchAllAppointments(); }}>
-            <RefreshDouble width={22} height={22} />
+            <RefreshDouble width={24} height={24} />
           </button>
-          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download as Excel" onClick={() => {
-            const rows = [
-              ['Invoice #', 'Client', 'Service', 'Staff', 'Date', 'Time', 'Status', 'Price'],
-              ...appointments.map(a => [
-                a.id,
-                `${a.client_first_name || ''} ${a.client_last_name || ''}`.trim() || a.client_name || '-',
-                a.service_name || '-',
-                a.staff_name || '-',
-                a.start_time ? new Date(a.start_time).toLocaleDateString() : '-',
-                a.start_time ? new Date(a.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
-                STATUS_MAP[a.status]?.label || a.status || '-',
-                a.service_price || 0,
-              ])
-            ];
-            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `appointments-${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download as Excel" onClick={async () => {
+            try {
+              // Fetch all appointments for export
+              const data = await api.get('/appointments?all=true&limit=10000');
+              const allAppts = data.success ? (data.data || []) : [];
+              
+              const rows = [
+                ['ID', 'Client', 'Service', 'Staff', 'Date', 'Time', 'Status', 'Price', 'Payment Status', 'Notes'],
+                ...allAppts.map(a => [
+                  a.id,
+                  `${a.customer_first_name || ''} ${a.customer_last_name || ''}`.trim() || '-',
+                  a.service_name || '-',
+                  a.staff_name || '-',
+                  a.start_time ? new Date(a.start_time).toLocaleDateString() : '-',
+                  a.start_time ? new Date(a.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-',
+                  STATUS_MAP[a.status]?.label || a.status || '-',
+                  a.service_price || 0,
+                  a.payment_status || '-',
+                  (a.notes || '').replace(/"/g, '""'),
+                ])
+              ];
+              const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `appointments-all-${new Date().toISOString().slice(0,10)}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              console.error('Export error:', error);
+              showToast('error', 'Failed to export appointments');
+            }
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print appointments" onClick={() => window.print()}>
+          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print all appointments" onClick={async () => {
+            try {
+              // Ensure we have all appointments loaded
+              const data = await api.get('/appointments?all=true&limit=10000');
+              if (data.success && data.data) {
+                // Create a hidden print table with all appointments
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <title>Appointments Report</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; padding: 20px; }
+                          h1 { margin: 0 0 10px; }
+                          p { margin: 0 0 20px; color: #666; }
+                          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                          th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; }
+                          td { padding: 8px 10px; border-bottom: 1px solid #e9ecef; }
+                          tr:hover { background: #f8f9fa; }
+                        </style>
+                      </head>
+                      <body>
+                        <h1>Appointments Report</h1>
+                        <p>Printed on ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p>Total Appointments: ${data.data.length}</p>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>Client</th>
+                              <th>Service</th>
+                              <th>Staff</th>
+                              <th>Date</th>
+                              <th>Time</th>
+                              <th>Status</th>
+                              <th>Price</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${data.data.map(a => `
+                              <tr>
+                                <td>${a.id}</td>
+                                <td>${(a.customer_first_name || '') + ' ' + (a.customer_last_name || '')}</td>
+                                <td>${a.service_name || '-'}</td>
+                                <td>${a.staff_name || '-'}</td>
+                                <td>${a.start_time ? new Date(a.start_time).toLocaleDateString() : '-'}</td>
+                                <td>${a.start_time ? new Date(a.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                                <td>${STATUS_MAP[a.status]?.label || a.status || '-'}</td>
+                                <td>${a.service_price || 0}</td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      </body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                  setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                  }, 250);
+                }
+              } else {
+                window.print();
+              }
+            } catch (error) {
+              console.error('Print error:', error);
+              window.print();
+            }
+          }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>
@@ -665,23 +772,45 @@ export default function Appointments() {
                 type="date"
                 className="date-filter"
                 value={fromDate}
-                onChange={(e) => { setFromDate(e.target.value); setToDate(''); }}
+                onChange={(e) => {
+                  const newFromDate = e.target.value;
+                  setFromDate(newFromDate);
+                  // If toDate is before new fromDate, clear it
+                  if (toDate && newFromDate && toDate < newFromDate) {
+                    setToDate('');
+                  }
+                }}
                 placeholder="From"
                 title="From Date"
+                max={toDate || undefined}
               />
               <span className="date-separator">to</span>
               <input
                 type="date"
                 className="date-filter"
                 value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
+                onChange={(e) => {
+                  const newToDate = e.target.value;
+                  // Validate that toDate is not before fromDate
+                  if (fromDate && newToDate && newToDate < fromDate) {
+                    showToast('error', 'End date cannot be before start date');
+                    return;
+                  }
+                  setToDate(newToDate);
+                }}
                 placeholder="To"
                 title="To Date"
+                min={fromDate || undefined}
               />
               {(fromDate || toDate) && (
                 <button 
                   className="clear-dates-btn" 
-                  onClick={() => { setFromDate(''); setToDate(''); }}
+                  onClick={() => { 
+                    setFromDate(''); 
+                    setToDate('');
+                    // Reset pagination when clearing filters
+                    setPagination(prev => ({ ...prev, page: 1 }));
+                  }}
                   title="Clear dates"
                 >
                   ×
@@ -907,11 +1036,11 @@ export default function Appointments() {
 
       {/* Booking Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setBookingStep(1); }}>
           <div className="modal-container booking-modal-new" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header-new">
               <h2>{editingItem ? 'Edit Appointment' : '✨ New Appointment'}</h2>
-              <button className="modal-close-btn" onClick={() => setShowModal(false)}>
+              <button className="modal-close-btn" onClick={() => { setShowModal(false); setBookingStep(1); }}>
                 <Xmark width={20} height={20} />
               </button>
             </div>

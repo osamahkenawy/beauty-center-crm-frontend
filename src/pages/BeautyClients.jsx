@@ -319,35 +319,120 @@ export default function BeautyClients() {
           </div>
         </div>
         <div className="cl-hero-actions">
-          <button className="cl-btn cl-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
-            const rows = [
-              ['ID', 'Name', 'Email', 'Phone', 'Gender', 'Source', 'Total Spent', 'Visits', 'Last Visit', 'Status'],
-              ...clients.map(c => [
-                c.id,
-                `${c.first_name || ''} ${c.last_name || ''}`.trim() || '-',
-                c.email || '-',
-                c.phone || c.mobile || '-',
-                c.gender || '-',
-                sourceLabels[c.source]?.replace(/[^\w\s]/g, '').trim() || c.source || '-',
-                formatCurrency(c.total_spent || 0),
-                c.total_visits || 0,
-                c.last_visit ? formatDate(c.last_visit) : '-',
-                c.status || 'active',
-              ])
-            ];
-            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `clients-${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+          <button className="cl-btn cl-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={async () => {
+            try {
+              // Fetch all clients for export
+              const data = await api.get('/contacts?limit=10000');
+              const allClientsData = data.success ? (data.data || []) : [];
+              
+              const rows = [
+                ['ID', 'Name', 'Email', 'Phone', 'Gender', 'Source', 'Total Spent', 'Visits', 'Last Visit', 'Status', 'Address', 'Notes'],
+                ...allClientsData.map(c => [
+                  c.id,
+                  `${c.first_name || ''} ${c.last_name || ''}`.trim() || '-',
+                  c.email || '-',
+                  c.phone || c.mobile || '-',
+                  c.gender || '-',
+                  sourceLabels[c.source]?.replace(/[^\w\s]/g, '').trim() || c.source || '-',
+                  formatCurrency(c.total_spent || 0),
+                  c.total_visits || 0,
+                  c.last_visit ? formatDate(c.last_visit) : '-',
+                  c.status || 'active',
+                  c.address || '-',
+                  (c.notes || '').replace(/"/g, '""'),
+                ])
+              ];
+              const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `clients-all-${new Date().toISOString().slice(0,10)}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              console.error('Export error:', error);
+              showToast('error', 'Failed to export clients');
+            }
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          <button className="cl-btn cl-btn-outline btn-print" data-tooltip="Print clients" onClick={() => window.print()}>
+          <button className="cl-btn cl-btn-outline btn-print" data-tooltip="Print all clients" onClick={async () => {
+            try {
+              // Fetch all clients for printing
+              const data = await api.get('/contacts?limit=10000');
+              if (data.success && data.data) {
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <title>Clients Report</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; padding: 20px; }
+                          h1 { margin: 0 0 10px; }
+                          p { margin: 0 0 20px; color: #666; }
+                          table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                          th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; }
+                          td { padding: 8px 10px; border-bottom: 1px solid #e9ecef; }
+                          tr:hover { background: #f8f9fa; }
+                        </style>
+                      </head>
+                      <body>
+                        <h1>Clients Report</h1>
+                        <p>Printed on ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p>Total Clients: ${data.data.length}</p>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>Name</th>
+                              <th>Email</th>
+                              <th>Phone</th>
+                              <th>Gender</th>
+                              <th>Source</th>
+                              <th>Total Spent</th>
+                              <th>Visits</th>
+                              <th>Last Visit</th>
+                              <th>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${data.data.map(c => `
+                              <tr>
+                                <td>${c.id}</td>
+                                <td>${(c.first_name || '') + ' ' + (c.last_name || '')}</td>
+                                <td>${c.email || '-'}</td>
+                                <td>${c.phone || c.mobile || '-'}</td>
+                                <td>${c.gender || '-'}</td>
+                                <td>${sourceLabels[c.source]?.replace(/[^\w\s]/g, '').trim() || c.source || '-'}</td>
+                                <td>${formatCurrency(c.total_spent || 0)}</td>
+                                <td>${c.total_visits || 0}</td>
+                                <td>${c.last_visit ? formatDate(c.last_visit) : '-'}</td>
+                                <td>${c.status || 'active'}</td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      </body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                  setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                  }, 250);
+                }
+              } else {
+                window.print();
+              }
+            } catch (error) {
+              console.error('Print error:', error);
+              window.print();
+            }
+          }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>

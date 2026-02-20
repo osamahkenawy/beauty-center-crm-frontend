@@ -70,6 +70,9 @@ function lighten(hex, pct) {
 /* ═══════════════ MAIN COMPONENT ═══════════════ */
 export default function GiftCards() {
   const { symbol, format: formatCurr, currency } = useCurrency();
+  
+  // Ensure UAE dirham symbol is used correctly - force د.إ for AED
+  const displaySymbol = (currency && currency.toUpperCase() === 'AED') ? 'د.إ' : symbol;
   const [cards, setCards] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -206,7 +209,8 @@ export default function GiftCards() {
   // ── Formatters ──
   const fmtCurrency = (v) => {
     const n = parseFloat(v || 0);
-    return formatCurr ? formatCurr(n, { symbolOnly: true }) : n.toFixed(2);
+    // Always use symbol (د.إ for UAE/AED) instead of currency code
+    return `${displaySymbol} ${n.toFixed(2)}`;
   };
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 

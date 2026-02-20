@@ -270,17 +270,30 @@ export default function BeautyLayout({ children }) {
   };
 
   // Fetch unread notification count periodically
+  const fetchUnread = useCallback(async () => {
+    try {
+      const res = await api.get('/notifications/unread-count');
+      if (res.success) setUnreadCount(res.count || 0);
+    } catch (e) { /* ignore */ }
+  }, []);
+
   useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const res = await api.get('/notifications/unread-count');
-        if (res.success) setUnreadCount(res.count || 0);
-      } catch (e) { /* ignore */ }
-    };
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000); // Poll every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+    
+    // Listen for custom event when notifications are marked as read
+    const handleNotificationRead = () => {
+      fetchUnread(); // Immediately refresh count
+    };
+    window.addEventListener('notification-read', handleNotificationRead);
+    window.addEventListener('notification-read-all', handleNotificationRead);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notification-read', handleNotificationRead);
+      window.removeEventListener('notification-read-all', handleNotificationRead);
+    };
+  }, [fetchUnread]);
 
   // Fetch user's role permissions for menu filtering
   useEffect(() => {

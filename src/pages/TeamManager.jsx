@@ -425,34 +425,117 @@ export default function TeamManager() {
               </button>
             ))}
           </div>
-          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={() => {
-            const rows = [
-              ['ID', 'Name', 'Email', 'Phone', 'Role', 'Job Title', 'Branch', 'Status', 'Hire Date'],
-              ...filtered.map(m => [
-                m.id,
-                m.full_name || m.username || '-',
-                m.email || '-',
-                m.phone || '-',
-                m.role || '-',
-                m.job_title || '-',
-                branches.find(b => b.id === m.branch_id)?.name || '-',
-                m.is_active ? 'Active' : 'Inactive',
-                m.hire_date ? new Date(m.hire_date).toLocaleDateString() : '-',
-              ])
-            ];
-            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `team-${new Date().toISOString().slice(0,10)}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+          <button className="module-btn module-btn-outline btn-export-csv" data-tooltip="Download Excel" onClick={async () => {
+            try {
+              // Fetch all staff for export
+              const data = await api.get('/staff?limit=10000');
+              const allStaff = data.success ? (data.data || []) : [];
+              
+              const rows = [
+                ['ID', 'Name', 'Email', 'Phone', 'Role', 'Job Title', 'Branch', 'Status', 'Hire Date', 'Salary', 'Nationality'],
+                ...allStaff.map(m => [
+                  m.id,
+                  m.full_name || m.username || '-',
+                  m.email || '-',
+                  m.phone || '-',
+                  m.role || '-',
+                  m.job_title || '-',
+                  branches.find(b => b.id === m.branch_id)?.name || '-',
+                  m.is_active ? 'Active' : 'Inactive',
+                  m.hire_date ? new Date(m.hire_date).toLocaleDateString() : '-',
+                  m.salary || '-',
+                  m.nationality || '-',
+                ])
+              ];
+              const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `team-all-${new Date().toISOString().slice(0,10)}.csv`;
+              link.click();
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              console.error('Export error:', error);
+              alert('Failed to export team data');
+            }
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Excel
           </button>
-          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print team" onClick={() => window.print()}>
+          <button className="module-btn module-btn-outline btn-print" data-tooltip="Print all team" onClick={async () => {
+            try {
+              // Fetch all staff for printing
+              const data = await api.get('/staff?limit=10000');
+              if (data.success && data.data) {
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <title>Team Report</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; padding: 20px; }
+                          h1 { margin: 0 0 10px; }
+                          p { margin: 0 0 20px; color: #666; }
+                          table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                          th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; }
+                          td { padding: 8px 10px; border-bottom: 1px solid #e9ecef; }
+                          tr:hover { background: #f8f9fa; }
+                        </style>
+                      </head>
+                      <body>
+                        <h1>Team Report</h1>
+                        <p>Printed on ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p>Total Staff: ${data.data.length}</p>
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>Name</th>
+                              <th>Email</th>
+                              <th>Phone</th>
+                              <th>Role</th>
+                              <th>Job Title</th>
+                              <th>Branch</th>
+                              <th>Status</th>
+                              <th>Hire Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            ${data.data.map(m => `
+                              <tr>
+                                <td>${m.id}</td>
+                                <td>${m.full_name || m.username || '-'}</td>
+                                <td>${m.email || '-'}</td>
+                                <td>${m.phone || '-'}</td>
+                                <td>${m.role || '-'}</td>
+                                <td>${m.job_title || '-'}</td>
+                                <td>${branches.find(b => b.id === m.branch_id)?.name || '-'}</td>
+                                <td>${m.is_active ? 'Active' : 'Inactive'}</td>
+                                <td>${m.hire_date ? new Date(m.hire_date).toLocaleDateString() : '-'}</td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      </body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                  setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                  }, 250);
+                }
+              } else {
+                window.print();
+              }
+            } catch (error) {
+              console.error('Print error:', error);
+              window.print();
+            }
+          }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
             Print
           </button>

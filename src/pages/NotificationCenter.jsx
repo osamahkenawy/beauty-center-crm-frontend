@@ -4,7 +4,7 @@ import {
   Mail, Star, Clock, Settings, RefreshDouble, Archive,
   WarningTriangle, Megaphone, Heart, User, BellNotification,
   Xmark, SendDiagonal, Gift, ShoppingBag, UserPlus,
-  CheckCircle, Package, InfoCircle, Filter, EyeEmpty
+  CheckCircle, Package, InfoCircle, Filter
 } from 'iconoir-react';
 import Swal from 'sweetalert2';
 import api from '../lib/api';
@@ -140,6 +140,8 @@ export default function NotificationCenter() {
       await api.patch(`/notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
       setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1) }));
+      // Dispatch custom event to update badge in header
+      window.dispatchEvent(new CustomEvent('notification-read'));
     } catch (error) { console.error(error); }
   };
 
@@ -148,14 +150,23 @@ export default function NotificationCenter() {
       await api.patch('/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
       setStats(prev => ({ ...prev, unread: 0 }));
+      // Dispatch custom event to update badge in header
+      window.dispatchEvent(new CustomEvent('notification-read-all'));
       Swal.fire({ icon: 'success', title: 'Done!', text: 'All marked as read', timer: 1500, showConfirmButton: false });
     } catch (error) { console.error(error); }
   };
 
   const archiveNotification = async (id) => {
     try {
+      const notification = notifications.find(n => n.id === id);
+      const wasUnread = notification && !notification.is_read;
       await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(n => n.id !== id));
+      // If deleted notification was unread, update stats and badge
+      if (wasUnread) {
+        setStats(prev => ({ ...prev, unread: Math.max(0, prev.unread - 1), total: Math.max(0, prev.total - 1) }));
+        window.dispatchEvent(new CustomEvent('notification-read'));
+      }
     } catch (error) { console.error(error); }
   };
 
@@ -172,6 +183,8 @@ export default function NotificationCenter() {
       try {
         await api.delete('/notifications/clear-all');
         fetchNotifications();
+        // Refresh badge count after clearing
+        window.dispatchEvent(new CustomEvent('notification-read-all'));
         Swal.fire({ icon: 'success', title: 'Cleared!', timer: 1200, showConfirmButton: false });
       } catch (error) { console.error(error); }
     }
@@ -329,7 +342,7 @@ export default function NotificationCenter() {
                 className={`notif-filter-chip ${filterRead === '0' ? 'active' : ''}`}
                 onClick={() => { setFilterRead(filterRead === '0' ? '' : '0'); setPage(1); }}
               >
-                <EyeEmpty width={12} height={12} />
+                <BellNotification width={12} height={12} />
                 Unread
                 <span className="chip-count">{stats.unread || 0}</span>
               </button>

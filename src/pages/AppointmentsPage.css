@@ -91,6 +91,13 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.btn-refresh svg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+}
+
 .btn-refresh:hover {
   background: #f8f9fa;
   color: #f2421b;
@@ -169,7 +176,9 @@
   .ic-sidenav, .nav-header,
   .Card-Header, .card-header,
   .appt-no-print,
-  [data-tooltip]::after, [data-tooltip]::before { display: none !important; }
+  /* Tooltips disabled for print - but allow for action dropdown */
+  [data-tooltip]:not(.action-dropdown)::after, 
+  [data-tooltip]:not(.action-dropdown)::before { display: none !important; }
 
   /* Page setup */
   @page {
@@ -391,16 +400,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 6px 10px;
   background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: 6px;
+  border: none;
   transition: all 0.15s;
+  min-width: 130px;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .search-box:focus-within {
-  background: #fff;
-  border-color: #f2421b;
+  background: #e9ecef;
 }
 
 .search-box input {
@@ -408,7 +419,11 @@
   background: transparent;
   outline: none;
   font-size: 14px;
-  width: 160px;
+  width: 100%;
+  flex: 1;
+  padding: 0;
+  margin: 0;
+  height: 100%;
 }
 
 .search-box svg {
@@ -444,6 +459,8 @@
   background: #f8f9fa;
   outline: none;
   min-width: 130px;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .date-filter:focus {
@@ -655,6 +672,44 @@
 .action-dropdown svg circle {
   fill: #fff !important;
   color: #fff !important;
+}
+
+/* Tooltip for action dropdown */
+.action-dropdown[data-tooltip] {
+  position: relative;
+}
+
+.action-dropdown[data-tooltip]:hover::after {
+  content: attr(data-tooltip) !important;
+  display: block !important;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1c2430;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 8px;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-dropdown[data-tooltip]:hover::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1c2430;
+  margin-bottom: 2px;
+  z-index: 1000;
+  pointer-events: none;
 }
 
 /* Fix dropdown z-index - IMPORTANT */
