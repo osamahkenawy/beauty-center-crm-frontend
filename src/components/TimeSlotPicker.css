@@ -131,6 +131,25 @@
   opacity: 0.5;
 }
 
+/* Break Time Slots */
+.time-slot-btn.break-time {
+  background: #fef9ec;
+  color: #92400e;
+  border-color: #fde68a;
+  cursor: not-allowed;
+  font-size: 11px;
+  position: relative;
+}
+.time-slot-btn.break-time .break-badge {
+  font-size: 10px;
+  margin-left: 3px;
+  line-height: 1;
+}
+.legend-indicator.break-time {
+  background: #fef9ec;
+  border: 1.5px solid #fde68a;
+}
+
 /* Slot Legend */
 .slot-legend {
   display: flex;

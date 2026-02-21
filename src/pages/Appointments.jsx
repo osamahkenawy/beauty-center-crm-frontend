@@ -104,6 +104,20 @@ export default function Appointments() {
   // Working hours state
   const [workingHours, setWorkingHours] = useState(null);
 
+  // Break slots — loaded from localStorage (managed in Settings → Working Hours)
+  const [breakSlots, setBreakSlots] = useState(() => {
+    try { const s = localStorage.getItem('beauty_crm_break_slots'); return s ? JSON.parse(s) : []; }
+    catch (e) { return []; }
+  });
+  useEffect(() => {
+    const sync = () => {
+      try { const s = localStorage.getItem('beauty_crm_break_slots'); setBreakSlots(s ? JSON.parse(s) : []); }
+      catch (e) { /* ignore */ }
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
+
   const showToast = useCallback((type, message) => {
     setToast({ show: true, type, message });
     setTimeout(() => setToast({ show: false, type: '', message: '' }), 4000);
@@ -260,8 +274,12 @@ export default function Appointments() {
   useEffect(() => {
     if (viewMode === 'calendar') {
       fetchAllAppointments(true);
+      if (!dropdownsFetched.current) {
+        dropdownsFetched.current = true;
+        fetchDropdownData();
+      }
     }
-  }, [viewMode, fetchAllAppointments]);
+  }, [viewMode, fetchAllAppointments, fetchDropdownData]);
 
   useEffect(() => {
     fetchStaffDayAppointments();
@@ -595,6 +613,21 @@ export default function Appointments() {
     setToDate(date);
   };
 
+  const handleReschedule = useCallback(async (appointmentId, newStartISO, newEndISO) => {
+    try {
+      const data = await api.patch(`/appointments/${appointmentId}`, {
+        start_time: newStartISO,
+        end_time: newEndISO,
+      });
+      if (data.success) {
+        showToast('success', 'Appointment rescheduled successfully');
+        fetchAllAppointments(true);
+      }
+    } catch (error) {
+      showToast('error', 'Failed to reschedule appointment');
+    }
+  }, [showToast, fetchAllAppointments]);
+
   const selectedService = services.find(s => s.id === parseInt(formData.service_id));
   const selectedStaff = staff.find(s => s.id === parseInt(formData.staff_id));
   const selectedClient = contacts.find(c => c.id === parseInt(formData.customer_id));
@@ -912,6 +945,9 @@ export default function Appointments() {
                 onDateSelect={handleDateSelectFromCalendar}
                 onAppointmentClick={openViewModal}
                 onNewAppointment={openCreateModal}
+                onReschedule={handleReschedule}
+                staff={staff}
+                services={services}
               />
             </div>
           )}
@@ -1229,6 +1265,7 @@ export default function Appointments() {
                       staffId={formData.staff_id}
                       duration={getServiceDuration()}
                       workingHours={workingHours}
+                      breakSlots={breakSlots}
                     />
                   </div>
                 </div>

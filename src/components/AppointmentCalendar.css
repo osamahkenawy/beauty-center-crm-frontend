@@ -1,31 +1,37 @@
-/* Appointment Calendar Styles - Clean Theme */
+/* ============================================================
+   Appointment Calendar — Professional Theme
+   ============================================================ */
+
+/* ── Container ── */
 .appointment-calendar {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid #e9ecef;
   overflow: hidden;
+  font-family: inherit;
 }
 
-/* Calendar Header */
+/* ── Header ── */
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid #e9ecef;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
+  background: #fff;
 }
 
 .calendar-nav {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .nav-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,32 +39,28 @@
   background: #fff;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
   color: #6c757d;
 }
-
-.nav-btn:hover {
-  background: #f8f9fa;
-  border-color: #f2421b;
-  color: #f2421b;
-}
+.nav-btn:hover { background: #f8f9fa; border-color: #f2421b; color: #f2421b; }
 
 .calendar-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1c2430;
-  min-width: 200px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #101828;
+  min-width: 190px;
   text-align: center;
 }
 
 .calendar-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .today-btn {
-  padding: 8px 16px;
+  padding: 7px 14px;
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
@@ -66,420 +68,673 @@
   font-size: 13px;
   font-weight: 500;
   color: #495057;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
-
-.today-btn:hover {
-  background: #e9ecef;
-}
+.today-btn:hover { background: #e9ecef; }
 
 .view-toggle {
   display: flex;
-  background: #f8f9fa;
+  background: #f1f3f5;
   border-radius: 8px;
-  padding: 4px;
+  padding: 3px;
 }
-
 .view-btn {
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: none;
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   color: #6c757d;
   transition: all 0.15s;
+  white-space: nowrap;
 }
+.view-btn:hover { color: #f2421b; }
+.view-btn.active { background: #fff; color: #f2421b; box-shadow: 0 1px 4px rgba(0,0,0,.10); }
 
-.view-btn:hover {
-  color: #f2421b;
-}
-
-.view-btn.active {
+/* icon buttons in header */
+.acal-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1px solid #e9ecef;
   background: #fff;
-  color: #f2421b;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #495057;
+  transition: all 0.15s;
+  position: relative;
+}
+.acal-icon-btn:hover { border-color: #adb5bd; background: #f8f9fa; }
+.acal-icon-btn.active { border-color: #f2421b; background: #fff5f3; color: #f2421b; }
+.acal-icon-btn.has-filters { border-color: #f2421b; color: #f2421b; background: #fff5f3; }
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f2421b;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .new-apt-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
+  gap: 5px;
+  padding: 8px 16px;
   background: linear-gradient(135deg, #f2421b 0%, #e63715 100%);
   color: #fff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   transition: all 0.2s;
 }
+.new-apt-btn:hover { box-shadow: 0 4px 12px rgba(242,66,27,.35); transform: translateY(-1px); }
 
-.new-apt-btn:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+/* ── Filter Bar ── */
+.acal-filter-bar {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
 }
-
-/* Calendar Grid */
-.calendar-grid {
-  padding: 16px;
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
 }
-
-.calendar-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+.filter-group {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  margin-bottom: 8px;
 }
-
-.weekday {
-  text-align: center;
-  font-size: 11px;
-  font-weight: 600;
+.filter-group label {
+  font-size: 10px;
+  font-weight: 700;
   color: #6c757d;
   text-transform: uppercase;
-  padding: 8px;
+  letter-spacing: .5px;
+}
+.filter-group select,
+.filter-group input {
+  padding: 6px 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 7px;
+  font-size: 13px;
+  background: #fff;
+  color: #1c2430;
+  cursor: pointer;
+  min-width: 130px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.filter-group select:focus,
+.filter-group input:focus { border-color: #f2421b; }
+
+.acal-reset-btn {
+  padding: 7px 12px;
+  background: #fff;
+  border: 1px solid #fca5a5;
+  border-radius: 7px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: flex-end;
+}
+.acal-reset-btn:hover { background: #fef2f2; }
+
+.filter-blocks-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.blocks-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.block-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #dee2e6;
+  font-size: 12px;
+  font-weight: 500;
+  color: #344054;
+}
+.chip-remove {
+  border: none;
+  background: none;
+  font-size: 14px;
+  line-height: 1;
+  color: #667085;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+}
+.chip-remove:hover { color: #dc2626; }
+
+/* ── Calendar Body ── */
+.calendar-body {
+  overflow-x: auto;
 }
 
-.calendar-days {
+/* ═══ MONTH VIEW ════════════════════════════════════════════ */
+.acal-month { padding: 12px; }
+
+.acal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+.acal-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+  padding: 8px 4px;
+  letter-spacing: .5px;
 }
 
-.calendar-days.month .calendar-day {
-  min-height: 100px;
+.acal-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
 }
 
-.calendar-days.week .calendar-day {
-  min-height: 200px;
-}
-
-.calendar-day {
+.acal-month-day {
+  min-height: 90px;
   background: #f8f9fa;
   border-radius: 8px;
-  padding: 8px;
+  padding: 7px;
   cursor: pointer;
   transition: all 0.15s;
   border: 2px solid transparent;
+  position: relative;
 }
+.acal-month-day:hover { background: #e9ecef; }
+.acal-month-day.other-month { opacity: .38; }
+.acal-month-day.today { background: #e8f5e9; border-color: #28a745; }
+.acal-month-day.today .acal-day-num { background: #28a745; color: #fff; }
+.acal-month-day.selected { border-color: #f2421b; background: #fff5f3; }
+.acal-month-day.has-apts::after { content: ''; }
+.acal-month-day.drag-target { border-color: #6366f1; background: #eef2ff; }
 
-.calendar-day:hover {
-  background: #e9ecef;
-}
-
-.calendar-day.other-month {
-  opacity: 0.35;
-}
-
-.calendar-day.today {
-  background: #e8f5e9;
-  border-color: #28a745;
-}
-
-.calendar-day.today .day-number {
-  background: #28a745;
-  color: #fff;
-}
-
-.calendar-day.selected {
-  border-color: #f2421b;
-  background: #f0f0ff;
-}
-
-.day-number {
+.acal-day-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1c2430;
   margin-bottom: 4px;
 }
 
-/* Day Appointments */
-.day-appointments {
+.acal-day-apts {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: 4px;
+  gap: 2px;
 }
 
-.apt-indicator {
+.acal-apt-pill {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
   color: #fff;
   cursor: pointer;
   overflow: hidden;
-  text-overflow: ellipsis;
+  transition: filter 0.15s, transform 0.1s;
   white-space: nowrap;
+  user-select: none;
 }
+.acal-apt-pill:hover { filter: brightness(1.12); transform: translateX(2px); }
+.acal-apt-pill.cancelled { opacity: .55; text-decoration: line-through; }
+.acal-apt-pill[draggable="true"] { cursor: grab; }
+.acal-apt-pill[draggable="true"]:active { cursor: grabbing; opacity: .7; }
 
-.apt-indicator:hover {
-  filter: brightness(1.1);
-}
+.pill-time { flex-shrink: 0; opacity: .9; }
+.pill-name { overflow: hidden; text-overflow: ellipsis; }
 
-.apt-indicator.status-cancelled {
-  opacity: 0.6;
-  text-decoration: line-through;
-}
-
-.apt-time {
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.apt-client {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.apt-status-icon {
+.acal-more-pill {
+  font-size: 10px;
   font-weight: 700;
-  font-size: 10px;
-  margin-left: auto;
-}
-
-.more-indicator {
-  font-size: 10px;
   color: #f2421b;
-  text-align: center;
-  padding: 2px 4px;
+  padding: 2px 6px;
   background: #fff5f3;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
+  text-align: center;
   transition: all 0.15s;
 }
-.more-indicator:hover {
-  background: #f2421b;
-  color: #fff;
+.acal-more-pill:hover { background: #f2421b; color: #fff; }
+
+/* ═══ WEEK VIEW ═════════════════════════════════════════════ */
+.acal-week { min-width: 700px; }
+
+.acal-week-head {
+  display: grid;
+  grid-template-columns: 72px repeat(7, 1fr);
+  border-bottom: 2px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
 }
 
-/* Day View */
-.day-view {
-  padding: 16px;
-}
-
-.day-view-header {
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e9ecef;
-  margin-bottom: 16px;
-}
-
-.day-view-header h3 {
-  font-size: 18px;
+.acal-gutter {
+  width: 72px;
+  flex-shrink: 0;
+  padding: 8px;
+  font-size: 11px;
   font-weight: 600;
-  color: #1c2430;
-  margin: 0;
+  color: #adb5bd;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
-.time-grid {
+.acal-week-col-head {
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  border-right: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+.acal-week-col-head:hover { background: #f8f9fa; }
+.acal-week-col-head.today .wh-dn { background: #28a745; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
+.acal-week-col-head.selected { background: #fff5f3; }
+.wh-wd { display: block; font-size: 10px; font-weight: 700; color: #6c757d; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+.wh-dn { font-size: 15px; font-weight: 700; color: #1c2430; }
+
+.acal-week-body {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.acal-week-row {
+  display: grid;
+  grid-template-columns: 72px repeat(7, 1fr);
+  border-bottom: 1px solid #f5f5f5;
+  min-height: 56px;
+}
+
+.acal-week-cell {
+  padding: 4px 6px;
+  border-right: 1px solid #f0f0f0;
+  min-height: 56px;
+  cursor: pointer;
+  transition: background 0.1s;
   display: flex;
   flex-direction: column;
+  gap: 3px;
+  position: relative;
 }
+.acal-week-cell:hover { background: #f8f9fa; }
+.acal-week-cell.blocked { cursor: not-allowed; }
+.acal-week-cell.drag-target { background: #eef2ff !important; outline: 2px dashed #6366f1; outline-offset: -2px; }
 
-.time-slot {
-  display: flex;
-  border-bottom: 1px solid #f5f5f5;
-  min-height: 60px;
+.acal-week-apt {
+  border-left: 3px solid;
+  border-radius: 0 5px 5px 0;
+  padding: 4px 7px;
+  cursor: pointer;
+  transition: filter 0.15s;
+  user-select: none;
 }
+.acal-week-apt:hover { filter: brightness(.96); }
+.acal-week-apt.cancelled { opacity: .5; text-decoration: line-through; }
+.acal-week-apt[draggable="true"] { cursor: grab; }
+.acal-week-apt[draggable="true"]:active { cursor: grabbing; opacity: .65; }
+.wapt-time { font-size: 10px; font-weight: 700; color: inherit; margin-bottom: 2px; }
+.wapt-client { font-size: 12px; font-weight: 600; color: #1c2430; }
+.wapt-service { font-size: 10px; color: #6c757d; }
 
-.time-label {
-  width: 80px;
-  padding: 12px;
-  font-size: 12px;
+.acal-block-stripe {
+  font-size: 10px;
   font-weight: 600;
   color: #6c757d;
-  flex-shrink: 0;
-  border-right: 1px solid #f0f0f0;
+  font-style: italic;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(0,0,0,.04);
 }
 
-.time-content {
+.empty-click-hint {
+  color: #ced4da;
+  font-size: 16px;
+  font-weight: 300;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.acal-week-cell:hover .empty-click-hint { opacity: 1; }
+
+/* ═══ DAY VIEW ══════════════════════════════════════════════ */
+.acal-day { max-height: 700px; overflow-y: auto; }
+
+.acal-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px 12px;
+  border-bottom: 2px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 5;
+}
+.acal-day-head h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1c2430;
+  margin: 0 0 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.acal-day-head h3.is-today { color: #28a745; }
+.today-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #28a745;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: .3px;
+}
+.day-sub { font-size: 12px; color: #6c757d; margin: 0; }
+.new-apt-inline {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #f2421b 0%, #e63715 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.new-apt-inline:hover { box-shadow: 0 4px 12px rgba(242,66,27,.35); }
+
+.acal-day-body { padding: 8px 0; }
+
+.acal-day-slot {
+  display: flex;
+  border-bottom: 1px solid #f9f9f9;
+  min-height: 42px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.acal-day-slot.hour-mark { border-bottom-color: #e9ecef; min-height: 46px; }
+.acal-day-slot.half-mark { background: #fafafa; }
+.acal-day-slot.blocked { cursor: default; }
+.acal-day-slot.open-slot:hover { background: #f0fdf4; }
+.acal-day-slot.drag-target { background: #eef2ff !important; }
+
+.acal-slot-label {
+  width: 72px;
+  flex-shrink: 0;
+  padding: 10px 10px 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #adb5bd;
+  border-right: 1px solid #f0f0f0;
+  white-space: nowrap;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.acal-day-slot.hour-mark .acal-slot-label { color: #6c757d; }
+
+.acal-slot-content {
   flex: 1;
-  padding: 8px 12px;
+  padding: 5px 12px;
+  min-height: 40px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
-.slot-appointment {
+.acal-day-apt {
   background: #fff;
-  border-left: 4px solid #f2421b;
+  border-left: 4px solid;
+  border-radius: 0 10px 10px 0;
   padding: 10px 14px;
-  border-radius: 0 8px 8px 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
   cursor: pointer;
   transition: all 0.15s;
+  user-select: none;
 }
+.acal-day-apt:hover { box-shadow: 0 4px 12px rgba(0,0,0,.09); transform: translateX(3px); }
+.acal-day-apt.cancelled { opacity: .5; text-decoration: line-through; }
+.acal-day-apt[draggable="true"] { cursor: grab; }
+.acal-day-apt[draggable="true"]:active { cursor: grabbing; opacity: .65; }
 
-.slot-appointment:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  transform: translateX(2px);
+.dapt-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.dapt-time { font-size: 11px; font-weight: 700; color: #6c757d; }
+.dapt-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: capitalize;
 }
+.dapt-client { font-size: 14px; font-weight: 700; color: #1c2430; margin-bottom: 3px; }
+.dapt-meta { font-size: 12px; color: #6c757d; }
+.dapt-service { font-weight: 600; color: #495057; }
+.dapt-staff { color: #adb5bd; }
+.dapt-notes { font-size: 11px; color: #6c757d; font-style: italic; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #e9ecef; }
+.drag-hint { font-size: 10px; color: #ced4da; margin-top: 4px; font-style: italic; }
 
-.slot-apt-time {
-  font-size: 11px;
-  font-weight: 600;
-  color: #f2421b;
-  margin-bottom: 4px;
-}
-
-.slot-apt-client {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1c2430;
-}
-
-.slot-apt-service {
+.block-band {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-left: 4px solid;
+  border-radius: 0 8px 8px 0;
   font-size: 12px;
-  color: #6c757d;
-  margin-top: 2px;
 }
+.block-icon { font-size: 14px; }
+.block-name { font-weight: 600; color: #344054; flex: 1; }
+.block-time { font-size: 11px; color: #667085; }
 
-.slot-apt-staff {
-  font-size: 11px;
-  color: #adb5bd;
-  margin-top: 2px;
+.open-slot-hint {
+  font-size: 12px;
+  color: #ced4da;
+  align-self: center;
+  transition: color 0.15s;
 }
+.acal-day-slot.open-slot:hover .open-slot-hint { color: #28a745; font-weight: 600; }
 
-.empty-slot {
+/* ═══ MULTI-STAFF VIEW ══════════════════════════════════════ */
+.acal-multistaff { overflow-x: auto; }
+
+.ms-top {
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+.ms-top h3 { font-size: 16px; font-weight: 700; color: #1c2430; margin: 0; }
+.ms-top h3.is-today { color: #28a745; }
+
+.ms-scroll-wrap { overflow-x: auto; }
+
+.ms-head {
+  display: flex;
+  border-bottom: 2px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 5;
+  min-width: max-content;
+}
+.ms-time-col {
+  width: 72px;
+  flex-shrink: 0;
+  border-right: 1px solid #e9ecef;
+}
+.ms-staff-head {
+  flex: 1;
+  min-width: 140px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border-right: 1px solid #e9ecef;
+  cursor: default;
+}
+.ms-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f2421b, #e63715);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 12px;
-  border: 2px dashed #e9ecef;
-  border-radius: 8px;
-  color: #adb5bd;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
+}
+.ms-staff-name { font-size: 13px; font-weight: 700; color: #1c2430; text-align: center; }
+.ms-staff-count { font-size: 10px; color: #6c757d; font-weight: 500; }
+
+.ms-body {
+  max-height: 600px;
+  overflow-y: auto;
+  min-width: max-content;
 }
 
-.empty-slot:hover {
-  border-color: #f2421b;
-  color: #f2421b;
-  background: #f0f0ff;
-}
-
-/* Legend */
-.calendar-legend {
+.ms-row {
   display: flex;
-  justify-content: center;
+  border-bottom: 1px solid #f5f5f5;
+  min-height: 40px;
+}
+.ms-row.hour-mark { border-bottom-color: #e9ecef; min-height: 46px; }
+.ms-row.half-mark { background: #fafafa; }
+
+.ms-time-label {
+  width: 72px;
+  flex-shrink: 0;
+  padding: 10px 8px 10px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6c757d;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.ms-cell {
+  flex: 1;
+  min-width: 140px;
+  padding: 3px 5px;
+  border-right: 1px solid #e9ecef;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background 0.1s;
+}
+.ms-cell:hover { background: #f8f9fa; }
+.ms-cell.blocked { cursor: default; }
+.ms-cell.drag-target { background: #eef2ff !important; outline: 2px dashed #6366f1; outline-offset: -2px; }
+
+.ms-block-label { font-size: 9px; font-weight: 600; color: #6c757d; font-style: italic; text-align: center; }
+
+.ms-apt {
+  border-radius: 6px;
+  padding: 5px 7px;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  user-select: none;
+}
+.ms-apt:hover { filter: brightness(1.1); transform: scale(1.01); }
+.ms-apt.cancelled { opacity: .5; text-decoration: line-through; }
+.ms-apt[draggable="true"] { cursor: grab; }
+.ms-apt[draggable="true"]:active { cursor: grabbing; opacity: .65; }
+.msapt-time { font-size: 9px; font-weight: 700; opacity: .85; }
+.msapt-client { font-size: 11px; font-weight: 700; }
+.msapt-service { font-size: 9px; opacity: .8; }
+
+/* ── Empty state ── */
+.acal-empty-state {
+  padding: 48px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+.acal-empty-state p { margin-bottom: 16px; }
+.cal-btn-primary {
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #f2421b, #e63715);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Legend ── */
+.acal-legend {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px 20px;
   border-top: 1px solid #e9ecef;
   background: #f8f9fa;
 }
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.legend-label {
-  font-size: 12px;
+.legend-title {
+  font-size: 11px;
+  font-weight: 700;
   color: #6c757d;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: .5px;
 }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { font-size: 12px; color: #6c757d; text-transform: capitalize; }
 
-/* Responsive */
-@media (max-width: 992px) {
-  .calendar-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .calendar-controls {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-
-  .calendar-days.month .calendar-day {
-    min-height: 80px;
-  }
-
-  .apt-indicator {
-    font-size: 9px;
-    padding: 2px 4px;
-  }
-
-  .apt-client {
-    display: none;
-  }
-}
-
-@media (max-width: 576px) {
-  .calendar-days.month .calendar-day {
-    min-height: 60px;
-    padding: 4px;
-  }
-
-  .day-number {
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
-  }
-
-  .day-appointments {
-    display: none;
-  }
-
-  .calendar-day.has-appointments::after {
-    content: '';
-    display: block;
-    width: 6px;
-    height: 6px;
-    background: #f2421b;
-    border-radius: 50%;
-    margin: 4px auto 0;
-  }
-
-  .view-toggle {
-    width: 100%;
-  }
-
-  .view-btn {
-    flex: 1;
-    text-align: center;
-    padding: 8px 10px;
-  }
-
-  .new-apt-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .time-label {
-    width: 60px;
-    padding: 8px;
-    font-size: 11px;
-  }
-}
-
-/* ── Expanded Day Popup ("+N more" click) ── */
+/* ── Day Popup ── */
 .calendar-day-popup-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0,0,0,.40);
   z-index: 9000;
   display: flex;
   align-items: center;
@@ -489,9 +744,9 @@
 .calendar-day-popup {
   background: #fff;
   border-radius: 14px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
   width: 100%;
-  max-width: 440px;
+  max-width: 450px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -515,7 +770,7 @@
 }
 .popup-count {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   background: #f2421b;
   color: #fff;
   padding: 2px 8px;
@@ -524,24 +779,20 @@
 .popup-close {
   background: none;
   border: none;
+  font-size: 18px;
   color: #667085;
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
   transition: all 0.15s;
+  line-height: 1;
 }
-.popup-close:hover {
-  background: #f2f4f7;
-  color: #101828;
-}
-.calendar-day-popup-list {
-  overflow-y: auto;
-  padding: 8px;
-}
+.popup-close:hover { background: #f2f4f7; color: #101828; }
+.calendar-day-popup-list { overflow-y: auto; padding: 8px; flex: 1; }
 .popup-apt-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 12px;
   border-left: 3px solid #ccc;
   border-radius: 8px;
@@ -549,44 +800,148 @@
   cursor: pointer;
   transition: background 0.1s;
 }
-.popup-apt-item:hover {
-  background: #f9fafb;
-}
-.popup-apt-time {
-  font-size: 12px;
-  font-weight: 600;
-  color: #344054;
-  min-width: 72px;
-  flex-shrink: 0;
-}
-.popup-apt-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.popup-apt-client {
-  font-size: 13px;
-  font-weight: 600;
-  color: #101828;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.popup-apt-service {
-  font-size: 11px;
-  color: #667085;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.popup-apt-item:hover { background: #f9fafb; }
+.popup-apt-time { font-size: 12px; font-weight: 700; color: #344054; min-width: 72px; flex-shrink: 0; }
+.popup-apt-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.popup-apt-client { font-size: 13px; font-weight: 700; color: #101828; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.popup-apt-service { font-size: 11px; color: #667085; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .popup-apt-badge {
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 2px 8px;
   border-radius: 10px;
   color: #fff;
   text-transform: capitalize;
   flex-shrink: 0;
 }
+.popup-footer {
+  padding: 10px 18px;
+  border-top: 1px solid #f2f4f7;
+  display: flex;
+  justify-content: flex-end;
+}
+.acal-link-btn {
+  background: none;
+  border: none;
+  color: #f2421b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.acal-link-btn:hover { text-decoration: underline; }
+
+/* ── Block Time Modal ── */
+.cal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.cal-modal-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+}
+.cal-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+.cal-modal-header h4 { font-size: 15px; font-weight: 700; color: #1c2430; margin: 0; }
+.cal-modal-body { padding: 18px 20px; }
+.cal-modal-hint { font-size: 12px; color: #6c757d; margin-bottom: 14px; }
+.cal-form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.cal-form-group label { font-size: 11px; font-weight: 700; color: #344054; text-transform: uppercase; letter-spacing: .4px; }
+.cal-form-group input,
+.cal-form-group select {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.cal-form-group input:focus,
+.cal-form-group select:focus { border-color: #f2421b; }
+.cal-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.color-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+}
+.color-swatch.active { border-color: #344054; transform: scale(1.15); }
+.color-swatch:hover { transform: scale(1.1); }
+.cal-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+.cal-btn-ghost {
+  padding: 8px 18px;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c757d;
+  cursor: pointer;
+}
+.cal-btn-ghost:hover { background: #f1f3f5; }
+.cal-btn-primary {
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #f2421b, #e63715);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cal-btn-primary:hover { box-shadow: 0 4px 10px rgba(242,66,27,.3); }
+
+/* ── Responsive ── */
+@media (max-width: 992px) {
+  .calendar-header { flex-direction: column; align-items: flex-start; }
+  .calendar-controls { width: 100%; flex-wrap: wrap; }
+  .acal-month-day { min-height: 72px; }
+  .pill-name { display: none; }
+}
+
+@media (max-width: 640px) {
+  .view-toggle { flex: 1; }
+  .view-btn { flex: 1; text-align: center; padding: 6px 6px; font-size: 11px; }
+  .new-apt-btn { flex: 1; justify-content: center; }
+  .acal-month-day { min-height: 54px; padding: 5px; }
+  .acal-day-apts { display: none; }
+  .acal-month-day.has-apts::after {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 5px;
+    background: #f2421b;
+    border-radius: 50%;
+    margin: 3px auto 0;
+  }
+  .calendar-title { min-width: 150px; font-size: 14px; }
+  .acal-slot-label { width: 52px; font-size: 10px; padding: 10px 6px; }
+  .ms-time-col, .ms-time-label { width: 52px; }
+}
+

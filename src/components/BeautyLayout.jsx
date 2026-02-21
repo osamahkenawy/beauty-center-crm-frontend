@@ -23,13 +23,17 @@ const initialState = {
 
 // Beauty Center Navigation Menu - with module permission keys for filtering
 const beautyMenuList = [
-  { title: 'MAIN', classsChange: 'menu-title' },
+  // ── OVERVIEW ──────────────────────────────────────────
+  { title: 'OVERVIEW', classsChange: 'menu-title' },
   {
     title: 'Dashboard',
     to: '/beauty-dashboard',
     iconStyle: <i className="flaticon-home" />,
     module: 'dashboard',
   },
+
+  // ── BOOKINGS ──────────────────────────────────────────
+  { title: 'BOOKINGS', classsChange: 'menu-title' },
   {
     title: 'Appointments',
     to: '/appointments',
@@ -37,30 +41,73 @@ const beautyMenuList = [
     module: 'appointments',
   },
   {
+    title: 'Waitlist',
+    to: '/waitlists',
+    iconStyle: <i className="flaticon-calendar-2" />,
+    module: 'waitlist',
+  },
+  {
+    title: 'Group Bookings',
+    to: '/group-bookings',
+    iconStyle: <Group width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'group_bookings',
+  },
+  {
+    title: 'Point of Sale',
+    to: '/pos',
+    iconStyle: <i className="flaticon-shopping-cart" />,
+    module: 'pos',
+  },
+
+  // ── CLIENTS ───────────────────────────────────────────
+  { title: 'CLIENTS', classsChange: 'menu-title' },
+  {
     title: 'Clients',
     to: '/beauty-clients',
     iconStyle: <i className="flaticon-user" />,
     module: 'clients',
   },
-  { title: 'SERVICES', classsChange: 'menu-title' },
   {
-    title: 'Team',
+    title: 'Consultation Forms',
+    to: '/consultation-forms',
+    iconStyle: <Notes width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'consultation_forms',
+  },
+  {
+    title: 'Patch Tests',
+    to: '/patch-tests',
+    iconStyle: <i className="flaticon-app" />,
+    module: 'patch_tests',
+  },
+  {
+    title: 'Reviews',
+    to: '/reviews',
+    iconStyle: <i className="flaticon-heart-1" />,
+    module: 'reviews',
+  },
+
+  // ── TEAM ──────────────────────────────────────────────
+  { title: 'TEAM', classsChange: 'menu-title' },
+  {
+    title: 'Staff',
     to: '/team',
     iconStyle: <Group width={20} height={20} style={{ display: 'inline-flex' }} />,
     module: 'team',
   },
-  { title: 'BUSINESS', classsChange: 'menu-title' },
+  {
+    title: 'Staff Analytics',
+    to: '/beauty-staff-performance',
+    iconStyle: <i className="flaticon-bar-chart" />,
+    module: 'reports',
+  },
+
+  // ── SALES ─────────────────────────────────────────────
+  { title: 'SALES', classsChange: 'menu-title' },
   {
     title: 'Payments',
     to: '/beauty-payments',
     iconStyle: <i className="flaticon-shopping-cart" />,
     module: 'payments',
-  },
-  {
-    title: 'Loyalty',
-    to: '/loyalty',
-    iconStyle: <i className="flaticon-heart-1" />,
-    module: 'loyalty',
   },
   {
     title: 'Gift Cards',
@@ -80,6 +127,9 @@ const beautyMenuList = [
     iconStyle: <i className="flaticon-user-1" />,
     module: 'memberships',
   },
+
+  // ── MARKETING ─────────────────────────────────────────
+  { title: 'MARKETING', classsChange: 'menu-title' },
   {
     title: 'Promotions',
     to: '/promotions',
@@ -87,34 +137,10 @@ const beautyMenuList = [
     module: 'promotions',
   },
   {
-    title: 'Reviews',
-    to: '/reviews',
+    title: 'Loyalty',
+    to: '/loyalty',
     iconStyle: <i className="flaticon-heart-1" />,
-    module: 'reviews',
-  },
-  {
-    title: 'Waitlist',
-    to: '/waitlists',
-    iconStyle: <i className="flaticon-calendar-2" />,
-    module: 'waitlist',
-  },
-  {
-    title: 'Reports',
-    to: '/beauty-reports',
-    iconStyle: <i className="flaticon-bar-chart" />,
-    module: 'reports',
-  },
-  {
-    title: 'Staff Analytics',
-    to: '/beauty-staff-performance',
-    iconStyle: <i className="flaticon-network" />,
-    module: 'reports',
-  },
-  {
-    title: 'Notifications',
-    to: '/notifications',
-    iconStyle: <Bell width={20} height={20} style={{ display: 'inline-flex' }} />,
-    module: 'notifications',
+    module: 'loyalty',
   },
   {
     title: 'Marketing',
@@ -122,36 +148,34 @@ const beautyMenuList = [
     iconStyle: <i className="flaticon-rocket" />,
     module: 'marketing',
   },
+  {
+    title: 'Notifications',
+    to: '/notifications',
+    iconStyle: <Bell width={20} height={20} style={{ display: 'inline-flex' }} />,
+    module: 'notifications',
+  },
+
+  // ── ANALYTICS ────────────────────────────────────────
+  { title: 'ANALYTICS', classsChange: 'menu-title' },
+  {
+    title: 'Reports',
+    to: '/beauty-reports',
+    iconStyle: <i className="flaticon-bar-chart" />,
+    module: 'reports',
+  },
+
+  // ── OPERATIONS ───────────────────────────────────────
   { title: 'OPERATIONS', classsChange: 'menu-title' },
-  {
-    title: 'Point of Sale',
-    to: '/pos',
-    iconStyle: <i className="flaticon-shopping-cart" />,
-    module: 'pos',
-  },
-  {
-    title: 'Group Bookings',
-    to: '/group-bookings',
-    iconStyle: <i className="flaticon-calendar-2" />,
-    module: 'group_bookings',
-  },
-  {
-    title: 'Consultation Forms',
-    to: '/consultation-forms',
-    iconStyle: <Notes width={20} height={20} style={{ display: 'inline-flex' }} />,
-    module: 'consultation_forms',
-  },
-  {
-    title: 'Patch Tests',
-    to: '/patch-tests',
-    iconStyle: <i className="flaticon-app" />,
-    module: 'patch_tests',
-  },
   {
     title: 'Inventory',
     to: '/inventory',
     iconStyle: <i className="flaticon-app" />,
     module: 'inventory',
+  },
+  {
+    title: 'Generate QR Codes',
+    to: '/tools/qr-codes',
+    iconStyle: <QrCode width={20} height={20} style={{ display: 'inline-flex' }} />,
   },
   {
     title: 'App Connect',
@@ -160,12 +184,8 @@ const beautyMenuList = [
     module: 'settings',
     isHighlight: true,
   },
-  { title: 'TOOLS', classsChange: 'menu-title' },
-  {
-    title: 'Generate QR Codes',
-    to: '/tools/qr-codes',
-    iconStyle: <QrCode width={20} height={20} style={{ display: 'inline-flex' }} />,
-  },
+
+  // ── SETTINGS ─────────────────────────────────────────
   { title: 'SETTINGS', classsChange: 'menu-title', adminOnly: true },
   {
     title: 'Settings',
@@ -592,7 +612,11 @@ export default function BeautyLayout({ children }) {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                   >
                     <div className="header-user">
-                      <span className="avatar">{user?.full_name?.charAt(0) || 'U'}</span>
+                      <span className="avatar">
+                        {user?.avatar_url
+                          ? <img src={user.avatar_url} alt={user.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                          : (user?.full_name?.charAt(0) || 'U')}
+                      </span>
                       <div className="header-info ms-2">
                         <span className="fs-14 font-w600">{user?.full_name || user?.username}</span>
                       </div>
@@ -602,7 +626,11 @@ export default function BeautyLayout({ children }) {
                   {showUserMenu && (
                     <div className="profile-dropdown">
                       <div className="profile-header">
-                        <div className="avatar-lg">{user?.full_name?.charAt(0) || 'U'}</div>
+                        <div className="avatar-lg">
+                          {user?.avatar_url
+                            ? <img src={user.avatar_url} alt={user.full_name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                            : (user?.full_name?.charAt(0) || 'U')}
+                        </div>
                         <div className="ms-3">
                           <h4>{user?.full_name || user?.username}</h4>
                           <p>{user?.email}</p>

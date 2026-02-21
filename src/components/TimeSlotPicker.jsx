@@ -11,7 +11,8 @@ export default function TimeSlotPicker({
   bookedSlots, 
   staffId,
   duration = 60,
-  workingHours
+  workingHours,
+  breakSlots = [],   // [{ startHour, startMin, endHour, endMin, label, color }]
 }) {
   const stableBookedSlots = bookedSlots || [];
   const stableWorkingHours = workingHours || DEFAULT_WORKING_HOURS;
@@ -21,6 +22,18 @@ export default function TimeSlotPicker({
     if (!dateStr) return null;
     const [y, m, d] = dateStr.split('-').map(Number);
     return new Date(y, m - 1, d, hour, minute, 0, 0);
+  };
+
+  /** Returns matching break slot if this time slot overlaps any break, else null */
+  const checkIfBreak = (hour, minute) => {
+    if (!breakSlots.length) return null;
+    const slotStart = hour * 60 + minute;
+    const slotEnd   = slotStart + duration;
+    return breakSlots.find(b => {
+      const bStart = b.startHour * 60 + b.startMin;
+      const bEnd   = b.endHour   * 60 + b.endMin;
+      return slotStart < bEnd && slotEnd > bStart;
+    }) || null;
   };
 
   const checkIfBooked = (hour, minute, serviceDuration, date, booked) => {
@@ -70,6 +83,7 @@ export default function TimeSlotPicker({
           continue;
         }
 
+        const breakMatch = checkIfBreak(hour, minute);
         const isBooked = checkIfBooked(hour, minute, duration, selectedDate, stableBookedSlots);
         const isPast = checkIfPast(hour, minute, selectedDate);
 
@@ -78,32 +92,55 @@ export default function TimeSlotPicker({
           label: formatTimeLabel(hour, minute),
           available: !isBooked && !isPast,
           isPast,
-          isBooked
+          isBooked,
+          isBreak: !!breakMatch,
+          breakLabel: breakMatch?.label || '',
         });
       }
     }
 
     return timeSlots;
-  }, [selectedDate, stableBookedSlots.length, duration, stableWorkingHours.start, stableWorkingHours.end]);
+  }, [selectedDate, stableBookedSlots.length, duration, stableWorkingHours.start, stableWorkingHours.end, breakSlots]);
 
   const handleSlotSelect = (slot) => {
     if (!slot.available) return;
     onTimeSelect(slot.time);
   };
 
-  const morning = slots.filter(s => parseInt(s.time.split(':')[0]) < 12);
-  const afternoon = slots.filter(s => {
-    const hour = parseInt(s.time.split(':')[0]);
-    return hour >= 12 && hour < 17;
-  });
-  const evening = slots.filter(s => parseInt(s.time.split(':')[0]) >= 17);
+  const renderSlot = (slot) => (
+    <button
+      key={slot.time}
+      type="button"
+      title={slot.isBreak ? `☕ ${slot.breakLabel}` : undefined}
+      className={[
+        'time-slot-btn',
+        !slot.available   ? 'unavailable' : '',
+        slot.isBooked     ? 'booked'      : '',
+        slot.isPast       ? 'past'        : '',
+        slot.isBreak      ? 'break-time'  : '',
+        selectedTime === slot.time ? 'selected' : '',
+      ].join(' ').trim()}
+      onClick={() => handleSlotSelect(slot)}
+      disabled={!slot.available}
+    >
+      {selectedTime === slot.time && <Check width={14} height={14} />}
+      {slot.label}
+      {slot.isBreak && <span className="break-badge">☕</span>}
+    </button>
+  );
+
+  const morning   = slots.filter(s => parseInt(s.time.split(':')[0]) < 12);
+  const afternoon = slots.filter(s => { const h = parseInt(s.time.split(':')[0]); return h >= 12 && h < 17; });
+  const evening   = slots.filter(s => parseInt(s.time.split(':')[0]) >= 17);
+
+  const hasBreaks = slots.some(s => s.isBreak);
 
   return (
     <div className="time-slot-picker">
       {selectedDate && (
         <div className="selected-date-label">
           <Clock width={16} height={16} />
-          {new Date(selectedDate).toLocaleDateString('en-US', { 
+          {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { 
             weekday: 'long', 
             month: 'long', 
             day: 'numeric' 
@@ -113,76 +150,22 @@ export default function TimeSlotPicker({
 
       {morning.length > 0 && (
         <div className="time-period">
-          <h4 className="period-title">
-            <SunLight width={16} height={16} /> Morning
-          </h4>
-          <div className="slots-grid">
-            {morning.map(slot => (
-              <button
-                key={slot.time}
-                type="button"
-                className={`time-slot-btn ${!slot.available ? 'unavailable' : ''} 
-                           ${slot.isBooked ? 'booked' : ''} 
-                           ${slot.isPast ? 'past' : ''}
-                           ${selectedTime === slot.time ? 'selected' : ''}`}
-                onClick={() => handleSlotSelect(slot)}
-                disabled={!slot.available}
-              >
-                {selectedTime === slot.time && <Check width={14} height={14} />}
-                {slot.label}
-              </button>
-            ))}
-          </div>
+          <h4 className="period-title"><SunLight width={16} height={16} /> Morning</h4>
+          <div className="slots-grid">{morning.map(renderSlot)}</div>
         </div>
       )}
 
       {afternoon.length > 0 && (
         <div className="time-period">
-          <h4 className="period-title">
-            <SunLight width={16} height={16} /> Afternoon
-          </h4>
-          <div className="slots-grid">
-            {afternoon.map(slot => (
-              <button
-                key={slot.time}
-                type="button"
-                className={`time-slot-btn ${!slot.available ? 'unavailable' : ''} 
-                           ${slot.isBooked ? 'booked' : ''} 
-                           ${slot.isPast ? 'past' : ''}
-                           ${selectedTime === slot.time ? 'selected' : ''}`}
-                onClick={() => handleSlotSelect(slot)}
-                disabled={!slot.available}
-              >
-                {selectedTime === slot.time && <Check width={14} height={14} />}
-                {slot.label}
-              </button>
-            ))}
-          </div>
+          <h4 className="period-title"><SunLight width={16} height={16} /> Afternoon</h4>
+          <div className="slots-grid">{afternoon.map(renderSlot)}</div>
         </div>
       )}
 
       {evening.length > 0 && (
         <div className="time-period">
-          <h4 className="period-title">
-            <HalfMoon width={16} height={16} /> Evening
-          </h4>
-          <div className="slots-grid">
-            {evening.map(slot => (
-              <button
-                key={slot.time}
-                type="button"
-                className={`time-slot-btn ${!slot.available ? 'unavailable' : ''} 
-                           ${slot.isBooked ? 'booked' : ''} 
-                           ${slot.isPast ? 'past' : ''}
-                           ${selectedTime === slot.time ? 'selected' : ''}`}
-                onClick={() => handleSlotSelect(slot)}
-                disabled={!slot.available}
-              >
-                {selectedTime === slot.time && <Check width={14} height={14} />}
-                {slot.label}
-              </button>
-            ))}
-          </div>
+          <h4 className="period-title"><HalfMoon width={16} height={16} /> Evening</h4>
+          <div className="slots-grid">{evening.map(renderSlot)}</div>
         </div>
       )}
 
@@ -199,6 +182,12 @@ export default function TimeSlotPicker({
           <span className="legend-indicator selected"></span>
           <span>Selected</span>
         </div>
+        {hasBreaks && (
+          <div className="legend-item">
+            <span className="legend-indicator break-time"></span>
+            <span>Break time</span>
+          </div>
+        )}
       </div>
     </div>
   );
