@@ -105,6 +105,12 @@ const beautyMenuList = [
     module: 'reports',
   },
   {
+    title: 'Staff Analytics',
+    to: '/beauty-staff-performance',
+    iconStyle: <i className="flaticon-network" />,
+    module: 'reports',
+  },
+  {
     title: 'Notifications',
     to: '/notifications',
     iconStyle: <Bell width={20} height={20} style={{ display: 'inline-flex' }} />,

@@ -38,6 +38,7 @@ import LoyaltyProgram from './pages/LoyaltyProgram';
 import BeautyClients from './pages/BeautyClients';
 import BeautyPayments from './pages/BeautyPayments';
 import BeautyReports from './pages/BeautyReports';
+import BeautyStaffPerformance from './pages/BeautyStaffPerformance';
 import BeautySettings from './pages/BeautySettings';
 import GiftCards from './pages/GiftCards';
 import Waitlists from './pages/Waitlists';
@@ -294,6 +295,7 @@ function App() {
         <Route path="/beauty-invoices" element={user ? <BeautyLayout><BeautyPayments /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-reports" element={user ? <BeautyLayout><BeautyReports /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-reports/*" element={user ? <BeautyLayout><BeautyReports /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/beauty-staff-performance" element={user ? <BeautyLayout><BeautyStaffPerformance /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-settings" element={user ? <BeautyLayout><BeautySettings /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/beauty-settings/*" element={user ? <BeautyLayout><BeautySettings /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/gift-cards" element={user ? <BeautyLayout><GiftCards /></BeautyLayout> : <Navigate to="/login" />} />
