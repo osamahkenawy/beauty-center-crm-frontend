@@ -1,11 +1,21 @@
 import ReactApexChart from "react-apexcharts";
 
-const WeeklySalesBarChart = ({ color = 'var(--primary)' }) => {
+const DEFAULT_CATEGORIES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const WeeklySalesBarChart = ({
+  color = 'var(--primary)',
+  name = 'Bookings',
+  data,
+  categories,
+}) => {
+  const safeData = Array.isArray(data) && data.length ? data : [28, 40, 50, 68, 30, 68, 48];
+  const safeCategories = Array.isArray(categories) && categories.length ? categories : DEFAULT_CATEGORIES;
+
   const series = [
     {
-      name: 'Bookings',
-      data: [28, 40, 50, 68, 30, 68, 48, 28, 20]
-    }
+      name,
+      data: safeData,
+    },
   ];
 
   const options = {
@@ -44,6 +54,7 @@ const WeeklySalesBarChart = ({ color = 'var(--primary)' }) => {
       crosshairs: {
         show: false,
       },
+      categories: safeCategories,
     },
     yaxis: {
       labels: {

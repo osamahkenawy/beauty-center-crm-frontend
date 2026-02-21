@@ -42,6 +42,7 @@ export default function Appointments() {
   const { currency } = useCurrency();
   const [appointments, setAppointments] = useState([]);
   const [allAppointments, setAllAppointments] = useState([]);
+  const [staffDayAppointments, setStaffDayAppointments] = useState([]);
   const [staff, setStaff] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [services, setServices] = useState([]);
@@ -160,7 +161,10 @@ export default function Appointments() {
     }
   }, [filterStatus, filterStaff, fromDate, toDate, search]);
 
-  const fetchAllAppointments = useCallback(async () => {
+  const fetchAllAppointments = useCallback(async (force = false) => {
+    if (!force && viewMode !== 'calendar') {
+      return;
+    }
     try {
       const data = await api.get('/appointments?all=true&limit=10000');
       if (data.success) {
@@ -169,7 +173,7 @@ export default function Appointments() {
     } catch (error) {
       console.error('Failed to fetch all appointments:', error);
     }
-  }, []);
+  }, [viewMode]);
 
   const fetchDropdownData = useCallback(async () => {
     try {
@@ -187,6 +191,27 @@ export default function Appointments() {
       console.error('Failed to fetch dropdown data:', error);
     }
   }, []);
+
+  const fetchStaffDayAppointments = useCallback(async () => {
+    if (!showModal || bookingStep < 2 || !formData.staff_id || !formData.booking_date) {
+      setStaffDayAppointments([]);
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.append('all', 'true');
+      params.append('limit', '500');
+      params.append('staff_id', String(formData.staff_id));
+      params.append('date', formData.booking_date);
+      const data = await api.get(`/appointments?${params}`);
+      if (data.success) {
+        setStaffDayAppointments(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch staff day appointments:', error);
+    }
+  }, [showModal, bookingStep, formData.staff_id, formData.booking_date]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -229,7 +254,16 @@ export default function Appointments() {
 
     fetchWorkingHours();
   }, [formData.staff_id, formData.booking_date]);
-  useEffect(() => { fetchAllAppointments(); }, [fetchAllAppointments]);
+  useEffect(() => {
+    if (viewMode === 'calendar') {
+      fetchAllAppointments(true);
+    }
+  }, [viewMode, fetchAllAppointments]);
+
+  useEffect(() => {
+    fetchStaffDayAppointments();
+  }, [fetchStaffDayAppointments]);
+
   useEffect(() => { fetchDropdownData(); }, [fetchDropdownData]);
 
   const handleInputChange = (e) => {
@@ -243,13 +277,11 @@ export default function Appointments() {
 
   const getBookedSlotsForStaff = () => {
     if (!formData.staff_id || !formData.booking_date) return [];
-    return allAppointments.filter(apt => {
-      // Use local date parts to compare (avoids UTC date shift near midnight)
-      const s = new Date(apt.start_time);
-      const aptDate = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}-${String(s.getDate()).padStart(2,'0')}`;
-      return apt.staff_id === parseInt(formData.staff_id) && 
-             aptDate === formData.booking_date &&
-             apt.status !== 'cancelled';
+    return staffDayAppointments.filter((apt) => {
+      const isSameStaff = apt.staff_id === parseInt(formData.staff_id);
+      const notCancelled = apt.status !== 'cancelled';
+      const notCurrentEdit = !editingItem || apt.id !== editingItem.id;
+      return isSameStaff && notCancelled && notCurrentEdit;
     });
   };
 
@@ -338,8 +370,7 @@ export default function Appointments() {
     setShowViewModal(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     
     // Only allow submission on step 4 (Review)
     if (bookingStep !== 4) {
@@ -1103,7 +1134,7 @@ export default function Appointments() {
               ))}
             </div>
 
-            <form onSubmit={handleSubmit} className="booking-form-new">
+            <form onSubmit={(e) => e.preventDefault()} className="booking-form-new">
               {/* Step 1: Service & Staff */}
               {bookingStep === 1 && (
                 <div className="step-content">
@@ -1302,6 +1333,13 @@ export default function Appointments() {
                           className="promo-input"
                           placeholder="Enter code e.g. BEAUTY20"
                           value={promoCode}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (!promoCode.trim() || promoStatus === 'valid' || promoStatus === 'validating') return;
+                              validatePromo();
+                            }
+                          }}
                           onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); if (promoStatus !== 'idle') { setPromoStatus('idle'); setPromoError(''); setPromoResult(null); } }}
                           disabled={promoStatus === 'valid'}
                         />
@@ -1392,7 +1430,7 @@ export default function Appointments() {
                     Continue
                   </button>
                 ) : (
-                  <button type="submit" className="btn-primary btn-confirm-booking" disabled={saving}>
+                  <button type="button" className="btn-primary btn-confirm-booking" disabled={saving} onClick={handleSubmit}>
                     {saving ? (
                       <>
                         <span className="promo-spinner" style={{ marginRight: 8 }}></span> Booking...

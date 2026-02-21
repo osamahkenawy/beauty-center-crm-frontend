@@ -24,6 +24,7 @@ export default function BeautyClients() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterSource, setFilterSource] = useState('');
+  const [filterVip, setFilterVip] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [stats, setStats] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -50,6 +51,7 @@ export default function BeautyClients() {
       first_name: '', last_name: '', email: '', phone: '', mobile: '',
       gender: '', date_of_birth: '', notes: '', source: 'walk-in',
       address: '', instagram: '', allergies: '', referral_source: '',
+      is_vip: false,
     };
   }
 
@@ -66,6 +68,7 @@ export default function BeautyClients() {
       if (search) params.append('search', search);
       if (filterStatus) params.append('status', filterStatus);
       if (filterSource) params.append('source', filterSource);
+      if (filterVip) params.append('vip', 'true');
 
       const data = await api.get(`/contacts?${params}`);
       if (data.success) {
@@ -77,7 +80,7 @@ export default function BeautyClients() {
     } finally {
       setLoading(false);
     }
-  }, [search, sortBy, filterStatus, filterSource]);
+  }, [search, sortBy, filterStatus, filterSource, filterVip]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -118,6 +121,25 @@ export default function BeautyClients() {
     }
   };
 
+  /* ─── Toggle VIP status ─── */
+  const handleToggleVip = async (clientId, currentIsVip) => {
+    try {
+      const res = await api.patch(`/contacts/${clientId}/toggle-vip`);
+      if (res.success) {
+        showToast('success', res.message || (currentIsVip ? 'VIP status removed' : 'Client marked as VIP'));
+        // Update local state immediately
+        setClients(prev => prev.map(c => c.id === clientId ? { ...c, is_vip: currentIsVip ? 0 : 1 } : c));
+        setAllClients(prev => prev.map(c => c.id === clientId ? { ...c, is_vip: currentIsVip ? 0 : 1 } : c));
+        if (detailClient?.id === clientId) {
+          setDetailClient(prev => ({ ...prev, is_vip: currentIsVip ? 0 : 1 }));
+        }
+        fetchStats();
+      }
+    } catch (error) {
+      showToast('error', 'Failed to update VIP status');
+    }
+  };
+
   /* ─── Open add/edit ─── */
   const openAddEdit = (client = null) => {
     if (client) {
@@ -136,6 +158,7 @@ export default function BeautyClients() {
         instagram: client.instagram || '',
         allergies: client.allergies || '',
         referral_source: client.referral_source || '',
+        is_vip: client.is_vip ? true : false,
       });
     } else {
       setEditingClient(null);
@@ -500,8 +523,15 @@ export default function BeautyClients() {
               {SORT_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           </div>
-          <button className="cl-btn cl-btn-text" data-tooltip="Reset all filters" onClick={() => { setFilterStatus(''); setFilterSource(''); setSortBy('newest'); }}>
+          <button className="cl-btn cl-btn-text" data-tooltip="Reset all filters" onClick={() => { setFilterStatus(''); setFilterSource(''); setSortBy('newest'); setFilterVip(false); }}>
             Clear All
+          </button>
+          <button
+            className={`cl-btn ${filterVip ? 'cl-btn-vip-active' : 'cl-btn-outline'}`}
+            data-tooltip="Show VIP clients only"
+            onClick={() => setFilterVip(v => !v)}
+          >
+            <StarSolid width={14} height={14} style={{ color: filterVip ? '#f5c518' : 'currentColor' }} /> VIP Only
           </button>
         </div>
       )}
@@ -570,7 +600,10 @@ export default function BeautyClients() {
                             {getInitials(c.first_name, c.last_name)}
                           </div>
                           <div>
-                            <div className="cl-name">{c.first_name} {c.last_name}</div>
+                            <div className="cl-name">
+                              {c.first_name} {c.last_name}
+                              {c.is_vip ? <span className="cl-vip-badge" title="VIP Client"><StarSolid width={11} height={11} /> VIP</span> : null}
+                            </div>
                             <div className="cl-since">Since {formatDate(c.created_at)}</div>
                           </div>
                         </div>
@@ -605,6 +638,14 @@ export default function BeautyClients() {
                           </button>
                           <button className="cl-act-btn" title="Edit" data-tooltip="Edit client" onClick={() => openAddEdit(c)}>
                             <Edit width={16} height={16} />
+                          </button>
+                          <button
+                            className={`cl-act-btn${c.is_vip ? ' cl-act-vip-on' : ''}`}
+                            title={c.is_vip ? 'Remove VIP' : 'Mark as VIP'}
+                            data-tooltip={c.is_vip ? 'Remove VIP status' : 'Mark as VIP'}
+                            onClick={() => handleToggleVip(c.id, c.is_vip)}
+                          >
+                            <StarSolid width={15} height={15} />
                           </button>
                           <button className="cl-act-btn cl-act-danger" title="Delete" data-tooltip="Delete client" onClick={() => setShowDeleteConfirm(c)}>
                             <Trash width={16} height={16} />
@@ -720,6 +761,25 @@ export default function BeautyClients() {
                 <label><Notes width={14} height={14} /> Notes</label>
                 <textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Any preferences or important notes..." rows={3} />
               </div>
+
+              {/* VIP Toggle */}
+              <div className="cl-field cl-field-full">
+                <label className="cl-vip-toggle-label">
+                  <input
+                    type="checkbox"
+                    className="cl-vip-checkbox"
+                    checked={!!form.is_vip}
+                    onChange={e => setForm(p => ({ ...p, is_vip: e.target.checked }))}
+                  />
+                  <span className="cl-vip-toggle-content">
+                    <StarSolid width={16} height={16} style={{ color: form.is_vip ? '#f5c518' : '#ccc' }} />
+                    <span>
+                      <strong>VIP Client</strong>
+                      <small>VIP clients get priority service and exclusive offers</small>
+                    </span>
+                  </span>
+                </label>
+              </div>
             </div>
             <div className="cl-modal-footer">
               <button className="cl-btn cl-btn-ghost" onClick={() => setShowAddEdit(false)}>Cancel</button>
@@ -753,10 +813,23 @@ export default function BeautyClients() {
                   <span className="cl-tier-badge" style={{ background: t.bg, color: t.color }}>{t.icon} {t.label}</span>
                 ); })()}
                 <span className={`cl-status cl-status-${detailClient.status || 'active'}`}>{detailClient.status || 'Active'}</span>
+                {detailClient.is_vip ? (
+                  <span className="cl-vip-badge" style={{ fontSize: 12, padding: '3px 10px' }}>
+                    <StarSolid width={13} height={13} /> VIP Member
+                  </span>
+                ) : null}
               </div>
               <div className="cl-detail-quick-actions">
                 <button className="cl-btn cl-btn-sm" data-tooltip="Edit client info" onClick={() => { setShowDetail(false); openAddEdit(detailClient); }}>
                   <Edit width={14} height={14} /> Edit
+                </button>
+                <button
+                  className={`cl-btn cl-btn-sm${detailClient.is_vip ? ' cl-btn-vip-active' : ' cl-btn-outline'}`}
+                  data-tooltip={detailClient.is_vip ? 'Remove VIP status' : 'Mark as VIP client'}
+                  onClick={() => handleToggleVip(detailClient.id, detailClient.is_vip)}
+                >
+                  <StarSolid width={14} height={14} style={{ color: detailClient.is_vip ? '#f5c518' : 'currentColor' }} />
+                  {detailClient.is_vip ? 'Remove VIP' : 'Mark VIP'}
                 </button>
                 <button className="cl-btn cl-btn-sm cl-btn-danger-white" data-tooltip="Delete client" onClick={() => setShowDeleteConfirm(detailClient)}>
                   <Trash width={14} height={14} /> Delete
@@ -1340,6 +1413,38 @@ const CSS = `
 }
 .cl-act-btn:hover { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
 .cl-act-danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+.cl-act-vip-on { background: #fffbeb; border-color: #fcd34d; color: #b45309; }
+.cl-act-vip-on:hover { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+
+/* VIP Badge (inline name tag) */
+.cl-vip-badge {
+  display: inline-flex; align-items: center; gap: 3px; margin-left: 7px;
+  background: linear-gradient(120deg, #fffbeb, #fef3c7);
+  color: #b45309; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 20px; border: 1px solid #fcd34d;
+  vertical-align: middle;
+}
+.cl-vip-badge svg { flex-shrink: 0; }
+
+/* VIP Filter (active pill) */
+.cl-btn-vip-active {
+  background: linear-gradient(120deg, #fffbeb, #fef3c7) !important;
+  color: #b45309 !important; border-color: #fcd34d !important;
+  font-weight: 600;
+}
+
+/* VIP Toggle in form */
+.cl-vip-toggle-label {
+  display: flex; align-items: center; cursor: pointer;
+  background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 12px; padding: 12px 16px;
+  gap: 12px; transition: all 0.2s;
+}
+.cl-vip-toggle-label:hover { background: #fef3c7; }
+.cl-vip-checkbox { width: 18px; height: 18px; accent-color: #f59e0b; cursor: pointer; flex-shrink: 0; }
+.cl-vip-toggle-content { display: flex; align-items: center; gap: 10px; }
+.cl-vip-toggle-content span { display: flex; flex-direction: column; gap: 2px; }
+.cl-vip-toggle-content strong { font-size: 14px; color: #92400e; }
+.cl-vip-toggle-content small { font-size: 12px; color: #b45309; }
 
 /* ─── Loading / Empty ─── */
 .cl-loading { display: flex; flex-direction: column; align-items: center; padding: 60px 20px; color: #94a3b8; }

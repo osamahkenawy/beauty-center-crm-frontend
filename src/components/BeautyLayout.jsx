@@ -2,6 +2,7 @@ import { useState, useContext, useEffect, useReducer, useCallback, Fragment } fr
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Collapse } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { Menu, X, QrCode } from 'lucide-react';
 import { Bell, Group, Notes, Wifi } from 'iconoir-react';
 import { AuthContext } from '../App';
