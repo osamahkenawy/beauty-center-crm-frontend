@@ -66,6 +66,12 @@ import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
 import SuperAdminLayout from './pages/SuperAdmin/SuperAdminLayout';
 import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
 import SuperAdminTenants from './pages/SuperAdmin/SuperAdminTenants';
+import SuperAdminUsers from './pages/SuperAdmin/SuperAdminUsers';
+import SuperAdminModules from './pages/SuperAdmin/SuperAdminModules';
+import SuperAdminAnalytics from './pages/SuperAdmin/SuperAdminAnalytics';
+import SuperAdminActivity from './pages/SuperAdmin/SuperAdminActivity';
+import SuperAdminTenantDetail from './pages/SuperAdmin/SuperAdminTenantDetail';
+import SuperAdminSettings from './pages/SuperAdmin/SuperAdminSettings';
 
 // Components
 import Layout from './components/Layout';
@@ -322,7 +328,12 @@ function App() {
           <Route index element={<Navigate to="/super-admin/dashboard" />} />
           <Route path="dashboard" element={<SuperAdminDashboard />} />
           <Route path="tenants" element={<SuperAdminTenants />} />
-          <Route path="tenants/:id" element={<SuperAdminTenants />} />
+          <Route path="tenants/:id" element={<SuperAdminTenantDetail />} />
+          <Route path="users" element={<SuperAdminUsers />} />
+          <Route path="modules" element={<SuperAdminModules />} />
+          <Route path="analytics" element={<SuperAdminAnalytics />} />
+          <Route path="activity" element={<SuperAdminActivity />} />
+          <Route path="settings" element={<SuperAdminSettings />} />
         </Route>
         
         {/* 404 */}

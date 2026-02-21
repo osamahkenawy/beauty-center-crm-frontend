@@ -1065,4 +1065,150 @@
   color: #6b7280;
 }
 
+/* ─── Plan Badges ─── */
+.sa-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
 
+/* ─── Header Actions ─── */
+.sa-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sa-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sa-secondary-btn:hover { background: #f9fafb; border-color: #d1d5db; }
+
+/* ─── Form Helpers ─── */
+.sa-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.sa-form-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+.sa-form-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* ─── Plan Selector ─── */
+.sa-plan-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+.sa-plan-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 4px;
+}
+.sa-plan-option:hover { border-color: #d1d5db; background: #f9fafb; }
+.sa-plan-option.selected { font-weight: 600; }
+.sa-plan-option-name { font-size: 13px; font-weight: 600; }
+.sa-plan-option-price { font-size: 11px; color: #6b7280; }
+
+/* ─── Danger action button ─── */
+.sa-action-btn.danger { color: #ef4444; }
+.sa-action-btn.danger:hover { background: #fef2f2; }
+
+/* ─── Danger button in modal ─── */
+.sa-btn.danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border: none;
+}
+.sa-btn.danger:hover { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+
+/* ─── Toast notification ─── */
+.sa-toast {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 420px;
+  animation: toastIn 0.3s ease;
+}
+.sa-toast.success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+.sa-toast.error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+@keyframes toastIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ─── Analytics page ─── */
+.sa-analytics {}
+.sa-stats-grid.four-col { grid-template-columns: repeat(4, 1fr); }
+.sa-analytics-row {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+.sa-card.medium { min-width: 0; }
+.sa-plan-dist { display: flex; flex-direction: column; gap: 14px; margin: 8px 0; }
+.sa-plan-bar-item { display: flex; align-items: center; gap: 8px; }
+.sa-plan-bar-label { display: flex; align-items: center; gap: 6px; min-width: 125px; font-size: 13px; color: #374151; }
+.sa-plan-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.sa-plan-count { margin-left: auto; font-weight: 600; font-size: 13px; }
+.sa-plan-bar-track { flex: 1; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+.sa-plan-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.sa-plan-pct { font-size: 12px; color: #9ca3af; min-width: 32px; text-align: right; }
+.sa-plan-summary { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f3f4f6; display: flex; flex-direction: column; gap: 8px; }
+.sa-plan-total { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280; }
+.sa-small-spinner { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: #244066; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1100px) {
+  .sa-analytics-row { grid-template-columns: 1fr; }
+  .sa-stats-grid.four-col { grid-template-columns: repeat(2, 1fr); }
+  .sa-plan-selector { grid-template-columns: repeat(2, 1fr); }
+  .sa-form-row { grid-template-columns: 1fr; }
+}
