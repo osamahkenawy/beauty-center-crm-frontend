@@ -56,6 +56,7 @@ import OnlineBooking from './pages/OnlineBooking';
 import OnlineStore from './pages/OnlineStore';
 import AppConnect from './pages/AppConnect';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import SetPasswordPage from './pages/SetPasswordPage';
 
 // Super Admin Pages
 import SuperAdminLogin from './pages/SuperAdmin/SuperAdminLogin';
@@ -234,6 +235,7 @@ function App() {
         } />
         <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <RegisterPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
         
         {/* Protected routes - Core CRM */}
         <Route path="/dashboard" element={user ? <Layout><Dashboard /></Layout> : <Navigate to="/login" />} />

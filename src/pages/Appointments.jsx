@@ -97,6 +97,9 @@ export default function Appointments() {
   const [promoResult, setPromoResult] = useState(null);   // { promotion_id, discount_code_id, type, discount_value, discount_amount, message }
   const [promoError, setPromoError] = useState('');
 
+  // Working hours state
+  const [workingHours, setWorkingHours] = useState(null);
+
   const showToast = useCallback((type, message) => {
     setToast({ show: true, type, message });
     setTimeout(() => setToast({ show: false, type: '', message: '' }), 4000);
@@ -193,6 +196,39 @@ export default function Appointments() {
   useEffect(() => { 
     fetchAppointments(pagination.page, pagination.limit); 
   }, [pagination.page, pagination.limit, filterStatus, filterStaff, fromDate, toDate, search, fetchAppointments]);
+
+  // Fetch working hours when staff and date are selected
+  useEffect(() => {
+    const fetchWorkingHours = async () => {
+      if (!formData.staff_id || !formData.booking_date) {
+        setWorkingHours(null);
+        return;
+      }
+
+      try {
+        const data = await api.get(`/appointments/staff/${formData.staff_id}/availability?date=${formData.booking_date}`);
+        if (data.success && data.data?.workingHours) {
+          const wh = data.data.workingHours;
+          // Convert TIME format (HH:MM:SS) to hours
+          const [startH, startM] = wh.start.split(':').map(Number);
+          const [endH, endM] = wh.end.split(':').map(Number);
+          setWorkingHours({
+            start: startH + startM / 60,
+            end: endH + endM / 60
+          });
+        } else {
+          // Default to 9 AM - 9 PM if no schedule found
+          setWorkingHours({ start: 9, end: 21 });
+        }
+      } catch (error) {
+        console.error('Error fetching working hours:', error);
+        // Default to 9 AM - 9 PM on error
+        setWorkingHours({ start: 9, end: 21 });
+      }
+    };
+
+    fetchWorkingHours();
+  }, [formData.staff_id, formData.booking_date]);
   useEffect(() => { fetchAllAppointments(); }, [fetchAllAppointments]);
   useEffect(() => { fetchDropdownData(); }, [fetchDropdownData]);
 
@@ -1153,6 +1189,7 @@ export default function Appointments() {
                       bookedSlots={getBookedSlotsForStaff()}
                       staffId={formData.staff_id}
                       duration={getServiceDuration()}
+                      workingHours={workingHours}
                     />
                   </div>
                 </div>

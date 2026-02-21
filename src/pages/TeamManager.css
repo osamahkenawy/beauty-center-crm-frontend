@@ -210,6 +210,124 @@
   transform: translateY(-3px);
 }
 
+/* ── Terminated Staff Card Styles ───────────────── */
+.team-card.terminated {
+  opacity: 0.75;
+  border-color: #dc3545;
+  border-width: 2px;
+  position: relative;
+  filter: grayscale(50%);
+  background: #fff;
+}
+
+.team-card.terminated:hover {
+  opacity: 0.85;
+  filter: grayscale(30%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(220, 53, 69, 0.12);
+}
+
+.team-card.terminated .team-card-body {
+  position: relative;
+}
+
+.team-card.terminated .team-card-top {
+  background: #dc3545 !important;
+  opacity: 0.6;
+}
+
+/* Ribbon Badge - Top Right Corner */
+.team-terminated-ribbon {
+  position: absolute;
+  top: 12px;
+  right: -6px;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: #fff;
+  padding: 7px 22px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transform: rotate(3deg);
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.team-terminated-ribbon::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 6px solid #c82333;
+}
+
+.team-terminated-ribbon::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -6px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 6px solid #a01e2a;
+}
+
+.team-terminated-ribbon svg {
+  flex-shrink: 0;
+}
+
+/* Watermark - Subtle Background Icon */
+.team-terminated-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  opacity: 0.08;
+  z-index: 1;
+  pointer-events: none;
+  color: #dc3545;
+}
+
+.team-terminated-watermark svg {
+  width: 120px;
+  height: 120px;
+}
+
+/* Make Reactivate Button Prominent */
+.team-card.terminated .team-action-btn.activate {
+  background: #28a745 !important;
+  color: #fff !important;
+  border-color: #28a745 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  position: relative;
+  z-index: 15;
+}
+
+.team-card.terminated .team-action-btn.activate:hover {
+  background: #218838 !important;
+  border-color: #218838 !important;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Ensure other buttons are still accessible */
+.team-card.terminated .team-card-actions {
+  position: relative;
+  z-index: 15;
+}
+
 .team-card-top {
   height: 6px;
   width: 100%;

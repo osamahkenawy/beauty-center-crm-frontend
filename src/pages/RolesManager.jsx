@@ -83,6 +83,19 @@ export default function RolesManager() {
     return form.permissions?.[module]?.[action] === true;
   };
 
+  const getViewScope = (module) => {
+    return form.permissions?.[module]?.view_scope || 'own';
+  };
+
+  const setViewScope = (module, scope) => {
+    setForm(prev => {
+      const perms = { ...prev.permissions };
+      if (!perms[module]) perms[module] = {};
+      perms[module] = { ...perms[module], view_scope: scope };
+      return { ...prev, permissions: perms };
+    });
+  };
+
   const toggleAllForModule = (module, actions) => {
     setForm(prev => {
       const perms = { ...prev.permissions };
@@ -378,6 +391,9 @@ export default function RolesManager() {
                   <span>Edit</span>
                   <span>Delete</span>
                   <span>Other</span>
+                  {matrix.some(m => m.module === 'appointments' || m.module === 'invoices') && (
+                    <span style={{ minWidth: '90px', textAlign: 'center' }}>View Scope</span>
+                  )}
                 </div>
               </div>
               {matrix.map(m => {
@@ -422,6 +438,37 @@ export default function RolesManager() {
                           <span style={{ color: '#ddd', fontSize: '0.75rem' }}>—</span>
                         )}
                       </div>
+                      {/* View Scope dropdown for appointments and invoices */}
+                      {matrix.some(m => m.module === 'appointments' || m.module === 'invoices') && (
+                        <div className="perm-toggle" style={{ minWidth: '90px', textAlign: 'center' }}>
+                          {(m.module === 'appointments' || m.module === 'invoices') ? (
+                            isPermChecked(m.module, 'view') ? (
+                              <select
+                                value={getViewScope(m.module)}
+                                onChange={(e) => setViewScope(m.module, e.target.value)}
+                                style={{
+                                  padding: '4px 6px',
+                                  fontSize: '0.7rem',
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  background: 'white',
+                                  cursor: 'pointer',
+                                  width: '100%',
+                                  minWidth: '80px'
+                                }}
+                                title="Choose if this role can view all records or only their own"
+                              >
+                                <option value="own">Own Only</option>
+                                <option value="all">All</option>
+                              </select>
+                            ) : (
+                              <span style={{ color: '#ddd', fontSize: '0.75rem' }}>—</span>
+                            )
+                          ) : (
+                            <span style={{ color: '#ddd', fontSize: '0.75rem' }}>—</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

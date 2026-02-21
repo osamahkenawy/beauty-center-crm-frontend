@@ -3,7 +3,7 @@ import { Modal } from 'react-bootstrap';
 import {
   Group, Search, Plus, Eye, EditPencil, Xmark, User, Clock,
   Phone, Mail, Star, Calendar, CreditCard, Check, Building,
-  Settings, Shield, UserPlus, SendMail, RefreshDouble
+  Settings, Shield, UserPlus, SendMail, RefreshDouble, Prohibition
 } from 'iconoir-react';
 import Swal from 'sweetalert2';
 import api from '../lib/api';
@@ -283,28 +283,225 @@ export default function TeamManager() {
   // ── Toggle Active ─────────────────────────────
   const toggleActive = async (member) => {
     const action = member.is_active ? 'deactivate' : 'activate';
-    const result = await Swal.fire({
-      title: `${action.charAt(0).toUpperCase() + action.slice(1)} ${member.full_name}?`,
-      text: member.is_active
-        ? 'They will no longer appear in booking and scheduling'
-        : 'They will be available for booking and scheduling again',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: member.is_active ? '#dc3545' : '#28a745',
-      confirmButtonText: member.is_active ? 'Deactivate' : 'Activate',
+    
+    // If activating, proceed normally
+    if (!member.is_active) {
+      const result = await Swal.fire({
+        title: `Activate ${member.full_name}?`,
+        text: 'They will be available for booking and scheduling again',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Activate',
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const res = await api.patch(`/staff/${member.id}/toggle-active`);
+          if (res.success) {
+            Swal.fire({ icon: 'success', title: 'Done!', text: res.message, timer: 1500, showConfirmButton: false });
+            fetchTeam();
+          } else {
+            Swal.fire('Error', res.message, 'error');
+          }
+        } catch (e) {
+          Swal.fire('Error', e.message, 'error');
+        }
+      }
+      return;
+    }
+
+    // If deactivating, check for appointments first
+    try {
+      // Try to deactivate - backend will check for appointments
+      const res = await api.patch(`/staff/${member.id}/toggle-active`);
+      
+      if (res.success) {
+        Swal.fire({ 
+          icon: 'success', 
+          title: 'Done!', 
+          text: res.message || 'Team member deactivated',
+          timer: 2000, 
+          showConfirmButton: false 
+        });
+        fetchTeam();
+      } else if (res.has_appointments) {
+        // Staff has appointments - show reassignment modal
+        await handleAppointmentReassignment(member, res.appointment_count || 0);
+      } else {
+        Swal.fire('Error', res.message || 'Failed to deactivate', 'error');
+      }
+    } catch (e) {
+      // API wrapper returns JSON, so check if it's an error object
+      const errorData = typeof e === 'object' && !e.message ? e : { message: e.message || 'Failed to deactivate' };
+      
+      if (errorData.has_appointments || (errorData.success === false && errorData.message?.includes('appointment'))) {
+        // Staff has appointments - show reassignment modal
+        const count = errorData.appointment_count || (errorData.message?.match(/\d+/)?.[0] || '0');
+        await handleAppointmentReassignment(member, parseInt(count) || 0);
+      } else {
+        Swal.fire('Error', errorData.message || 'Failed to deactivate', 'error');
+      }
+    }
+  };
+
+  const handleAppointmentReassignment = async (member, appointmentCount) => {
+    try {
+      // Fetch the appointments list
+      const appointmentsRes = await api.get(`/staff/${member.id}/appointments`);
+      const appointments = appointmentsRes.success ? appointmentsRes.data || [] : [];
+
+      // Get list of active staff (excluding the member being deactivated)
+      const availableStaff = team.filter(s => s.is_active && s.id !== member.id);
+
+      if (availableStaff.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Available Staff',
+          html: `This staff member has ${appointmentCount} upcoming appointment(s), but there are no other active staff members to reassign to.<br/><br/>Please activate another staff member first, or the system can try to auto-assign to admin.`,
+          showCancelButton: true,
+          confirmButtonText: 'Auto-assign to Admin',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#f2421b'
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await autoReassignToAdmin(member);
+          }
+        });
+        return;
+      }
+
+      // Build appointments list HTML
+      const appointmentsList = appointments.slice(0, 5).map(apt => {
+        const date = new Date(apt.start_time);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const customerName = `${apt.customer_first_name || ''} ${apt.customer_last_name || ''}`.trim() || 'Unknown';
+        return `<div style="text-align: left; padding: 8px; border-bottom: 1px solid #eee;">
+          <strong>${dateStr} at ${timeStr}</strong><br/>
+          <span style="color: #666;">${customerName} - ${apt.service_name || 'Service'}</span>
+        </div>`;
+      }).join('');
+
+      const moreText = appointments.length > 5 ? `<br/><em>...and ${appointments.length - 5} more</em>` : '';
+
+      const result = await Swal.fire({
+        icon: 'warning',
+        title: `${member.full_name} has ${appointmentCount} upcoming appointment(s)`,
+        html: `
+          <p style="text-align: left; margin-bottom: 15px;">
+            This staff member cannot be deactivated until their appointments are reassigned.
+          </p>
+          <div style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; padding: 10px;">
+            ${appointmentsList}${moreText}
+          </div>
+          <p style="text-align: left; margin-top: 15px;">
+            <strong>Choose an option:</strong>
+          </p>
+        `,
+        input: 'select',
+        inputOptions: {
+          'manual': 'Reassign to another staff member',
+          'admin': 'Auto-reassign to Admin',
+          'cancel': 'Cancel (keep staff active)'
+        },
+        inputPlaceholder: 'Select an option',
+        showCancelButton: true,
+        confirmButtonText: 'Proceed',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#f2421b',
+        inputValidator: (value) => {
+          if (!value) {
+            return 'Please select an option';
+          }
+        }
+      });
+
+      if (result.isConfirmed && result.value) {
+        if (result.value === 'admin') {
+          await autoReassignToAdmin(member);
+        } else if (result.value === 'manual') {
+          await manualReassign(member, appointments, availableStaff);
+        }
+        // If 'cancel', do nothing
+      }
+    } catch (error) {
+      console.error('Error handling appointment reassignment:', error);
+      Swal.fire('Error', 'Failed to load appointments. Please try again.', 'error');
+    }
+  };
+
+  const autoReassignToAdmin = async (member) => {
+    try {
+      const res = await api.patch(`/staff/${member.id}/toggle-active`, { auto_reassign_to_admin: true });
+      if (res.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Done!',
+          html: res.message || `Team member deactivated. Appointments automatically reassigned to admin.`,
+          timer: 3000,
+          showConfirmButton: false
+        });
+        fetchTeam();
+      } else {
+        Swal.fire('Error', res.message, 'error');
+      }
+    } catch (e) {
+      const errorData = e.response?.data || {};
+      Swal.fire('Error', errorData.message || e.message, 'error');
+    }
+  };
+
+  const manualReassign = async (member, appointments, availableStaff) => {
+    const staffOptions = {};
+    availableStaff.forEach(s => {
+      staffOptions[s.id] = s.full_name;
     });
 
-    if (result.isConfirmed) {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'Reassign to which staff member?',
+      input: 'select',
+      inputOptions: staffOptions,
+      inputPlaceholder: 'Select staff member',
+      showCancelButton: true,
+      confirmButtonText: 'Reassign',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#f2421b',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Please select a staff member';
+        }
+      }
+    });
+
+    if (result.isConfirmed && result.value) {
       try {
-        const res = await api.patch(`/staff/${member.id}/toggle-active`);
-        if (res.success) {
-          Swal.fire({ icon: 'success', title: 'Done!', text: res.message, timer: 1500, showConfirmButton: false });
-          fetchTeam();
+        const reassignRes = await api.patch(`/staff/${member.id}/reassign-appointments`, {
+          new_staff_id: parseInt(result.value)
+        });
+
+        if (reassignRes.success) {
+          // Now deactivate the staff member
+          const deactivateRes = await api.patch(`/staff/${member.id}/toggle-active`);
+          if (deactivateRes.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Done!',
+              html: `${reassignRes.message}<br/>Team member deactivated.`,
+              timer: 3000,
+              showConfirmButton: false
+            });
+            fetchTeam();
+          } else {
+            Swal.fire('Warning', `Appointments reassigned, but failed to deactivate: ${deactivateRes.message}`, 'warning');
+          }
         } else {
-          Swal.fire('Error', res.message, 'error');
+          Swal.fire('Error', reassignRes.message, 'error');
         }
       } catch (e) {
-        Swal.fire('Error', e.message, 'error');
+        const errorData = e.response?.data || {};
+        Swal.fire('Error', errorData.message || e.message, 'error');
       }
     }
   };
@@ -559,7 +756,18 @@ export default function TeamManager() {
       ) : (
         <div className="team-grid">
           {filtered.map(member => (
-            <div key={member.id} className="team-card">
+            <div key={member.id} className={`team-card ${!member.is_active ? 'terminated' : ''}`}>
+              {!member.is_active && (
+                <>
+                  <div className="team-terminated-ribbon">
+                    <Xmark width={16} height={16} />
+                    <span>TERMINATED</span>
+                  </div>
+                  <div className="team-terminated-watermark">
+                    <Prohibition width={120} height={120} />
+                  </div>
+                </>
+              )}
               <div className="team-card-top" style={{ background: member.color || '#667eea' }} />
               <div className="team-card-body">
                 <div className="team-card-profile">
@@ -625,20 +833,30 @@ export default function TeamManager() {
                   <button className="team-action-btn view" data-tooltip="View member" onClick={() => openView(member)}>
                     <Eye width={14} height={14} /> View
                   </button>
-                  <button className="team-action-btn" data-tooltip="Edit member" onClick={() => openEdit(member)}>
-                    <EditPencil width={14} height={14} /> Edit
-                  </button>
+                  {member.is_active && (
+                    <button className="team-action-btn" data-tooltip="Edit member" onClick={() => openEdit(member)}>
+                      <EditPencil width={14} height={14} /> Edit
+                    </button>
+                  )}
                   {member.has_pending_invite && member.email && (
                     <button className="team-action-btn invite" data-tooltip="Resend invite" onClick={() => resendInvite(member)}>
                       <SendMail width={14} height={14} /> Resend
                     </button>
                   )}
                   <button className={`team-action-btn ${member.is_active ? 'terminate' : 'activate'}`}
-                    data-tooltip={member.is_active ? 'Deactivate member' : 'Activate member'}
-                    onClick={() => toggleActive(member)}>
+                    data-tooltip={member.is_active ? 'Deactivate member' : 'Reactivate member'}
+                    onClick={() => toggleActive(member)}
+                    style={!member.is_active ? { 
+                      flex: '1.5', 
+                      fontWeight: 700, 
+                      fontSize: '0.8rem',
+                      background: '#28a745',
+                      color: '#fff',
+                      borderColor: '#28a745'
+                    } : {}}>
                     {member.is_active
                       ? <><Xmark width={14} height={14} /> Terminate</>
-                      : <><Check width={14} height={14} /> Activate</>
+                      : <><Check width={16} height={16} /> Reactivate</>
                     }
                   </button>
                 </div>

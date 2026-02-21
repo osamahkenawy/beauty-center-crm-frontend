@@ -795,6 +795,40 @@ export default function BeautyPayments() {
               <div className="inv-view-actions-bar">
                 <StatusBadge status={viewing.status} size="lg" />
                 <div className="inv-view-actions-right">
+                  <button 
+                    className="inv-btn-icon-action" 
+                    onClick={async () => {
+                      try {
+                        const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+                        const token = localStorage.getItem('crm_token');
+                        const response = await fetch(`${API_BASE_URL}/invoices/${viewing.id}/pdf`, {
+                          headers: {
+                            'Authorization': `Bearer ${token}`
+                          }
+                        });
+                        if (!response.ok) {
+                          const errorData = await response.json().catch(() => ({}));
+                          throw new Error(errorData.message || 'Failed to generate PDF');
+                        }
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `invoice-${viewing.invoice_number}.pdf`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        showToast('success', 'PDF Downloaded', 'Invoice PDF has been downloaded successfully');
+                      } catch (error) {
+                        console.error('PDF download error:', error);
+                        showToast('error', 'Download Failed', error.message || 'Failed to download PDF. Please try again.');
+                      }
+                    }}
+                    title="Download PDF"
+                  >
+                    <Download size={18} />
+                  </button>
                   <button className="inv-btn-icon-action" onClick={handlePrint} title="Print Invoice">
                     <Printer size={18} />
                   </button>
