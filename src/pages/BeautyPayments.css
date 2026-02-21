@@ -1906,6 +1906,22 @@
 }
 .inv-pay-gc-check-btn:hover:not(:disabled) { background: #d97706; }
 .inv-pay-gc-check-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.inv-pay-gc-scan-btn {
+  padding: 10px 14px;
+  background: var(--primary, #244066);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.inv-pay-gc-scan-btn:hover { background: var(--primary-dark, #1a2e4a); }
 .inv-pay-gc-result {
   margin-top: 8px;
   font-size: 0.78rem;

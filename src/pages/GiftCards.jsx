@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import * as IconoirIcons from 'iconoir-react';
 import api from '../lib/api';
+import BarcodeDisplay from '../components/BarcodeDisplay';
 import useCurrency from '../hooks/useCurrency';
 import CurrencySymbol from '../components/CurrencySymbol';
 import './GiftCards.css';
@@ -88,6 +89,11 @@ export default function GiftCards() {
   const [viewing, setViewing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Barcode / QR display state
+  const [showGcQRModal, setShowGcQRModal] = useState(false);
+  const [gcQRTarget, setGcQRTarget] = useState(null);
+  const [sentEmailCard, setSentEmailCard] = useState(null); // tracks card id of most-recent email send
 
   // Create form
   const [form, setForm] = useState({
@@ -205,6 +211,26 @@ export default function GiftCards() {
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(false), 2000);
   };
+
+  const handleResendEmail = useCallback(async (card, e) => {
+    e.stopPropagation();
+    if (!card.issued_to_email) {
+      alert('This gift card has no recipient email address on file.');
+      return;
+    }
+    try {
+      const res = await api.post(`/gift-cards/${card.id}/resend-email`);
+      if (res.success) {
+        setSentEmailCard(card.id);
+        setTimeout(() => setSentEmailCard(null), 3000);
+      } else {
+        alert(res.message || 'Failed to send email');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send email');
+    }
+  }, []);
 
   // ── Formatters ──
   const fmtCurrency = (v) => {
@@ -408,6 +434,19 @@ export default function GiftCards() {
                   <div className="gc-card-row"><span className="gc-card-label">Expires</span><span>{fmtDate(card.expires_at)}</span></div>
                   <div className="gc-card-footer">
                     <StatusBadge status={card.status} />
+                    <button className="gc-btn-icon gc-no-print" title="Show QR Code"
+                      onClick={e => { e.stopPropagation(); setGcQRTarget(card); setShowGcQRModal(true); }}>
+                      <IconoirIcons.QrCode width={16} height={16} />
+                    </button>
+                    {card.issued_to_email && (
+                      <button className="gc-btn-icon gc-no-print"
+                        title={sentEmailCard === card.id ? 'Email sent!' : `Send QR to ${card.issued_to_email}`}
+                        onClick={e => handleResendEmail(card, e)}>
+                        {sentEmailCard === card.id
+                          ? <IconoirIcons.Check width={16} height={16} color="#10b981" />
+                          : <IconoirIcons.SendMail width={16} height={16} />}
+                      </button>
+                    )}
                     <button className="gc-btn-icon gc-no-print" title={copiedCode === card.code ? 'Copied!' : 'Copy code'}
                       onClick={e => { e.stopPropagation(); copyCode(card.code); }}>
                       {copiedCode === card.code
@@ -753,6 +792,18 @@ export default function GiftCards() {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* ── Gift Card QR display modal ── */}
+      {gcQRTarget && (
+        <BarcodeDisplay
+          show={showGcQRModal}
+          onClose={() => setShowGcQRModal(false)}
+          type="giftcard"
+          entityId={gcQRTarget.id}
+          label={`Gift Card: ${gcQRTarget.code}`}
+          subLabel={`Balance: ${gcQRTarget.remaining_value} ${gcQRTarget.currency || ''}  ·  Status: ${gcQRTarget.status}`}
+        />
       )}
     </div>
   );

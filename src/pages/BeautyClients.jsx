@@ -182,10 +182,12 @@ export default function BeautyClients() {
       if (!payload.date_of_birth) delete payload.date_of_birth;
 
       if (editingClient) {
-        await api.patch(`/contacts/${editingClient.id}`, payload);
+        const res = await api.patch(`/contacts/${editingClient.id}`, payload);
+        if (!res.success) throw new Error(res.message || 'Failed to update');
         showToast('success', 'Client updated successfully');
       } else {
-        await api.post('/contacts', payload);
+        const res = await api.post('/contacts', payload);
+        if (!res.success) throw new Error(res.message || 'Failed to add');
         showToast('success', 'Client added successfully');
       }
       setShowAddEdit(false);
@@ -202,7 +204,8 @@ export default function BeautyClients() {
   /* ─── Delete client ─── */
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/contacts/${id}`);
+      const res = await api.delete(`/contacts/${id}`);
+      if (!res.success) throw new Error(res.message || 'Failed to delete');
       showToast('success', 'Client deleted successfully');
       setShowDeleteConfirm(null);
       if (showDetail && detailClient?.id === id) { setShowDetail(false); setDetailClient(null); }

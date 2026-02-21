@@ -522,3 +522,81 @@
   .pos-stats-bar { flex-wrap: wrap; }
   .pos-service-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ─── Barcode Scan Button ─── */
+.pos-scan-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: var(--primary, #244066);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.pos-scan-btn:hover { background: var(--primary-dark, #1a2e4a); }
+
+/* ─── Gift Card Payment Input ─── */
+.pos-gift-card-input {
+  margin-top: 10px;
+}
+.pos-gift-card-input label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-600, #555);
+  margin-bottom: 5px;
+}
+.pos-gift-card-input input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1.5px solid var(--gray-200, #e2e8f0);
+  border-radius: 7px;
+  font-size: 0.85rem;
+  outline: none;
+  width: 100%;
+}
+.pos-gift-card-input input:focus {
+  border-color: var(--primary, #244066);
+}
+.pos-gift-card-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.pos-gift-card-row input {
+  border-radius: 7px 0 0 7px;
+  border-right: none;
+}
+.pos-gift-card-row .pos-scan-btn {
+  border-radius: 0 7px 7px 0;
+  padding: 8px 12px;
+  margin-left: 0 !important;
+}
+.pos-gift-card-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #555;
+}
+.pos-gift-card-badge {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.pos-gift-card-warn {
+  color: #b45309;
+  font-weight: 500;
+}

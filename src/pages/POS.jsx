@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useContext } from 'react';
 import { Modal, Form } from 'react-bootstrap';
-import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote, Search, X, Receipt, RefreshCw, DollarSign, Users, TrendingUp, Clock } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote, Search, X, Receipt, RefreshCw, DollarSign, Users, TrendingUp, Clock, ScanLine } from 'lucide-react';
 import Swal from 'sweetalert2';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
 import CurrencySymbol from '../components/CurrencySymbol';
+import BarcodeScanner from '../components/BarcodeScanner';
 import './POS.css';
 
 export default function POS() {
@@ -33,6 +34,38 @@ export default function POS() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [categories, setCategories] = useState([]);
   const [notes, setNotes] = useState('');
+
+  // ── Barcode/QR scanner state ────────────────────────────────────
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannedGiftCard, setScannedGiftCard] = useState(null);
+  const [giftCardCode, setGiftCardCode] = useState('');
+
+  const handleScanResult = useCallback((type, data) => {
+    if (type === 'product') {
+      // Add product to cart
+      const product = {
+        id: `p-${data.id}`,
+        name: data.name,
+        price: parseFloat(data.retail_price || 0),
+        quantity: 1,
+        type: 'product',
+        sku: data.sku,
+      };
+      setCart(prev => {
+        const existing = prev.find(i => i.id === product.id);
+        if (existing) return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return [...prev, product];
+      });
+      Swal.fire({ icon: 'success', title: `Added: ${data.name}`, toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+    } else if (type === 'giftcard') {
+      setScannedGiftCard(data);
+      setGiftCardCode(data.code);
+      setPaymentMethod('gift_card');
+      Swal.fire({ icon: 'success', title: `Gift Card: ${data.code}`, text: `Balance: ${data.remaining_value} ${data.currency || ''}`, toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
+    } else {
+      Swal.fire({ icon: 'info', title: `Scanned: ${type}`, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false });
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -117,6 +150,7 @@ export default function POS() {
         payment_method: paymentMethod,
         amount_paid: paid,
         notes,
+        ...(paymentMethod === 'gift_card' && giftCardCode ? { gift_card_code: giftCardCode.trim() } : {}),
       });
       if (res.success) {
         setShowReceipt(res.data);
@@ -126,6 +160,8 @@ export default function POS() {
         setTip(0);
         setAmountPaid('');
         setNotes('');
+        setScannedGiftCard(null);
+        setGiftCardCode('');
         fetchData();
       }
     } catch (e) {
@@ -180,6 +216,9 @@ export default function POS() {
           <Search size={16} />
           <input placeholder="Search services..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           {searchTerm && <X size={14} className="pos-search-clear" onClick={() => setSearchTerm('')} />}
+          <button className="pos-scan-btn" title="Scan barcode / QR code" onClick={() => setShowScanner(true)}>
+            <ScanLine size={16} /> Scan
+          </button>
         </div>
 
         {/* Categories */}
@@ -317,6 +356,7 @@ export default function POS() {
                 { key: 'cash', label: 'Cash', icon: <Banknote size={14} /> },
                 { key: 'card', label: 'Card', icon: <CreditCard size={14} /> },
                 { key: 'bank_transfer', label: 'Bank', icon: <DollarSign size={14} /> },
+                { key: 'gift_card', label: 'Gift Card', icon: <Receipt size={14} /> },
               ].map(m => (
                 <button key={m.key} className={`pos-pay-btn ${paymentMethod === m.key ? 'active' : ''}`}
                   onClick={() => setPaymentMethod(m.key)}>
@@ -324,6 +364,33 @@ export default function POS() {
                 </button>
               ))}
             </div>
+
+            {paymentMethod === 'gift_card' && (
+              <div className="pos-gift-card-input">
+                <label>Gift Card Code</label>
+                <div className="pos-gift-card-row">
+                  <input
+                    type="text"
+                    placeholder="Enter or scan gift card code"
+                    value={giftCardCode}
+                    onChange={e => { setGiftCardCode(e.target.value); setScannedGiftCard(null); }}
+                    style={{ fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase' }}
+                  />
+                  <button className="pos-scan-btn" style={{ marginLeft: 6 }} onClick={() => setShowScanner(true)} title="Scan QR">
+                    <ScanLine size={15} />
+                  </button>
+                </div>
+                {scannedGiftCard && (
+                  <div className="pos-gift-card-info">
+                    <span className="pos-gift-card-badge">✓ Scanned</span>
+                    <span>Balance: <strong>{scannedGiftCard.remaining_value} {scannedGiftCard.currency || ''}</strong></span>
+                    {parseFloat(scannedGiftCard.remaining_value) < total && (
+                      <span className="pos-gift-card-warn">⚠ Insufficient balance (total: {total.toFixed(2)})</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {paymentMethod === 'cash' && (
               <div className="pos-cash-input">
@@ -405,6 +472,15 @@ export default function POS() {
           </table>
         </Modal.Body>
       </Modal>
+
+      {/* ── Barcode / QR Scanner modal ── */}
+      <BarcodeScanner
+        show={showScanner}
+        onClose={() => setShowScanner(false)}
+        onResult={handleScanResult}
+        title="Scan to Add / Redeem"
+        hint="Scan a product barcode to add to cart, or a gift card QR code to redeem."
+      />
     </div>
   );
 }

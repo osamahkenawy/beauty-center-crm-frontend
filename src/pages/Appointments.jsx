@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import {
   Calendar, Search, Plus, Eye, EditPencil, Trash, User, Clock,
   Check, Xmark, Phone, Mail, WarningTriangle, List, GridPlus,
-  UserPlus, RefreshDouble, Scissor, Gift, Percentage, CreditCard
+  UserPlus, RefreshDouble, Scissor, Gift, Percentage, CreditCard,
+  QrCode, ScanBarcode
 } from 'iconoir-react';
 import { Table, Badge, Dropdown, Card, Toast, ToastContainer } from 'react-bootstrap';
 import Swal from 'sweetalert2';
@@ -13,6 +14,8 @@ import AppointmentCalendar from '../components/AppointmentCalendar';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 import useCurrency from '../hooks/useCurrency';
 import { showContactSupport } from '../utils/supportAlert';
+import BarcodeDisplay from '../components/BarcodeDisplay';
+import BarcodeScanner from '../components/BarcodeScanner';
 import './CRMPages.css';
 import './BeautyPages.css';
 import './AppointmentsPage.css';
@@ -94,6 +97,26 @@ export default function Appointments() {
   const [gcChecking, setGcChecking] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState(null);
   const [checkingOut, setCheckingOut] = useState(false);
+
+  // ── Barcode / QR state ────────────────────────────────────────
+  const [showApptQR, setShowApptQR] = useState(false);
+  const [apptQRTarget, setApptQRTarget] = useState(null);
+  const [showApptScanner, setShowApptScanner] = useState(false);
+
+  const handleScanCheckin = useCallback(async (type, data) => {
+    if (type === 'appointment') {
+      try {
+        await api.post(`/barcodes/appointment/${data.id}/checkin`, {});
+        showToast('success', `Client checked in for appointment #${data.id}`);
+        fetchAppointments(pagination.page, pagination.limit);
+        fetchAllAppointments();
+      } catch (err) {
+        showToast('error', err?.message || 'Check-in failed');
+      }
+    } else {
+      showToast('info', `Scanned: ${type}`);
+    }
+  }, [pagination.page, pagination.limit]);
 
   // Promo code state
   const [promoCode, setPromoCode] = useState('');
@@ -820,6 +843,9 @@ export default function Appointments() {
           <button className="module-btn module-btn-primary" data-tooltip="Book new appointment" onClick={() => openCreateModal()}>
             <Plus width={16} height={16} /> New Appointment
           </button>
+          <button className="module-btn module-btn-outline" data-tooltip="Scan QR code to check in client" onClick={() => setShowApptScanner(true)} style={{ gap: 6 }}>
+            <ScanBarcode width={16} height={16} /> Scan Check-in
+          </button>
         </div>
       </div>
 
@@ -1038,7 +1064,7 @@ export default function Appointments() {
                                 {appt.status !== 'completed' && appt.status !== 'cancelled' && (
                                   <Dropdown.Divider />
                                 )}
-                                {appt.status !== 'confirmed' && appt.status !== 'completed' && appt.status !== 'cancelled' && (
+                                {appt.status !== 'confirmed' && appt.status !== 'in_progress' && appt.status !== 'completed' && appt.status !== 'cancelled' && (
                                   <Dropdown.Item onClick={() => openConfirmModal(appt.id, 'confirmed')}>
                                     <Check width={14} height={14} className="me-2" /> Confirm
                                   </Dropdown.Item>
@@ -1053,6 +1079,10 @@ export default function Appointments() {
                                     <Xmark width={14} height={14} className="me-2" /> Cancel
                                   </Dropdown.Item>
                                 )}
+                                <Dropdown.Divider />
+                                <Dropdown.Item onClick={() => { setApptQRTarget(appt); setShowApptQR(true); }}>
+                                  <QrCode width={14} height={14} className="me-2" /> View QR Code
+                                </Dropdown.Item>
                                 <Dropdown.Divider />
                                 <Dropdown.Item onClick={() => handleDelete(appt.id)} className="text-danger">
                                   <Trash width={14} height={14} className="me-2" /> Delete
@@ -1822,8 +1852,28 @@ export default function Appointments() {
           </div>
         </div>
       )}
+
+      {/* ── Appointment QR display modal ── */}
+      {apptQRTarget && (
+        <BarcodeDisplay
+          show={showApptQR}
+          onClose={() => setShowApptQR(false)}
+          type="appointment"
+          entityId={apptQRTarget.id}
+          label={`Appointment #${apptQRTarget.id}`}
+          subLabel={[apptQRTarget.service_name, apptQRTarget.customer_first_name && `${apptQRTarget.customer_first_name} ${apptQRTarget.customer_last_name || ''}`.trim(), apptQRTarget.start_time && new Date(apptQRTarget.start_time).toLocaleString()].filter(Boolean).join('  ·  ')}
+        />
+      )}
+
+      {/* ── QR Check-in scanner ── */}
+      <BarcodeScanner
+        show={showApptScanner}
+        onClose={() => setShowApptScanner(false)}
+        onResult={handleScanCheckin}
+        title="Scan Appointment QR Code"
+        hint="Scan the appointment QR code to check in the client."
+      />
     </div>
   );
 }
-
 

@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useReducer, useCallback, Fragment } from 'react';
+import { useState, useContext, useEffect, useReducer, useCallback, useRef, Fragment } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Collapse } from 'react-bootstrap';
@@ -239,6 +239,11 @@ export default function BeautyLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  
+  // Refs for click-outside detection
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+  const langRef = useRef(null);
 
   // Sidebar logo – reserved for platform branding (leave empty for now)
 
@@ -362,6 +367,26 @@ export default function BeautyLayout({ children }) {
     i18n.changeLanguage(lng);
     setShowLangMenu(false);
   };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifPopup(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+      if (langRef.current && !langRef.current.contains(event.target)) {
+        setShowLangMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className={`beauty-wrapper ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'} ${isRTL ? 'rtl' : ''}`}>
@@ -529,7 +554,7 @@ export default function BeautyLayout({ children }) {
               
               <ul className="navbar-nav header-right">
                 {/* Language Switcher */}
-                <li className="nav-item dropdown notification_dropdown">
+                <li className="nav-item dropdown notification_dropdown" ref={langRef}>
                   <div className="lang-switcher">
                     <button 
                       className="nav-link"
@@ -560,7 +585,7 @@ export default function BeautyLayout({ children }) {
                 </li>
 
                 {/* Notification Bell */}
-                <li className="nav-item dropdown notification_dropdown">
+                <li className="nav-item dropdown notification_dropdown" ref={notifRef}>
                   <button 
                     className="nav-link notif-bell-btn"
                     data-tooltip="Notifications"
@@ -604,7 +629,7 @@ export default function BeautyLayout({ children }) {
                 </li>
 
                 {/* User Profile */}
-                <li className="nav-item dropdown header-profile">
+                <li className="nav-item dropdown header-profile" ref={profileRef}>
                   <button 
                     className="nav-link"
                     data-tooltip="Account menu"

@@ -7,11 +7,12 @@ import {
   Receipt, ArrowUpRight, ArrowDownRight, TrendingUp, Ban, Hash,
   User, Calendar, Banknote, MoreVertical, ChevronDown, Send,
   Sparkles, X, Star, Tag, Wallet, Building2, Gift, ClipboardList,
-  BadgeCheck, ShieldCheck, Coins, PercentCircle, ArrowRight
+  BadgeCheck, ShieldCheck, Coins, PercentCircle, ArrowRight, ScanLine
 } from 'lucide-react';
 import api from '../lib/api';
 import useCurrency from '../hooks/useCurrency';
 import CurrencySymbol from '../components/CurrencySymbol';
+import BarcodeScanner from '../components/BarcodeScanner';
 import './BeautyPayments.css';
 
 const STATUS_CONFIG = {
@@ -64,6 +65,8 @@ export default function BeautyPayments() {
   const [payForm, setPayForm] = useState({ amount: '', payment_method: 'cash', gift_card_code: '' });
   const [payGcBalance, setPayGcBalance] = useState(null);
   const [payGcChecking, setPayGcChecking] = useState(false);
+  const [showPayScanner, setShowPayScanner] = useState(false);
+  const [showGlobalScanner, setShowGlobalScanner] = useState(false);
   const [payLoyalty, setPayLoyalty] = useState(null);
   const [payLoyaltyLoading, setPayLoyaltyLoading] = useState(false);
   const [payDiscount, setPayDiscount] = useState(null); // { valid, discount_amount, message, ... }
@@ -195,6 +198,41 @@ export default function BeautyPayments() {
       if (res.success) { setViewing(res.data); setShowView(true); }
     } catch (e) { console.error(e); }
   };
+
+  const handlePayScanResult = useCallback((type, data) => {
+    if (type !== 'giftcard') return;
+    const code = data.code?.toUpperCase() || '';
+    setPayForm(p => ({ ...p, payment_method: 'gift_card', gift_card_code: code }));
+    setPayGcBalance(null);
+    setShowPayScanner(false);
+    checkPayGcBalance(code);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleGlobalScanResult = useCallback(async (type, data) => {
+    setShowGlobalScanner(false);
+    if (type === 'invoice') {
+      // Fetch full invoice then open Record Payment directly
+      try {
+        const res = await api.get(`/invoices/${data.id}`);
+        const fullInv = res.success ? res.data : data;
+        if (fullInv.status === 'paid') {
+          showToast('warning', 'Already Paid', `Invoice ${fullInv.invoice_number} is already paid.`);
+          return;
+        }
+        if (fullInv.status === 'void') {
+          showToast('error', 'Voided', `Invoice ${fullInv.invoice_number} has been voided.`);
+          return;
+        }
+        openPayModal(fullInv);
+      } catch (e) {
+        showToast('error', 'Scan Error', 'Could not load invoice. Please try again.');
+      }
+    } else if (type === 'appointment') {
+      showToast('warning', 'Appointment QR', 'Use the Appointments page to check in this customer.');
+    } else {
+      showToast('warning', 'Wrong QR Code', 'This QR code is not an invoice. Please scan the invoice QR sent to the customer.');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkPayGcBalance = async (code) => {
     if (!code || code.length < 4) { setPayGcBalance(null); return; }
@@ -505,6 +543,9 @@ export default function BeautyPayments() {
           </button>
           <button className="module-btn module-btn-outline btn-print" data-tooltip="Print invoices" onClick={() => window.print()}>
             <Printer size={16} /> Print
+          </button>
+          <button className="module-btn module-btn-outline" data-tooltip="Scan customer invoice QR to open payment" onClick={() => setShowGlobalScanner(true)}>
+            <ScanLine size={16} /> Scan to Pay
           </button>
           <button className="module-btn module-btn-primary" data-tooltip="Create new invoice" onClick={() => setShowCreate(true)}>
             <Plus size={16} /> New Invoice
@@ -1290,6 +1331,14 @@ export default function BeautyPayments() {
                             />
                             <button
                               type="button"
+                              className="inv-pay-gc-scan-btn"
+                              onClick={() => setShowPayScanner(true)}
+                              title="Scan QR code"
+                            >
+                              <ScanLine size={14} />
+                            </button>
+                            <button
+                              type="button"
                               className="inv-pay-gc-check-btn"
                               onClick={() => checkPayGcBalance(payForm.gift_card_code)}
                               disabled={payGcChecking || !payForm.gift_card_code}
@@ -1341,6 +1390,24 @@ export default function BeautyPayments() {
           <button className="inv-toast-close" onClick={() => setToast(null)}><X size={16} /></button>
         </div>
       )}
+
+      {/* ── Gift Card QR Scanner (inside Record Payment modal) ── */}
+      <BarcodeScanner
+        show={showPayScanner}
+        onClose={() => setShowPayScanner(false)}
+        onResult={handlePayScanResult}
+        title="Scan Gift Card QR Code"
+        hint="Scan the QR code from the customer's gift card email to fill in the code automatically."
+      />
+
+      {/* ── Global Invoice QR Scanner (counter scan-to-pay) ── */}
+      <BarcodeScanner
+        show={showGlobalScanner}
+        onClose={() => setShowGlobalScanner(false)}
+        onResult={handleGlobalScanResult}
+        title="Scan Customer Invoice QR"
+        hint="Ask the customer to show their invoice QR code from the email. Scan it to open the payment screen instantly."
+      />
     </div>
   );
 }

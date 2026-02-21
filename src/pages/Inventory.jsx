@@ -4,8 +4,10 @@ import {
   Package, Plus, Search, AlertTriangle, TrendingUp,
   Box, BarChart3, Edit, Truck, ArrowDownUp, Trash2, Eye,
   DollarSign, Archive, X, Check, History, Bell,
-  Layers, Tag, Building2, ClipboardList, RefreshCw, Boxes, Clock
+  Layers, Tag, Building2, ClipboardList, RefreshCw, Boxes, Clock,
+  QrCode
 } from 'lucide-react';
+import BarcodeDisplay from '../components/BarcodeDisplay';
 import useCurrency from '../hooks/useCurrency';
 import CurrencySymbol from '../components/CurrencySymbol';
 import LocationPicker from './settings/LocationPicker';
@@ -56,6 +58,11 @@ export default function Inventory() {
   const [form, setForm] = useState(emptyForm);
   const [stockForm, setStockForm] = useState({ type: 'purchase', quantity: '', unit_cost: '', notes: '' });
   const [editId, setEditId] = useState(null);
+
+  // ── Barcode / QR display state ──────────────────────────────────────────
+  const [showBarcodeModal, setShowBarcodeModal] = useState(false);
+  const [barcodeTarget, setBarcodeTarget] = useState(null);
+  const handleShowBarcode = (item) => { setBarcodeTarget(item); setShowBarcodeModal(true); };
 
   // ── Suppliers state ─────────────────────────────────────────────────────
   const [suppliers, setSuppliers] = useState([]);
@@ -551,6 +558,9 @@ export default function Inventory() {
                             </OverlayTrigger>
                             <OverlayTrigger placement="top" overlay={<Tooltip>Deactivate</Tooltip>}>
                               <button className="inv-action-btn danger" onClick={() => handleDelete(item)}><Trash2 size={15} /></button>
+                            </OverlayTrigger>
+                            <OverlayTrigger placement="top" overlay={<Tooltip>Barcode / QR Code</Tooltip>}>
+                              <button className="inv-action-btn" style={{ color: '#0369a1' }} onClick={() => handleShowBarcode(item)}><QrCode size={15} /></button>
                             </OverlayTrigger>
                           </div>
                         </td>
@@ -1223,6 +1233,18 @@ export default function Inventory() {
           <button className="inv-btn-secondary" onClick={() => setShowPODetail(false)}>Close</button>
         </Modal.Footer>
       </Modal>
+
+      {/* ── Barcode / QR display modal ── */}
+      {barcodeTarget && (
+        <BarcodeDisplay
+          show={showBarcodeModal}
+          onClose={() => setShowBarcodeModal(false)}
+          type="product"
+          entityId={barcodeTarget.id}
+          label={barcodeTarget.name}
+          subLabel={[barcodeTarget.sku && `SKU: ${barcodeTarget.sku}`, barcodeTarget.barcode && `Barcode: ${barcodeTarget.barcode}`].filter(Boolean).join('  ·  ')}
+        />
+      )}
     </div>
   );
 }
