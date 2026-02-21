@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Calendar, Search, Plus, Eye, EditPencil, Trash, User, Clock,
@@ -77,6 +77,9 @@ export default function Appointments() {
 
   const emptyClientForm = { first_name: '', last_name: '', email: '', phone: '', gender: '', notes: '' };
   const [newClientData, setNewClientData] = useState(emptyClientForm);
+
+  // Dropdown data cache — only fetched once on first modal open
+  const dropdownsFetched = useRef(false);
 
   // Confirmation modal state
   const [confirmModal, setConfirmModal] = useState({ show: false, id: null, status: '', message: '' });
@@ -264,7 +267,13 @@ export default function Appointments() {
     fetchStaffDayAppointments();
   }, [fetchStaffDayAppointments]);
 
-  useEffect(() => { fetchDropdownData(); }, [fetchDropdownData]);
+  // Lazily fetch dropdown data only when the modal is first opened
+  useEffect(() => {
+    if (showModal && !dropdownsFetched.current) {
+      dropdownsFetched.current = true;
+      fetchDropdownData();
+    }
+  }, [showModal, fetchDropdownData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -1177,21 +1186,20 @@ export default function Appointments() {
 
                   <div className="form-section">
                     <label className="section-label">Select Staff</label>
-                    <div className="staff-selection">
+                    <select
+                      className="form-input"
+                      value={formData.staff_id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, staff_id: e.target.value }))}
+                    >
+                      <option value="">Choose a staff member...</option>
                       {filteredStaff.length > 0 ? filteredStaff.map(s => (
-                        <div 
-                          key={s.id}
-                          className={`staff-option ${formData.staff_id === String(s.id) ? 'selected' : ''}`}
-                          onClick={() => setFormData(prev => ({ ...prev, staff_id: String(s.id) }))}
-                        >
-                          <div className="staff-avatar-sm">{(s.full_name || s.username)?.charAt(0)}</div>
-                          <span>{s.full_name || s.username}</span>
-                          {s.branch_name && <small style={{ opacity: 0.6, fontSize: 10 }}>{s.branch_name}</small>}
-                        </div>
+                        <option key={s.id} value={String(s.id)}>
+                          {s.full_name || s.username}{s.branch_name ? ` — ${s.branch_name}` : ''}
+                        </option>
                       )) : (
-                        <div className="empty-selection-msg">No staff available{formData.branch_id ? ' for this branch' : ''}.</div>
+                        <option disabled>No staff available{formData.branch_id ? ' for this branch' : ''}</option>
                       )}
-                    </div>
+                    </select>
                   </div>
                 </div>
               )}

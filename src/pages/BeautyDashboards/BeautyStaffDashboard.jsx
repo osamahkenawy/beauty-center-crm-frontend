@@ -1,7 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Dropdown } from 'react-bootstrap';
-import { Calendar as CalendarIcon, CheckCircle2, DollarSign, Users, ShoppingCart, Bell, CreditCard as PosIcon, Plus, ChevronRight, TrendingUp } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, DollarSign, Users, ChevronRight, TrendingUp, Sun, CloudSun, Sunset, Moon } from 'lucide-react';
 import ReactApexChart from 'react-apexcharts';
 import { AuthContext } from '../../App';
 import api from '../../lib/api';
@@ -17,6 +17,23 @@ function statusBadgeClass(status) {
   if (['cancelled', 'no_show'].includes(s)) return 'bb-cancelled';
   if (s === 'pending') return 'bb-pending';
   return 'bb-default';
+}
+
+function initials(name) {
+  return (name || '—')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return { text: 'Good morning',  Icon: Sun,      sub: 'Ready for another great day?' };
+  if (h < 17) return { text: 'Good afternoon', Icon: CloudSun, sub: 'Keep up the excellent work!' };
+  if (h < 20) return { text: 'Good evening',   Icon: Sunset,   sub: 'Wrapping up the day nicely.' };
+  return        { text: 'Good night',          Icon: Moon,     sub: 'Almost done — you did great today.' };
 }
 
 function pad2(n) {
@@ -102,6 +119,8 @@ function getBookingSummary(items) {
 export default function BeautyStaffDashboard() {
   const { user } = useContext(AuthContext);
   const { format: formatCurrency } = useCurrency();
+  const greeting = useMemo(() => getGreeting(), []);
+  const firstName = user?.full_name ? user.full_name.split(' ')[0] : '';
 
   const [loading, setLoading] = useState(true);
   const [appointmentsToday, setAppointmentsToday] = useState([]);
@@ -244,27 +263,94 @@ export default function BeautyStaffDashboard() {
     );
   }, [periodInvoices, activePeriod.start, activePeriod.end]);
 
+  const summaryTotal = summaryDataByTab.active.total || 0;
+  const pct = (n) => (summaryTotal ? Math.round((n / summaryTotal) * 100) : 0);
+
+  const statCards = [
+    {
+      id: 'appts',
+      icon: <CalendarIcon size={18} />,
+      iconClass: 'si-primary',
+      accent: 'primary',
+      value: loading ? '—' : (activeApptsForPeriod?.length || 0),
+      label: 'My Appointments',
+      desc: 'Your bookings in the selected period.',
+      today: `${loading ? '—' : (appointmentsToday?.length || 0)} today`,
+      barPct: loading ? 0 : Math.min(100, ((appointmentsToday?.length || 0) / Math.max(activeApptsForPeriod?.length || 1, 1)) * 100),
+    },
+    {
+      id: 'completed',
+      icon: <CheckCircle2 size={18} />,
+      iconClass: 'si-success',
+      accent: 'success',
+      value: loading ? '—' : completedInPeriod,
+      label: 'Completed Sessions',
+      desc: 'Sessions you successfully completed this period.',
+      today: loading ? '—' : `${pct(completedInPeriod)}% completion rate`,
+      barPct: loading ? 0 : Math.min(100, (completedInPeriod / Math.max(activeApptsForPeriod?.length || 1, 1)) * 100),
+    },
+    {
+      id: 'clients',
+      icon: <Users size={18} />,
+      iconClass: 'si-warning',
+      accent: 'warning',
+      value: loading ? '—' : uniqueClientsInPeriod,
+      label: 'Clients Served',
+      desc: 'Unique clients you attended this period.',
+      today: `${loading ? '—' : (activeApptsForPeriod?.length || 0)} total visits`,
+      barPct: loading ? 0 : Math.min(100, (uniqueClientsInPeriod / Math.max(activeApptsForPeriod?.length || 1, 1)) * 100),
+    },
+    {
+      id: 'revenue',
+      icon: <DollarSign size={18} />,
+      iconClass: 'si-info',
+      accent: 'info',
+      value: !invoiceAllowed ? '—' : (loading ? '—' : formatCurrency(periodRevenuePaid)),
+      label: 'My Revenue (Paid)',
+      desc: !invoiceAllowed ? 'Not available for your role.' : 'Paid revenue collected this period.',
+      today: !invoiceAllowed ? 'Contact admin for access' : `Outstanding: ${loading ? '—' : formatCurrency(periodRevenuePending)}`,
+      barPct: !invoiceAllowed ? 0 : loading ? 0 : Math.min(100, (periodRevenuePaid / Math.max(periodRevenuePaid + periodRevenuePending, 1)) * 100),
+    },
+  ];
+
   return (
     <div className="beauty-dashboard">
       <SEO page="beauty-dashboard" noindex={true} />
       <div className="container-fluid">
-        <div className="beauty-topbar d-flex align-items-start" style={{ gap: 12, flexWrap: 'wrap' }}>
-          <div className="me-auto d-none d-lg-block">
-            <h2 className="text-primary" style={{ fontWeight: 700, marginBottom: 2 }}>Dashboard</h2>
-            <p className="mb-0 text-muted">Hi{user?.full_name ? `, ${user.full_name}` : ''} — here’s your day at a glance</p>
+
+        {/* ── Hero Topbar ── */}
+        <div className="beauty-topbar">
+          <div className="beauty-topbar-shine" aria-hidden="true" />
+          <div className="beauty-topbar-text me-auto">
+            <h2>
+              {greeting.text}{firstName ? `, ${firstName}` : ''} <greeting.Icon size={26} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: '6px', opacity: 0.9 }} />
+            </h2>
+            <p>{greeting.sub}</p>
+          </div>
+
+          <div className="beauty-topbar-date me-2 d-none d-md-flex align-items-center">
+            <span className="beauty-date-pill">
+              <TrendingUp size={14} />
+              {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
           </div>
 
           <Dropdown align="end">
-            <Dropdown.Toggle size="sm" className="btn btn-primary d-flex align-items-center" style={{ borderRadius: 12 }}>
-              <CalendarIcon size={18} style={{ marginRight: 10 }} />
-              <div className="text-start" style={{ lineHeight: 1.1 }}>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>Filter Period</div>
-                <small style={{ opacity: 0.9 }}>{formatRangeLabel(activePeriod.start, activePeriod.end)}</small>
-              </div>
+            <Dropdown.Toggle as="button" className="beauty-period-btn" id="staff-period-toggle">
+              <CalendarIcon size={15} />
+              {activePeriod.label}
+              <small style={{ opacity: 0.8, fontSize: '0.78rem' }}>
+                {formatRangeLabel(activePeriod.start, activePeriod.end)}
+              </small>
             </Dropdown.Toggle>
-            <Dropdown.Menu>
+            <Dropdown.Menu className="beauty-period-menu">
               {periodOptions.map((p) => (
-                <Dropdown.Item key={p.key} active={p.key === activePeriod.key} onClick={() => setPeriodKey(p.key)}>
+                <Dropdown.Item
+                  key={p.key}
+                  active={p.key === activePeriod.key}
+                  onClick={() => setPeriodKey(p.key)}
+                  className="beauty-period-item"
+                >
                   {p.label}
                 </Dropdown.Item>
               ))}
@@ -272,89 +358,36 @@ export default function BeautyStaffDashboard() {
           </Dropdown>
         </div>
 
-        <div className="row">
-          <div className="col-xl-3 col-xxl-3 col-lg-6 col-md-6 col-sm-6">
-            <div className="card beauty-stat-card">
-              <div className="card-body p-4">
-                <div className="beauty-stat-top">
-                  <span
-                    className="beauty-stat-icon"
-                  >
-                    <CalendarIcon size={20} />
-                  </span>
-                  <div className="beauty-stat-content">
-                    <h3 className="beauty-stat-value">{loading ? '—' : (activeApptsForPeriod?.length || 0)}</h3>
-                    <p className="beauty-stat-label">My Appointments</p>
+        {/* ── Stat Cards ── */}
+        <div className="row g-3 mb-4">
+          {statCards.map((c) => (
+            <div key={c.id} className="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+              <div className="card beauty-stat-card h-100" data-accent={c.accent}>
+                <div className="card-body">
+                  <div className="sc2-header">
+                    <span className={`sc2-icon ${c.iconClass}`}>{c.icon}</span>
+                    <span className="sc2-label">{c.label}</span>
                   </div>
-                  <div className="beauty-stat-chart">
-                    <WeeklySalesBarChart name="My week" data={weekChart.data} categories={weekChart.labels} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-xl-3 col-xxl-3 col-lg-6 col-md-6 col-sm-6">
-            <div className="card beauty-stat-card">
-              <div className="card-body p-4">
-                <div className="beauty-stat-top">
-                  <span
-                    className="beauty-stat-icon"
-                  >
-                    <CheckCircle2 size={20} />
-                  </span>
-                  <div className="beauty-stat-content">
-                    <h3 className="beauty-stat-value">{loading ? '—' : completedInPeriod}</h3>
-                    <p className="beauty-stat-label">Completed (period)</p>
+                  <span className="sc2-value">{c.value}</span>
+                  <p className="sc2-desc">{c.desc}</p>
+                  <div className="sc2-footer">
+                    <div className="sc2-bar">
+                      <div className="sc2-bar-fill" style={{ width: `${c.barPct}%` }} />
+                    </div>
+                    <span className="sc2-today">{c.today}</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="col-xl-3 col-xxl-3 col-lg-6 col-md-6 col-sm-6">
-            <div className="card beauty-stat-card">
-              <div className="card-body p-4">
-                <div className="beauty-stat-top">
-                  <span
-                    className="beauty-stat-icon"
-                  >
-                    <Users size={20} />
-                  </span>
-                  <div className="beauty-stat-content">
-                    <h3 className="beauty-stat-value">{loading ? '—' : uniqueClientsInPeriod}</h3>
-                    <p className="beauty-stat-label">Clients Served</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-xl-3 col-xxl-3 col-lg-6 col-md-6 col-sm-6">
-            <div className="card beauty-stat-card">
-              <div className="card-body p-4">
-                <div className="beauty-stat-top">
-                  <span
-                    className="beauty-stat-icon"
-                  >
-                    <DollarSign size={20} />
-                  </span>
-                  <div className="beauty-stat-content">
-                    <h3 className="beauty-stat-value">
-                      {!invoiceAllowed ? '—' : (loading ? '—' : formatCurrency(periodRevenuePaid))}
-                    </h3>
-                    <p className="beauty-stat-label">My Revenue (paid)</p>
-                    <small className="beauty-stat-sub">{!invoiceAllowed ? 'Not available for your role' : `Outstanding: ${loading ? '—' : formatCurrency(periodRevenuePending)}`}</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="row">
-          <div className="col-xl-6 col-xxl-6 col-lg-12 col-md-12">
-            <div className="card">
+        {/* ── Middle Row: Bookings Summary + Revenue ── */}
+        <div className="row g-3 mb-4">
+
+          {/* Bookings Summary */}
+          <div className="col-xl-6 col-lg-12">
+            <div className="card h-100">
               <div className="card-header">
                 <div className="beauty-section-header">
                   <div>
@@ -375,47 +408,53 @@ export default function BeautyStaffDashboard() {
                   </div>
                 </div>
               </div>
-
-              <div className="card-body pt-3">
-                <div
-                  className="d-flex flex-wrap p-3 align-items-center mb-4"
-                  style={{ background: 'rgba(34, 197, 94, 0.08)', borderRadius: 14 }}
-                >
-                  <span className="btn fs-22 text-white py-1 px-4 me-3 beauty-kpi-chip" style={{ background: 'var(--success)', borderRadius: 12 }}>
-                    {loading ? '—' : summaryDataByTab.active.total}
-                  </span>
-                  <h4 className="mb-0" style={{ fontWeight: 800 }}>
-                    Bookings <span className="ms-2" style={{ color: 'var(--success)' }}>●</span>
-                  </h4>
-                  <Link
-                    to="/appointments"
-                    className="ms-sm-auto mt-sm-0 mt-2"
-                    style={{ color: 'var(--success)', fontWeight: 700, textDecoration: 'none' }}
-                  >
-                    Manage bookings
+              <div className="card-body">
+                {/* KPI banner */}
+                <div className="beauty-kpi-banner">
+                  <span className="beauty-kpi-number">{loading ? '—' : summaryDataByTab.active.total}</span>
+                  <p className="beauty-kpi-label">Total Bookings</p>
+                  <Link to="/appointments" className="beauty-kpi-link">
+                    Manage <ChevronRight size={14} />
                   </Link>
                 </div>
 
-                <div className="row">
+                {/* Mini stat boxes */}
+                <div className="row g-2 mb-3">
                   {[
-                    { label: 'Upcoming', value: summaryDataByTab.active.upcoming },
-                    { label: 'Completed', value: summaryDataByTab.active.completed },
-                    { label: 'Cancelled', value: summaryDataByTab.active.cancelled },
+                    { key: 'ms-upcoming',  label: 'Upcoming',  val: summaryDataByTab.active.upcoming },
+                    { key: 'ms-completed', label: 'Completed', val: summaryDataByTab.active.completed },
+                    { key: 'ms-cancelled', label: 'Cancelled', val: summaryDataByTab.active.cancelled },
                   ].map((b) => (
-                    <div key={b.label} className="col-sm-4 mb-4">
-                      <div className="border px-3 py-3 rounded-3">
-                        <div style={{ fontSize: 28, fontWeight: 800 }}>{loading ? '—' : b.value}</div>
-                        <p className="fs-16 mb-0 text-muted">{b.label}</p>
+                    <div key={b.key} className="col-4">
+                      <div className={`beauty-mini-stat ${b.key}`}>
+                        <span className="ms-num">{loading ? '—' : b.val}</span>
+                        <span className="ms-label">{b.label}</span>
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {/* Progress bars */}
+                {[
+                  { label: `Upcoming (${pct(summaryDataByTab.active.upcoming)}%)`, val: summaryDataByTab.active.upcoming, color: 'var(--primary)' },
+                  { label: `Completed (${pct(summaryDataByTab.active.completed)}%)`, val: summaryDataByTab.active.completed, color: 'var(--success)' },
+                  { label: `Cancelled (${pct(summaryDataByTab.active.cancelled)}%)`, val: summaryDataByTab.active.cancelled, color: 'var(--danger)' },
+                ].map((bar) => (
+                  <div key={bar.label} className="beauty-progress-row">
+                    <span className="bp-label">{bar.label}</span>
+                    <div className="bp-bar">
+                      <div className="bp-fill" style={{ width: `${pct(bar.val)}%`, background: bar.color }} />
+                    </div>
+                    <span className="bp-val">{loading ? '—' : bar.val}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="col-xl-6 col-xxl-6 col-lg-12 col-md-12">
-            <div className="card">
+          {/* Revenue */}
+          <div className="col-xl-6 col-lg-12">
+            <div className="card h-100">
               <div className="card-header">
                 <div className="beauty-section-header">
                   <div>
@@ -433,7 +472,7 @@ export default function BeautyStaffDashboard() {
                           setRevTab(tab);
                           setPeriodKey(tab === 'Monthly' ? 'month' : tab === 'Weekly' ? 'week' : 'today');
                         }}
-                        style={!invoiceAllowed ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                        style={!invoiceAllowed ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
                       >
                         {tab}
                       </button>
@@ -441,44 +480,58 @@ export default function BeautyStaffDashboard() {
                   </div>
                 </div>
               </div>
-
-              <div className="card-body px-3">
+              <div className="card-body">
                 {!invoiceAllowed ? (
-                  <div className="text-muted" style={{ padding: '12px 6px' }}>Invoices not available for your role.</div>
+                  <div className="beauty-empty">
+                    <span className="be-icon">🔒</span>
+                    <p>Revenue data is not available for your role.</p>
+                    <small style={{ color: '#94a3b8' }}>Contact your administrator to request access.</small>
+                  </div>
                 ) : (
                   <>
-                    <div className="d-flex flex-wrap justify-content-end pe-3 revenue-chart-bar">
-                      <div className="d-flex align-items-end me-4 mb-2">
-                        <div>
-                          <small className="text-dark fs-14">Paid</small>
-                          <h3 className="mb-0" style={{ fontWeight: 800 }}>{loading ? '—' : formatCurrency(periodRevenuePaid)}</h3>
-                        </div>
+                    <div className="d-flex gap-3 mb-3 flex-wrap">
+                      <div className="beauty-rev-chip">
+                        <span className="rc-label">Paid</span>
+                        <span className="rc-value">{loading ? '—' : formatCurrency(periodRevenuePaid)}</span>
                       </div>
-                      <div className="d-flex align-items-end mb-2">
-                        <div>
-                          <small className="text-dark fs-14">Outstanding</small>
-                          <h3 className="mb-0" style={{ fontWeight: 800 }}>{loading ? '—' : formatCurrency(periodRevenuePending)}</h3>
-                        </div>
+                      <div className="beauty-rev-chip">
+                        <span className="rc-label">Outstanding</span>
+                        <span className="rc-value">{loading ? '—' : formatCurrency(periodRevenuePending)}</span>
                       </div>
                     </div>
-
-                    <div style={{ marginTop: 10 }}>
-                      <ReactApexChart
-                        type="bar"
-                        height={260}
-                        series={[{ name: 'Paid revenue', data: revenueChart.data }]}
-                        options={{
-                          chart: { toolbar: { show: false }, fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif' },
-                          plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
-                          dataLabels: { enabled: false },
-                          colors: ['var(--primary)'],
-                          grid: { borderColor: 'rgba(0,0,0,0.05)' },
-                          xaxis: { categories: revenueChart.labels, labels: { rotate: -45 } },
-                          yaxis: { labels: { formatter: (v) => `${Math.round(v)}` } },
-                          tooltip: { y: { formatter: (v) => formatCurrency(v) } },
-                        }}
-                      />
-                    </div>
+                    <ReactApexChart
+                      type="bar"
+                      height={220}
+                      series={[{ name: 'Paid Revenue', data: revenueChart.data }]}
+                      options={{
+                        chart: { toolbar: { show: false }, fontFamily: 'Inter, system-ui, sans-serif', background: 'transparent' },
+                        plotOptions: { bar: { borderRadius: 8, columnWidth: '50%' } },
+                        dataLabels: { enabled: false },
+                        colors: ['#244066'],
+                        fill: {
+                          type: 'gradient',
+                          gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.4, gradientToColors: ['#3b75c4'], opacityFrom: 1, opacityTo: 0.7 },
+                        },
+                        grid: { borderColor: '#f1f5f9', strokeDashArray: 4, padding: { left: 0, right: 0 } },
+                        xaxis: {
+                          categories: revenueChart.labels,
+                          labels: { rotate: -40, style: { fontSize: '10px', colors: '#94a3b8', fontWeight: 600 } },
+                          axisBorder: { show: false },
+                          axisTicks: { show: false },
+                        },
+                        yaxis: {
+                          labels: { style: { fontSize: '10px', colors: '#94a3b8', fontWeight: 600 }, formatter: (v) => `${Math.round(v)}` },
+                        },
+                        tooltip: {
+                          y: { formatter: (v) => formatCurrency(v) },
+                          theme: 'light',
+                          style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' },
+                        },
+                        states: {
+                          hover: { filter: { type: 'lighten', value: 0.15 } },
+                        },
+                      }}
+                    />
                   </>
                 )}
               </div>
@@ -486,21 +539,31 @@ export default function BeautyStaffDashboard() {
           </div>
         </div>
 
-        <div className="row">
-          <div className="col-xl-8">
+        {/* ── Bottom Row: Upcoming Today + Quick Actions ── */}
+        <div className="row g-3">
+
+          {/* Upcoming Appointments */}
+          <div className="col-xl-8 col-lg-12">
             <div className="card">
-              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 className="card-title" style={{ margin: 0 }}>My upcoming today</h4>
-                <Link to="/appointments" className="btn btn-outline-secondary btn-sm">View</Link>
+              <div className="card-header">
+                <div className="beauty-section-header align-items-center">
+                  <div>
+                    <p className="beauty-section-title">My Upcoming Today</p>
+                    <p className="beauty-section-sub">{loading ? '…' : `${nextAppointments.length} appointment${nextAppointments.length !== 1 ? 's' : ''} remaining`}</p>
+                  </div>
+                  <Link to="/appointments" className="beauty-kpi-link">
+                    View all <ChevronRight size={14} />
+                  </Link>
+                </div>
               </div>
               <div className="card-body" style={{ paddingTop: 0 }}>
                 {loading ? (
-                  <div className="text-muted">Loading…</div>
+                  <div className="beauty-empty"><span className="be-icon">⏳</span><p>Loading appointments…</p></div>
                 ) : nextAppointments.length === 0 ? (
-                  <div className="text-muted">No upcoming appointments.</div>
+                  <div className="beauty-empty"><span className="be-icon">📅</span><p>No upcoming appointments for today.</p></div>
                 ) : (
                   <div className="table-responsive">
-                    <table className="table table-striped">
+                    <table className="beauty-table">
                       <thead>
                         <tr>
                           <th>Time</th>
@@ -511,15 +574,23 @@ export default function BeautyStaffDashboard() {
                       </thead>
                       <tbody>
                         {nextAppointments.map((a) => {
-                          const start = new Date(a.start_time);
-                          const time = start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                          const time = new Date(a.start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
                           const client = `${a.customer_first_name || ''} ${a.customer_last_name || ''}`.trim() || '—';
                           return (
                             <tr key={a.id}>
-                              <td>{time}</td>
-                              <td>{client}</td>
-                              <td>{a.service_name || '—'}</td>
-                              <td>{a.status || '—'}</td>
+                              <td className="bt-time">{time}</td>
+                              <td>
+                                <div className="bt-avatar-cell">
+                                  <span className="bt-avatar">{initials(client)}</span>
+                                  <span className="bt-client">{client}</span>
+                                </div>
+                              </td>
+                              <td className="bt-service">{a.service_name || '—'}</td>
+                              <td>
+                                <span className={`beauty-badge ${statusBadgeClass(a.status)}`}>
+                                  {a.status || '—'}
+                                </span>
+                              </td>
                             </tr>
                           );
                         })}
@@ -531,22 +602,50 @@ export default function BeautyStaffDashboard() {
             </div>
           </div>
 
-          <div className="col-xl-4">
-            <div className="card">
+          {/* Quick Actions */}
+          <div className="col-xl-4 col-lg-12">
+            <div className="card h-100">
               <div className="card-header">
-                <h4 className="card-title" style={{ margin: 0 }}>Front desk snapshot</h4>
-              </div>
-              <div className="card-body" style={{ paddingTop: 0 }}>
-                <div className="text-muted" style={{ marginBottom: 10 }}>Quick actions</div>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                  <Link className="btn btn-outline-secondary btn-sm" to="/pos">Open POS</Link>
-                  <Link className="btn btn-outline-secondary btn-sm" to="/appointments">Create booking</Link>
-                  <Link className="btn btn-outline-secondary btn-sm" to="/beauty-payments">Payments</Link>
-                  <Link className="btn btn-outline-secondary btn-sm" to="/notifications">Notifications</Link>
+                <div className="beauty-section-header align-items-center">
+                  <p className="beauty-section-title">Quick Actions</p>
                 </div>
+              </div>
+              <div className="card-body d-flex flex-column gap-2" style={{ paddingTop: '0.75rem' }}>
+                {[
+                  { label: 'Open POS',       to: '/pos',             accent: '#1c2f4e' },
+                  { label: 'Create Booking', to: '/appointments',    accent: '#0ea47a' },
+                  { label: 'Payments',       to: '/beauty-payments', accent: '#7c5cbf' },
+                  { label: 'Notifications',  to: '/notifications',   accent: '#e8880a' },
+                ].map((action) => (
+                  <Link
+                    key={action.to}
+                    to={action.to}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 16px',
+                      borderRadius: 10,
+                      background: `${action.accent}12`,
+                      border: `1px solid ${action.accent}28`,
+                      color: action.accent,
+                      fontWeight: 600,
+                      fontSize: '0.92rem',
+                      textDecoration: 'none',
+                      transition: 'background 0.18s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = `${action.accent}22`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = `${action.accent}12`; }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: action.accent, flexShrink: 0 }} />
+                    {action.label}
+                    <ChevronRight size={14} style={{ marginLeft: 'auto', opacity: 0.6 }} />
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
