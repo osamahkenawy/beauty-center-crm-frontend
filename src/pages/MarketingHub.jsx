@@ -626,9 +626,11 @@ export default function MarketingHub() {
               <div className="mh-empty-icon"><Megaphone width={36} height={36} /></div>
               <h3>No Campaigns Yet</h3>
               <p>Create your first marketing campaign to reach your clients via email, SMS, or social media.</p>
-              <button className="mh-btn mh-btn-primary" onClick={() => { resetCampaignForm(); setShowCampaignModal(true); }}>
-                <Plus width={16} height={16} /> Create Campaign
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button className="mh-btn mh-btn-primary" onClick={() => { resetCampaignForm(); setShowCampaignModal(true); }}>
+                  <Plus width={16} height={16} /> Create Campaign
+                </button>
+              </div>
             </div>
           ) : (
             <div className="mh-campaigns-grid">

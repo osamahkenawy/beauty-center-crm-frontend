@@ -2,7 +2,7 @@ import { useState, useContext, useEffect, useReducer, useCallback, Fragment } fr
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Collapse } from 'react-bootstrap';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, QrCode } from 'lucide-react';
 import { Bell, Group, Notes, Wifi } from 'iconoir-react';
 import { AuthContext } from '../App';
 import api from '../lib/api';
@@ -153,6 +153,12 @@ const beautyMenuList = [
     module: 'settings',
     isHighlight: true,
   },
+  { title: 'TOOLS', classsChange: 'menu-title' },
+  {
+    title: 'Generate QR Codes',
+    to: '/tools/qr-codes',
+    iconStyle: <QrCode width={20} height={20} style={{ display: 'inline-flex' }} />,
+  },
   { title: 'SETTINGS', classsChange: 'menu-title', adminOnly: true },
   {
     title: 'Settings',
@@ -167,6 +173,7 @@ const beautyMenuList = [
       { title: 'Resources', to: '/beauty-settings/resources' },
       { title: 'Working Hours', to: '/beauty-settings/hours' },
       { title: 'Notifications', to: '/beauty-settings/notifications' },
+      { title: 'Terms & Conditions', to: '/beauty-settings/terms' },
       { title: 'Online Booking', to: '/beauty-settings/booking' },
       { title: 'Team', to: '/beauty-settings/team' },
       { title: 'Roles & Permissions', to: '/beauty-settings/roles' },

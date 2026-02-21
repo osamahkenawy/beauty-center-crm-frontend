@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, GripVertical, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Plus, Pencil, Trash2, GripVertical, X, Tags, ArrowRight, Sparkles } from 'lucide-react';
 import { Badge, Modal } from 'react-bootstrap';
 import { HexColorPicker } from 'react-colorful';
 import { ICON_OPTIONS, renderCatIcon, EMPTY_CATEGORY_FORM } from './settingsConstants';
@@ -15,10 +15,35 @@ export default function CategoriesManager({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
 
-  const openCreate = () => { setEditing(null); setForm({ ...EMPTY_CATEGORY_FORM }); setShowModal(true); };
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),
+    [categories]
+  );
+  const activeCount = useMemo(() => categories.filter((category) => category.is_active !== 0).length, [categories]);
+  const inactiveCount = categories.length - activeCount;
+
+  const closeModal = () => {
+    setShowModal(false);
+    setShowIconPicker(false);
+    setShowColorPicker(false);
+  };
+
+  const openCreate = () => {
+    setEditing(null);
+    // Calculate next sort order based on existing categories
+    const nextSortOrder = categories.length > 0 
+      ? Math.max(...categories.map(c => c.sort_order || 0)) + 1
+      : 1;
+    setForm({ ...EMPTY_CATEGORY_FORM, sort_order: nextSortOrder });
+    setShowIconPicker(false);
+    setShowColorPicker(false);
+    setShowModal(true);
+  };
   const openEdit = (cat) => {
     setEditing(cat);
-    setForm({ name: cat.name, name_ar: cat.name_ar || '', icon: cat.icon || 'sparkles', color: cat.color || '#E91E63', sort_order: cat.sort_order || '' });
+    setForm({ name: cat.name, name_ar: cat.name_ar || '', icon: cat.icon || 'sparkles', color: cat.color || '#E91E63', sort_order: cat.sort_order || 0, is_active: cat.is_active || 0 });
+    setShowIconPicker(false);
+    setShowColorPicker(false);
     setShowModal(true);
   };
 
@@ -33,7 +58,7 @@ export default function CategoriesManager({
         await api.post('/service-categories', form);
         showToast('success', 'Category created');
       }
-      setShowModal(false);
+      closeModal();
       fetchCategories();
     } catch (e) { showToast('error', e.message || 'Failed to save'); }
     setSaving(false);
@@ -43,6 +68,21 @@ export default function CategoriesManager({
 
   return (
     <div className="stn-page">
+      <div className="stn-cat-summary">
+        <div className="stn-cat-summary-left">
+          <div className="stn-cat-summary-icon"><Tags size={18} /></div>
+          <div>
+            <h3>Service Categories</h3>
+            <p>Organize your services into clean, discoverable groups.</p>
+          </div>
+        </div>
+        <div className="stn-cat-summary-stats">
+          <span className="stn-cat-pill">Total {categories.length}</span>
+          <span className="stn-cat-pill active">Active {activeCount}</span>
+          {inactiveCount > 0 && <span className="stn-cat-pill muted">Inactive {inactiveCount}</span>}
+        </div>
+      </div>
+
       <div className="stn-page-actions">
         <button className="stn-btn-primary" onClick={openCreate}><Plus size={14} /> Add category</button>
       </div>
@@ -53,15 +93,19 @@ export default function CategoriesManager({
         <div className="stn-loading">Loading categories...</div>
       ) : categories.length === 0 ? (
         <div className="stn-empty">
-          <div className="stn-empty-icon">🏷️</div>
+          <div className="stn-empty-icon"><Sparkles size={30} /></div>
           <h3>No categories yet</h3>
-          <p>Categories help organize your service menu.</p>
+          <p>Create your first category to structure your service menu beautifully.</p>
           <button className="stn-btn-primary" onClick={openCreate}><Plus size={14} /> Create your first category</button>
         </div>
       ) : (
         <div className="stn-card">
+          <div className="stn-card-head">
+            <h3><Tags size={14} /> Category List</h3>
+            <p>{categories.length} categories • Drag handles ready for reorder</p>
+          </div>
           <div className="stn-card-body" style={{ padding: 0 }}>
-            {categories.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(cat => (
+            {sortedCategories.map((cat, index) => (
               <div className="stn-list-row" key={cat.id}>
                 <div className="stn-list-left">
                   <GripVertical size={14} color="#d0d5dd" className="stn-grip" />
@@ -69,12 +113,15 @@ export default function CategoriesManager({
                     {renderCatIcon(cat.icon, 18, cat.color)}
                   </div>
                   <div className="stn-list-info">
-                    <strong>{cat.name}</strong>
+                    <strong>{cat.name} <span className="stn-cat-order">#{index + 1}</span></strong>
                     {cat.name_ar && <span className="stn-arabic">{cat.name_ar}</span>}
                   </div>
                 </div>
                 <div className="stn-list-right">
-                  <button className="stn-btn-ghost" onClick={() => onNavigate('services')}>{'>>'} Services</button>
+                  <Badge bg="" className={`stn-cat-status ${cat.is_active !== 0 ? 'active' : 'inactive'}`}>
+                    {cat.is_active !== 0 ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <button className="stn-btn-ghost" onClick={() => onNavigate('services')}><ArrowRight size={12} /> Services</button>
                   <button className="stn-btn-icon" onClick={() => openEdit(cat)}><Pencil size={14} /></button>
                   <button className="stn-btn-icon danger" onClick={() => handleDelete(cat.id)}><Trash2 size={14} /></button>
                 </div>
@@ -85,10 +132,10 @@ export default function CategoriesManager({
       )}
 
       {/* Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered className="stn-modal">
+      <Modal show={showModal} onHide={closeModal} centered className="stn-modal">
         <Modal.Header>
           <Modal.Title>{editing ? 'Edit category' : 'New category'}</Modal.Title>
-          <button className="stn-btn-icon" onClick={() => setShowModal(false)}><X size={18} /></button>
+          {/* <button className="stn-btn-icon" onClick={closeModal}><X size={18} /></button> */}
         </Modal.Header>
         <Modal.Body>
           {/* Preview */}
@@ -151,11 +198,11 @@ export default function CategoriesManager({
 
           <div className="stn-field">
             <label>Sort order</label>
-            <input type="number" placeholder="0" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: e.target.value }))} />
+            <input type="number" placeholder="1" value={form.sort_order} onChange={e => setForm(p => ({ ...p, sort_order: parseInt(e.target.value) || 1 }))} />
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <button className="stn-btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
+          <button className="stn-btn-outline" onClick={closeModal}>Cancel</button>
           <button className="stn-btn-primary" disabled={saving} onClick={handleSubmit}>
             {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
           </button>

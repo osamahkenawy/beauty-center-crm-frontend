@@ -497,6 +497,21 @@ export default function NotificationCenter() {
                 const RIcon = info.Icon || Clock;
                 let channels = [];
                 try { channels = typeof reminder.channels === 'string' ? JSON.parse(reminder.channels) : (reminder.channels || []); } catch (e) { channels = []; }
+                let timingOptions = [];
+                try {
+                  timingOptions = typeof reminder.timing_options === 'string'
+                    ? JSON.parse(reminder.timing_options)
+                    : (reminder.timing_options || []);
+                } catch (e) {
+                  timingOptions = [];
+                }
+                if (!Array.isArray(timingOptions)) timingOptions = [];
+
+                const isUpcomingReminder = reminder.reminder_type === 'appointment_upcoming';
+                const defaultUpcomingTimings = [24, 2, 0.5];
+                const selectedTimings = isUpcomingReminder
+                  ? (timingOptions.length > 0 ? timingOptions : defaultUpcomingTimings)
+                  : [];
 
                 return (
                   <div key={reminder.id} className={`reminder-card ${reminder.is_enabled ? '' : 'disabled'}`}>
@@ -520,7 +535,39 @@ export default function NotificationCenter() {
                       </label>
                     </div>
                     <div className="reminder-card-body">
-                      {reminder.reminder_type !== 'birthday' && reminder.reminder_type !== 'stock_low' && (
+                      {isUpcomingReminder && (
+                        <div className="reminder-field">
+                          <label>Reminder Timings</label>
+                          <div className="reminder-channels">
+                            {[
+                              { value: 24, label: '24h' },
+                              { value: 2, label: '2h' },
+                              { value: 0.5, label: '30m' },
+                            ].map(opt => (
+                              <button
+                                key={opt.label}
+                                className={`channel-tag ${selectedTimings.includes(opt.value) ? 'active' : ''}`}
+                                onClick={() => {
+                                  const has = selectedTimings.includes(opt.value);
+                                  let updated = has
+                                    ? selectedTimings.filter(v => v !== opt.value)
+                                    : [...selectedTimings, opt.value];
+
+                                  if (updated.length === 0) {
+                                    updated = [24];
+                                  }
+
+                                  updateReminder(reminder.id, { timing_options: updated });
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {reminder.reminder_type !== 'birthday' && reminder.reminder_type !== 'stock_low' && !isUpcomingReminder && (
                         <div className="reminder-field">
                           <label>Hours Before</label>
                           <input
@@ -537,7 +584,6 @@ export default function NotificationCenter() {
                           {[
                             { key: 'in_app', label: 'In-App', Icon: Bell },
                             { key: 'email', label: 'Email', Icon: Mail },
-                            { key: 'sms', label: 'SMS', Icon: SendDiagonal },
                           ].map(ch => (
                             <button
                               key={ch.key}

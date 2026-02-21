@@ -132,12 +132,17 @@ export default function Packages() {
 
   return (
     <div className="pkg-page">
-      <div className="pkg-header">
-        <div>
-          <h1 className="pkg-title">Packages</h1>
-          <p className="pkg-subtitle">Create service bundles at discounted prices</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Package size={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Packages</h1>
+            <p className="module-hero-sub">Create service bundles at discounted prices</p>
+          </div>
         </div>
-        <button className="pkg-btn-primary" onClick={openCreate}><Plus size={18} /> Create Package</button>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-primary" onClick={openCreate}><Plus size={18} /> Create Package</button>
+        </div>
       </div>
 
       {/* Stats */}

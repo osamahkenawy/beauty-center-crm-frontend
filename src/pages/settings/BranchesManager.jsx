@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   MapPin, Plus, Pencil, Trash2, Star, Phone, Mail,
-  X, Clock, ToggleLeft, ToggleRight,
+  Clock, ToggleLeft, ToggleRight,
   Building2, Copy, CheckCircle2, ExternalLink, Navigation
 } from 'lucide-react';
 import { Modal } from 'react-bootstrap';
@@ -16,12 +16,55 @@ const DAY_FULL = { sunday: 'Sunday', monday: 'Monday', tuesday: 'Tuesday', wedne
 /** Merge saved hours with defaults so all 7 days always exist */
 function mergeHours(raw) {
   if (!raw) return { ...DEFAULT_WORKING_HOURS };
-  const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  let parsed = raw;
+  if (typeof raw === 'string') {
+    try {
+      parsed = JSON.parse(raw);
+      if (typeof parsed === 'string') {
+        parsed = JSON.parse(parsed);
+      }
+    } catch (e) {
+      parsed = {};
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') parsed = {};
   const merged = {};
   for (const day of DAY_ORDER) {
-    merged[day] = parsed[day] || DEFAULT_WORKING_HOURS[day] || { open: '09:00', close: '22:00', isOpen: false };
+    merged[day] = parsed[day] || DEFAULT_WORKING_HOURS[day] || { open: '09:00', close: '22:00', isOpen: true };
   }
   return merged;
+}
+
+const COUNTRY_OPTIONS = [
+  'UAE', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Bahrain', 'Oman',
+  'Jordan', 'Egypt', 'Turkey', 'United Kingdom', 'United States', 'India', 'Pakistan'
+];
+
+const ARABIC_CHAR_MAP = {
+  a: 'ا', b: 'ب', c: 'ك', d: 'د', e: 'ي', f: 'ف', g: 'ج', h: 'ه', i: 'ي', j: 'ج',
+  k: 'ك', l: 'ل', m: 'م', n: 'ن', o: 'و', p: 'ب', q: 'ق', r: 'ر', s: 'س', t: 'ت',
+  u: 'و', v: 'ف', w: 'و', x: 'كس', y: 'ي', z: 'ز'
+};
+
+function transliterateToArabic(value) {
+  if (!value) return '';
+  return value
+    .trim()
+    .split(/\s+/)
+    .map((word) => word
+      .toLowerCase()
+      .replace(/[^a-z]/g, '')
+      .split('')
+      .map((char) => ARABIC_CHAR_MAP[char] || char)
+      .join(''))
+    .filter(Boolean)
+    .join(' ');
+}
+
+function createBranchCode(value) {
+  if (!value) return '';
+  const clean = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return clean.slice(0, 3);
 }
 
 /* ── Working hours mini-table inside cards ── */
@@ -90,7 +133,7 @@ function BranchCard({ branch, onEdit, onDelete, onToggle, onSetHQ }) {
         </div>
         {/* Status badges */}
         <div className="loc-card-badges">
-          {branch.is_headquarters && (
+          {!!branch.is_headquarters && (
             <span className="loc-badge loc-badge-hq"><Star size={10} /> HQ</span>
           )}
           <span className={`loc-badge ${branch.is_active ? 'loc-badge-open' : 'loc-badge-closed'}`}>
@@ -165,6 +208,31 @@ export default function BranchesManager({
   const [editingBranch, setEditingBranch] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_BRANCH_FORM });
+  const [nameArTouched, setNameArTouched] = useState(false);
+  const [codeTouched, setCodeTouched] = useState(false);
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingBranch(null);
+    setSaving(false);
+  };
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`);
+      const data = await res.json();
+      const address = data?.address || {};
+      const country = address.country || address.country_code?.toUpperCase() || '';
+      const city = address.city || address.town || address.village || address.state || '';
+      return {
+        fullAddress: data?.display_name || '',
+        country,
+        city,
+      };
+    } catch (e) {
+      return null;
+    }
+  };
 
   const handleInput = (field, value) => {
     if (field.startsWith('working_hours.')) {
@@ -179,6 +247,19 @@ export default function BranchesManager({
           }
         }
       }));
+    } else if (field === 'name') {
+      setForm(prev => {
+        const next = { ...prev, name: value };
+        if (!nameArTouched) next.name_ar = transliterateToArabic(value);
+        if (!codeTouched) next.code = createBranchCode(value);
+        return next;
+      });
+    } else if (field === 'name_ar') {
+      setNameArTouched(true);
+      setForm(prev => ({ ...prev, [field]: value }));
+    } else if (field === 'code') {
+      setCodeTouched(true);
+      setForm(prev => ({ ...prev, [field]: value?.toUpperCase() || '' }));
     } else {
       setForm(prev => ({ ...prev, [field]: value }));
     }
@@ -186,12 +267,16 @@ export default function BranchesManager({
 
   const openCreate = () => {
     setEditingBranch(null);
+    setNameArTouched(false);
+    setCodeTouched(false);
     setForm({ ...EMPTY_BRANCH_FORM, working_hours: { ...DEFAULT_WORKING_HOURS } });
     setShowModal(true);
   };
 
   const openEdit = (b) => {
     setEditingBranch(b);
+    setNameArTouched(true);
+    setCodeTouched(true);
     const wh = mergeHours(b.working_hours);
     setForm({
       name: b.name || '', name_ar: b.name_ar || '', code: b.code || '',
@@ -199,7 +284,7 @@ export default function BranchesManager({
       country: b.country || 'UAE', postal_code: b.postal_code || '',
       latitude: b.latitude || '', longitude: b.longitude || '',
       phone: b.phone || '', email: b.email || '', description: b.description || '',
-      is_headquarters: !!b.is_headquarters, is_active: b.is_active !== false,
+      is_headquarters: !!b.is_headquarters, is_active: !!b.is_active,
       timezone: b.timezone || 'Asia/Dubai', currency: b.currency || 'AED',
       working_hours: wh,
     });
@@ -221,8 +306,6 @@ export default function BranchesManager({
           }
         } catch (e) { /* ignore */ }
       }
-      if (payload.working_hours) payload.working_hours = JSON.stringify(payload.working_hours);
-
       if (editingBranch) {
         await api.patch(`/branches/${editingBranch.id}`, payload);
         showToast('success', 'Branch updated');
@@ -230,7 +313,7 @@ export default function BranchesManager({
         await api.post('/branches', payload);
         showToast('success', 'Branch created');
       }
-      setShowModal(false);
+      closeModal();
       fetchBranches();
     } catch (e) {
       showToast('error', e.message || 'Failed to save branch');
@@ -249,12 +332,9 @@ export default function BranchesManager({
 
   const handleSetHQ = async (branch) => {
     try {
-      for (const b of branches.filter(x => x.is_headquarters && x.id !== branch.id)) {
-        await api.patch(`/branches/${b.id}`, { is_headquarters: false });
-      }
       await api.patch(`/branches/${branch.id}`, { is_headquarters: true });
       showToast('success', `${branch.name} set as headquarters`);
-      fetchBranches();
+      await fetchBranches();
     } catch (e) { showToast('error', 'Failed'); }
   };
 
@@ -310,12 +390,9 @@ export default function BranchesManager({
       )}
 
       {/* ── Create / Edit Modal ── */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered className="stn-modal">
-        <Modal.Header>
+      <Modal show={showModal} onHide={closeModal} size="lg" centered className="stn-modal">
+        <Modal.Header closeButton>
           <Modal.Title className='text-light'>{editingBranch ? 'Edit location' : 'New location'}</Modal.Title>
-          <button type="button" className="stn-btn-icon text-light" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowModal(false); }} aria-label="Close">
-            <X size={18} />
-          </button>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           <div className="stn-form-grid">
@@ -341,7 +418,14 @@ export default function BranchesManager({
             </div>
             <div className="stn-field">
               <label>Country</label>
-              <input type="text" value={form.country} onChange={e => handleInput('country', e.target.value)} />
+              <select value={form.country} onChange={e => handleInput('country', e.target.value)}>
+                {form.country && !COUNTRY_OPTIONS.includes(form.country) && (
+                  <option value={form.country}>{form.country}</option>
+                )}
+                {COUNTRY_OPTIONS.map((country) => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
+              </select>
             </div>
             <div className="stn-field">
               <label>Phone</label>
@@ -360,10 +444,15 @@ export default function BranchesManager({
               <LocationPicker
                 latitude={form.latitude}
                 longitude={form.longitude}
-                onLocationSelect={(lat, lng, addr) => {
+                onLocationSelect={async (lat, lng, addr) => {
                   handleInput('latitude', lat);
                   handleInput('longitude', lng);
                   if (addr && !form.address) handleInput('address', addr);
+
+                  const geo = await reverseGeocode(lat, lng);
+                  if (geo?.fullAddress && (!form.address || form.address === addr)) handleInput('address', geo.fullAddress);
+                  if (geo?.city && !form.city) handleInput('city', geo.city);
+                  if (geo?.country) handleInput('country', geo.country);
                 }}
                 height={250}
               />
@@ -408,7 +497,7 @@ export default function BranchesManager({
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <button className="stn-btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
+          <button className="stn-btn-outline" onClick={closeModal}>Cancel</button>
           <button className="stn-btn-primary" disabled={saving} onClick={handleSubmit}>
             {saving ? 'Saving...' : editingBranch ? 'Update location' : 'Create location'}
           </button>

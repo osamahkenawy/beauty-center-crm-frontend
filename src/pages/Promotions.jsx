@@ -109,12 +109,17 @@ export default function Promotions() {
 
   return (
     <div className="prm-page">
-      <div className="prm-header">
-        <div>
-          <h1 className="prm-title">Deals & Promotions</h1>
-          <p className="prm-subtitle">Create offers and discount codes to attract more clients</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Percent size={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Deals & Promotions</h1>
+            <p className="module-hero-sub">Create offers and discount codes to attract more clients</p>
+          </div>
         </div>
-        <button className="prm-btn-primary" onClick={openCreate}><Plus size={18} /> New Promotion</button>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-primary" onClick={openCreate}><Plus size={18} /> New Promotion</button>
+        </div>
       </div>
 
       {/* Stats */}

@@ -124,14 +124,17 @@ export default function Memberships() {
 
   return (
     <div className="mem-page">
-      <div className="mem-header">
-        <div>
-          <h1 className="mem-title">Memberships</h1>
-          <p className="mem-subtitle">Recurring plans for loyal clients</p>
+      <div className="module-hero">
+        <div className="module-hero-left">
+          <div className="module-hero-icon"><Crown size={26} /></div>
+          <div>
+            <h1 className="module-hero-title">Memberships</h1>
+            <p className="module-hero-sub">Recurring plans for loyal clients</p>
+          </div>
         </div>
-        <div className="mem-header-actions">
-          <button className="mem-btn-outline" onClick={() => openSubscribe()}><UserPlus size={16} /> Subscribe Client</button>
-          <button className="mem-btn-primary" onClick={openCreatePlan}><Plus size={18} /> New Plan</button>
+        <div className="module-hero-actions">
+          <button className="module-btn module-btn-outline" onClick={() => openSubscribe()}><UserPlus size={16} /> Subscribe Client</button>
+          <button className="module-btn module-btn-primary" onClick={openCreatePlan}><Plus size={18} /> New Plan</button>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Star, Search, Plus, Xmark, WarningTriangle, Check,
   User, Trophy, ArrowUp, ArrowDown, Refresh, Settings,
-  Trash, Gift, Calculator, Eye, EyeClosed
+  Trash, Gift, Calculator, Eye, EyeClosed, Activity
 } from 'iconoir-react';
 import api from '../lib/api';
 import SEO from '../components/SEO';
@@ -422,9 +422,11 @@ export default function LoyaltyProgram() {
                     <Star width={48} height={48} />
                     <h3>No loyalty members yet</h3>
                     <p>Enroll your first client to start the loyalty program</p>
-                    <button className="loyalty-btn-enroll" onClick={() => { setEnrollForm({ customer_id: '', tier: 'bronze' }); setShowEnrollModal(true); }}>
-                      <Plus width={18} height={18} /> Enroll First Client
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <button className="loyalty-btn-enroll" onClick={() => { setEnrollForm({ customer_id: '', tier: 'bronze' }); setShowEnrollModal(true); }}>
+                        <Plus width={18} height={18} /> Enroll First Client
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   members.map(member => {
@@ -469,7 +471,7 @@ export default function LoyaltyProgram() {
           {activeTab === 'activity' && (
             <div className="loyalty-activity-feed">
               <div className="loyalty-activity-header">
-                <h3>📊 Recent Activity</h3>
+                <h3><Activity width={16} height={16} /> Recent Activity</h3>
                 <button className="loyalty-refresh-btn" data-tooltip="Refresh members" onClick={fetchMembers}><Refresh width={16} height={16} /></button>
               </div>
               {recentActivity.length === 0 ? (

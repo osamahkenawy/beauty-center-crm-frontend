@@ -395,6 +395,16 @@ export default function BusinessSetup({ businessInfo, onBusinessChange, onSave, 
             <LocationPicker
               latitude={businessInfo.latitude}
               longitude={businessInfo.longitude}
+              markers={branches
+                .filter((b) => Number.isFinite(parseFloat(b.latitude)) && Number.isFinite(parseFloat(b.longitude)))
+                .map((b) => ({
+                  id: b.id,
+                  lat: parseFloat(b.latitude),
+                  lng: parseFloat(b.longitude),
+                  label: b.name,
+                  isHeadquarters: !!b.is_headquarters,
+                  isActive: !!b.is_active,
+                }))}
               onLocationSelect={(lat, lng, addr) => {
                 onBusinessChange('latitude', lat);
                 onBusinessChange('longitude', lng);
@@ -437,7 +447,7 @@ export default function BusinessSetup({ businessInfo, onBusinessChange, onSave, 
                     {b.staff_count !== undefined && b.staff_count > 0 && (
                       <span className="biz-branch-count">{b.staff_count}</span>
                     )}
-                    {b.is_headquarters && <Badge bg="" className="biz-badge-hq">HQ</Badge>}
+                    {!!b.is_headquarters && <Badge bg="" className="biz-badge-hq">HQ</Badge>}
                     <Badge bg="" className={`biz-badge-status ${b.is_active ? 'active' : ''}`}>
                       {b.is_active ? 'Open' : 'Closed'}
                     </Badge>

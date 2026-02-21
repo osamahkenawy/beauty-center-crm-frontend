@@ -52,6 +52,7 @@ import GroupBookingsPage from './pages/GroupBookings';
 import PatchTestsPage from './pages/PatchTests';
 import NotificationCenterPage from './pages/NotificationCenter';
 import MarketingHubPage from './pages/MarketingHub';
+import QrToolsPage from './pages/QrTools';
 import OnlineBooking from './pages/OnlineBooking';
 import OnlineStore from './pages/OnlineStore';
 import AppConnect from './pages/AppConnect';
@@ -309,6 +310,7 @@ function App() {
         <Route path="/notifications" element={user ? <BeautyLayout><NotificationCenterPage /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/marketing" element={user ? <BeautyLayout><MarketingHubPage /></BeautyLayout> : <Navigate to="/login" />} />
         <Route path="/app-connect" element={user ? <BeautyLayout><AppConnect /></BeautyLayout> : <Navigate to="/login" />} />
+        <Route path="/tools/qr-codes" element={user ? <BeautyLayout><QrToolsPage /></BeautyLayout> : <Navigate to="/login" />} />
         
         {/* Super Admin Routes */}
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />

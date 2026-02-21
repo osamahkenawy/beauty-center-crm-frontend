@@ -690,7 +690,7 @@ export default function BeautyPayments() {
       <Modal show={showCreate} onHide={() => setShowCreate(false)} size="lg" centered className="inv-modal">
         <Modal.Header closeButton>
           <Modal.Title>
-            <div className="inv-modal-title"><Receipt size={20} /> Create New Invoice</div>
+            <div className="inv-modal-title text-white"><Receipt size={20} className='text-white' /> Create New Invoice</div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -707,7 +707,7 @@ export default function BeautyPayments() {
                 <label>Staff</label>
                 <select value={form.staff_id} onChange={e => setForm(p => ({ ...p, staff_id: e.target.value }))}>
                   <option value="">Select staff...</option>
-                  {staffList.map(s => <option key={s.id} value={s.id}>{s.full_name}</option>)}
+                  {staffList.filter(s => s.is_active).map(s => <option key={s.id} value={s.id}>{s.full_name}</option>)}
                 </select>
               </div>
             </div>
@@ -826,15 +826,55 @@ export default function BeautyPayments() {
                       }
                     }}
                     title="Download PDF"
+                    data-tooltip="Download invoice PDF"
+                    data-tooltip-pos="bottom"
                   >
                     <Download size={18} />
                   </button>
-                  <button className="inv-btn-icon-action" onClick={handlePrint} title="Print Invoice">
+                  {Number(viewing.amount_paid || 0) > 0 && (
+                    <button
+                      className="inv-btn-icon-action"
+                      onClick={async () => {
+                        try {
+                          const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+                          const token = localStorage.getItem('crm_token');
+                          const response = await fetch(`${API_BASE_URL}/invoices/${viewing.id}/receipt-pdf`, {
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            }
+                          });
+                          if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.message || 'Failed to generate receipt PDF');
+                          }
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `receipt-${viewing.invoice_number}.pdf`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                          showToast('success', 'Receipt Downloaded', 'Payment receipt PDF has been downloaded successfully');
+                        } catch (error) {
+                          console.error('Receipt download error:', error);
+                          showToast('error', 'Download Failed', error.message || 'Failed to download receipt PDF. Please try again.');
+                        }
+                      }}
+                      title="Download Receipt"
+                      data-tooltip="Download receipt PDF"
+                      data-tooltip-pos="bottom"
+                    >
+                      <Receipt size={18} />
+                    </button>
+                  )}
+                  <button className="inv-btn-icon-action" onClick={handlePrint} title="Print Invoice" data-tooltip="Print invoice" data-tooltip-pos="bottom">
                     <Printer size={18} />
                   </button>
                   {viewing.status !== 'paid' && viewing.status !== 'void' && (
                     <>
-                      <button className="inv-btn-icon-action inv-btn-void" onClick={() => handleVoid(viewing.id)} title="Void Invoice">
+                      <button className="inv-btn-icon-action inv-btn-void" onClick={() => handleVoid(viewing.id)} title="Void Invoice" data-tooltip="Void invoice" data-tooltip-pos="bottom">
                         <Ban size={18} />
                       </button>
                       <button className="inv-btn-primary inv-btn-sm" onClick={() => openPayModal(viewing, balanceDue)}>
@@ -842,7 +882,7 @@ export default function BeautyPayments() {
                       </button>
                     </>
                   )}
-                  <button className="inv-btn-close-view" onClick={() => setShowView(false)}>
+                  <button className="inv-btn-close-view" onClick={() => setShowView(false)} data-tooltip="Close" data-tooltip-pos="bottom">
                     <XCircle size={20} />
                   </button>
                 </div>

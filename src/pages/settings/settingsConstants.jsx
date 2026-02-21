@@ -169,7 +169,7 @@ export const EMPTY_SERVICE_FORM = {
 };
 
 export const EMPTY_CATEGORY_FORM = {
-  name: '', name_ar: '', icon: 'sparkles', color: '#E91E63', sort_order: '',
+  name: '', name_ar: '', icon: 'sparkles', color: '#E91E63', sort_order: 1, is_active: 1,
 };
 
 export const EMPTY_RESOURCE_FORM = {

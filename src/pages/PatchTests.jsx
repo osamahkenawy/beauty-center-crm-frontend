@@ -225,9 +225,11 @@ export default function PatchTests() {
             <ShieldCheck size={48} strokeWidth={1} />
             <h4>No patch tests found</h4>
             <p>Schedule a patch test to get started</p>
-            <button className="pt-add-btn" data-tooltip="Schedule patch test" onClick={() => setShowModal(true)}>
-              <Plus size={16} /> New Patch Test
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <button className="pt-add-btn" data-tooltip="Schedule patch test" onClick={() => setShowModal(true)}>
+                <Plus size={16} /> New Patch Test
+              </button>
+            </div>
           </div>
         ) : (
           <table className="pt-table">

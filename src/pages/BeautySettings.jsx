@@ -13,6 +13,7 @@ import WorkingHours from './settings/WorkingHours';
 import NotificationSettings from './settings/NotificationSettings';
 import BookingRules from './settings/BookingRules';
 import ResourcesManager from './settings/ResourcesManager';
+import TermsConditionsSettings from './settings/TermsConditionsSettings';
 import RolesManager from './RolesManager';
 import EmailTemplatesManager from './settings/EmailTemplatesManager';
 import './settings/Settings.css';
@@ -25,6 +26,7 @@ const getTabFromPath = (pathname) => {
   if (pathname.includes('/services')) return 'services';
   if (pathname.includes('/hours')) return 'hours';
   if (pathname.includes('/notifications')) return 'notifications';
+  if (pathname.includes('/terms')) return 'terms';
   if (pathname.includes('/booking')) return 'booking';
   if (pathname.includes('/resources')) return 'resources';
   if (pathname.includes('/team')) return 'team';
@@ -41,6 +43,7 @@ const TAB_TITLES = {
   services: 'Service Menu',
   hours: 'Working Hours',
   notifications: 'Notifications',
+  terms: 'Terms & Conditions',
   booking: 'Online Booking',
   resources: 'Resources',
   team: 'Team',
@@ -216,6 +219,10 @@ export default function BeautySettings() {
 
           {activeTab === 'notifications' && (
             <NotificationSettings api={api} showToast={showToast} />
+          )}
+
+          {activeTab === 'terms' && (
+            <TermsConditionsSettings api={api} showToast={showToast} />
           )}
 
           {activeTab === 'booking' && (

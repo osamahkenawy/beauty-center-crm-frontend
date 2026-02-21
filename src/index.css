@@ -428,6 +428,10 @@ input, textarea, select {
   border-color: rgba(255,255,255,0.45);
   transform: translateY(-1px);
 }
+.module-btn-outline.btn-print:hover,
+.module-btn-outline.btn-print:hover svg {
+  color: #ffffff !important;
+}
 @media (max-width: 768px) {
   .module-hero { flex-direction: column; align-items: flex-start; gap: 14px; border-radius: 14px; padding: 18px 20px; }
   .module-hero-actions { width: 100%; justify-content: flex-end; }
